@@ -3,6 +3,7 @@ package api
 import (
 	"crypto/rand"
 	"encoding/base64"
+	"log/slog"
 	"net/http"
 	"strings"
 	"time"
@@ -34,8 +35,11 @@ func (s *Server) handleDiscordLogin(w http.ResponseWriter, r *http.Request) {
 // handleDiscordCallback completes the OAuth2 flow, creates a session, and
 // redirects the user back into the SPA.
 func (s *Server) handleDiscordCallback(w http.ResponseWriter, r *http.Request) {
+	slog.Info("discord callback: entered", "query", r.URL.RawQuery != "")
+
 	stateCookie, err := r.Cookie(oauthStateCookie)
 	if err != nil || stateCookie.Value == "" {
+		slog.Warn("discord callback: missing state cookie")
 		writeError(w, http.StatusBadRequest, "missing oauth state")
 		return
 	}
@@ -43,20 +47,24 @@ func (s *Server) handleDiscordCallback(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, &http.Cookie{Name: oauthStateCookie, Path: "/", MaxAge: -1})
 
 	if r.URL.Query().Get("state") != stateCookie.Value {
+		slog.Warn("discord callback: state mismatch")
 		writeError(w, http.StatusBadRequest, "invalid oauth state")
 		return
 	}
 	code := r.URL.Query().Get("code")
 	if code == "" {
+		slog.Warn("discord callback: missing code")
 		writeError(w, http.StatusBadRequest, "missing authorization code")
 		return
 	}
 
 	du, err := s.oauth.Exchange(r.Context(), code)
 	if err != nil {
+		slog.Error("discord callback: exchange failed", "error", err)
 		writeError(w, http.StatusBadGateway, "failed to authenticate with Discord")
 		return
 	}
+	slog.Info("discord callback: exchange ok", "discordID", du.ID)
 
 	user, err := s.stores.Users.UpsertByDiscord(r.Context(), du.ID, du.Username, du.AvatarURL())
 	if err != nil {
