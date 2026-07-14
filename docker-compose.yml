@@ -1,0 +1,39 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-tww}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-tww}
+      POSTGRES_DB: ${POSTGRES_DB:-tibia_warden}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-tww} -d ${POSTGRES_DB:-tibia_warden}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      LISTEN_ADDR: ":8080"
+      DATABASE_URL: postgres://${POSTGRES_USER:-tww}:${POSTGRES_PASSWORD:-tww}@db:5432/${POSTGRES_DB:-tibia_warden}?sslmode=disable
+      DISCORD_CLIENT_ID: ${DISCORD_CLIENT_ID}
+      DISCORD_CLIENT_SECRET: ${DISCORD_CLIENT_SECRET}
+      DISCORD_REDIRECT_URL: ${DISCORD_REDIRECT_URL}
+      SESSION_SECRET: ${SESSION_SECRET}
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+    ports:
+      - "8080:8080"
+
+volumes:
+  pgdata:
