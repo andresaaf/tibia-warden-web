@@ -1,4 +1,3 @@
-package main
 // Command seed imports the Tibia creature list into the database.
 //
 // Usage:
