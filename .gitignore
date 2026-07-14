@@ -1,0 +1,17 @@
+# Env
+.env
+
+# Go
+/backend/server
+/backend/seed
+*.exe
+
+# Node / SvelteKit
+node_modules/
+/frontend/.svelte-kit/
+/frontend/build/
+/frontend/.vite/
+
+# Editor / OS
+.DS_Store
+Thumbs.db

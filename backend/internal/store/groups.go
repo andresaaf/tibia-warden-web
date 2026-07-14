@@ -1,0 +1,285 @@
+package store
+
+import (
+	"context"
+	"errors"
+	"time"
+
+	"github.com/baz/tibia-warden-web/backend/internal/models"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
+)
+
+type GroupStore struct {
+	pool *pgxpool.Pool
+}
+
+// Create makes a new group and adds the creator as owner in a single transaction.
+func (s *GroupStore) Create(ctx context.Context, ownerID int64, name, description, visibility string) (*models.Group, error) {
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback(ctx)
+
+	var g models.Group
+	err = tx.QueryRow(ctx, `
+		INSERT INTO groups (name, description, visibility, owner_id)
+		VALUES ($1, $2, $3, $4)
+		RETURNING id, name, description, visibility, owner_id, created_at`,
+		name, description, visibility, ownerID,
+	).Scan(&g.ID, &g.Name, &g.Description, &g.Visibility, &g.OwnerID, &g.CreatedAt)
+	if err != nil {
+		return nil, err
+	}
+
+	if _, err = tx.Exec(ctx, `
+		INSERT INTO group_members (group_id, user_id, role)
+		VALUES ($1, $2, 'owner')`, g.ID, ownerID); err != nil {
+		return nil, err
+	}
+
+	if err = tx.Commit(ctx); err != nil {
+		return nil, err
+	}
+	g.Role = models.RoleOwner
+	g.MemberCount = 1
+	return &g, nil
+}
+
+// GetByID returns a group with member count and, if provided, the given user's role.
+func (s *GroupStore) GetByID(ctx context.Context, groupID, viewerID int64) (*models.Group, error) {
+	var g models.Group
+	var role *string
+	err := s.pool.QueryRow(ctx, `
+		SELECT g.id, g.name, g.description, g.visibility, g.owner_id, g.created_at,
+		       (SELECT COUNT(*) FROM group_members m WHERE m.group_id = g.id) AS member_count,
+		       (SELECT m.role FROM group_members m WHERE m.group_id = g.id AND m.user_id = $2) AS role
+		FROM groups g WHERE g.id = $1`, groupID, viewerID,
+	).Scan(&g.ID, &g.Name, &g.Description, &g.Visibility, &g.OwnerID, &g.CreatedAt, &g.MemberCount, &role)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, ErrNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+	if role != nil {
+		g.Role = *role
+	}
+	return &g, nil
+}
+
+// ListPublic returns public groups matching an optional search term, annotated
+// with the viewer's role where they are a member.
+func (s *GroupStore) ListPublic(ctx context.Context, viewerID int64, search string) ([]models.Group, error) {
+	rows, err := s.pool.Query(ctx, `
+		SELECT g.id, g.name, g.description, g.visibility, g.owner_id, g.created_at,
+		       (SELECT COUNT(*) FROM group_members m WHERE m.group_id = g.id) AS member_count,
+		       (SELECT m.role FROM group_members m WHERE m.group_id = g.id AND m.user_id = $1) AS role
+		FROM groups g
+		WHERE g.visibility = 'public'
+		  AND ($2 = '' OR g.name ILIKE '%' || $2 || '%')
+		ORDER BY g.created_at DESC`, viewerID, search)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	return scanGroups(rows)
+}
+
+// ListForUser returns all groups the user is a member of.
+func (s *GroupStore) ListForUser(ctx context.Context, userID int64) ([]models.Group, error) {
+	rows, err := s.pool.Query(ctx, `
+		SELECT g.id, g.name, g.description, g.visibility, g.owner_id, g.created_at,
+		       (SELECT COUNT(*) FROM group_members m WHERE m.group_id = g.id) AS member_count,
+		       gm.role
+		FROM groups g
+		JOIN group_members gm ON gm.group_id = g.id AND gm.user_id = $1
+		ORDER BY g.created_at DESC`, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	return scanGroups(rows)
+}
+
+func scanGroups(rows pgx.Rows) ([]models.Group, error) {
+	var out []models.Group
+	for rows.Next() {
+		var g models.Group
+		var role *string
+		if err := rows.Scan(&g.ID, &g.Name, &g.Description, &g.Visibility, &g.OwnerID, &g.CreatedAt, &g.MemberCount, &role); err != nil {
+			return nil, err
+		}
+		if role != nil {
+			g.Role = *role
+		}
+		out = append(out, g)
+	}
+	return out, rows.Err()
+}
+
+// Role returns the viewer's role in a group, or ErrNotFound if not a member.
+func (s *GroupStore) Role(ctx context.Context, groupID, userID int64) (string, error) {
+	var role string
+	err := s.pool.QueryRow(ctx,
+		`SELECT role FROM group_members WHERE group_id = $1 AND user_id = $2`, groupID, userID,
+	).Scan(&role)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return "", ErrNotFound
+	}
+	return role, err
+}
+
+// Members lists the members of a group with their display names.
+func (s *GroupStore) Members(ctx context.Context, groupID int64) ([]models.GroupMember, error) {
+	rows, err := s.pool.Query(ctx, `
+		SELECT gm.user_id, u.character_name, u.discord_username, gm.role, gm.joined_at
+		FROM group_members gm
+		JOIN users u ON u.id = gm.user_id
+		WHERE gm.group_id = $1
+		ORDER BY
+			CASE gm.role WHEN 'owner' THEN 0 WHEN 'admin' THEN 1 ELSE 2 END,
+			gm.joined_at ASC`, groupID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var out []models.GroupMember
+	for rows.Next() {
+		var m models.GroupMember
+		if err := rows.Scan(&m.UserID, &m.CharacterName, &m.DiscordName, &m.Role, &m.JoinedAt); err != nil {
+			return nil, err
+		}
+		out = append(out, m)
+	}
+	return out, rows.Err()
+}
+
+// SetRole updates a member's role. It refuses to change the owner's role.
+func (s *GroupStore) SetRole(ctx context.Context, groupID, userID int64, role string) error {
+	tag, err := s.pool.Exec(ctx, `
+		UPDATE group_members SET role = $3
+		WHERE group_id = $1 AND user_id = $2 AND role <> 'owner'`, groupID, userID, role)
+	if err != nil {
+		return err
+	}
+	if tag.RowsAffected() == 0 {
+		return ErrNotFound
+	}
+	return nil
+}
+
+// RemoveMember removes a member from a group. The owner cannot be removed.
+func (s *GroupStore) RemoveMember(ctx context.Context, groupID, userID int64) error {
+	tag, err := s.pool.Exec(ctx, `
+		DELETE FROM group_members
+		WHERE group_id = $1 AND user_id = $2 AND role <> 'owner'`, groupID, userID)
+	if err != nil {
+		return err
+	}
+	if tag.RowsAffected() == 0 {
+		return ErrNotFound
+	}
+	return nil
+}
+
+// CreateInvite creates a one-time invite code for a private group.
+func (s *GroupStore) CreateInvite(ctx context.Context, groupID, createdBy int64, code string, expiresAt *time.Time) (*models.InviteCode, error) {
+	var inv models.InviteCode
+	err := s.pool.QueryRow(ctx, `
+		INSERT INTO invite_codes (group_id, code, created_by, expires_at)
+		VALUES ($1, $2, $3, $4)
+		RETURNING id, group_id, code, created_by, used_by, used_at, expires_at, created_at`,
+		groupID, code, createdBy, expiresAt,
+	).Scan(&inv.ID, &inv.GroupID, &inv.Code, &inv.CreatedBy, &inv.UsedBy, &inv.UsedAt, &inv.ExpiresAt, &inv.CreatedAt)
+	if err != nil {
+		return nil, err
+	}
+	return &inv, nil
+}
+
+// ListInvites returns the invite codes for a group.
+func (s *GroupStore) ListInvites(ctx context.Context, groupID int64) ([]models.InviteCode, error) {
+	rows, err := s.pool.Query(ctx, `
+		SELECT id, group_id, code, created_by, used_by, used_at, expires_at, created_at
+		FROM invite_codes WHERE group_id = $1 ORDER BY created_at DESC`, groupID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var out []models.InviteCode
+	for rows.Next() {
+		var inv models.InviteCode
+		if err := rows.Scan(&inv.ID, &inv.GroupID, &inv.Code, &inv.CreatedBy, &inv.UsedBy, &inv.UsedAt, &inv.ExpiresAt, &inv.CreatedAt); err != nil {
+			return nil, err
+		}
+		out = append(out, inv)
+	}
+	return out, rows.Err()
+}
+
+// RedeemInvite consumes a valid, unused, unexpired invite code and adds the user
+// as a member, all within a single transaction. Returns the group ID joined.
+func (s *GroupStore) RedeemInvite(ctx context.Context, userID int64, code string) (int64, error) {
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return 0, err
+	}
+	defer tx.Rollback(ctx)
+
+	var groupID int64
+	err = tx.QueryRow(ctx, `
+		SELECT group_id FROM invite_codes
+		WHERE code = $1
+		  AND used_by IS NULL
+		  AND (expires_at IS NULL OR expires_at > now())
+		FOR UPDATE`, code,
+	).Scan(&groupID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return 0, ErrNotFound
+	}
+	if err != nil {
+		return 0, err
+	}
+
+	if _, err = tx.Exec(ctx, `
+		UPDATE invite_codes SET used_by = $1, used_at = now() WHERE code = $2`,
+		userID, code); err != nil {
+		return 0, err
+	}
+
+	if _, err = tx.Exec(ctx, `
+		INSERT INTO group_members (group_id, user_id, role)
+		VALUES ($1, $2, 'member')
+		ON CONFLICT (group_id, user_id) DO NOTHING`, groupID, userID); err != nil {
+		return 0, err
+	}
+
+	if err = tx.Commit(ctx); err != nil {
+		return 0, err
+	}
+	return groupID, nil
+}
+
+// JoinPublic adds a user to a public group as a member.
+func (s *GroupStore) JoinPublic(ctx context.Context, userID, groupID int64) error {
+	var visibility string
+	err := s.pool.QueryRow(ctx, `SELECT visibility FROM groups WHERE id = $1`, groupID).Scan(&visibility)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return ErrNotFound
+	}
+	if err != nil {
+		return err
+	}
+	if visibility != models.VisibilityPublic {
+		return ErrNotFound
+	}
+	_, err = s.pool.Exec(ctx, `
+		INSERT INTO group_members (group_id, user_id, role)
+		VALUES ($1, $2, 'member')
+		ON CONFLICT (group_id, user_id) DO NOTHING`, groupID, userID)
+	return err
+}

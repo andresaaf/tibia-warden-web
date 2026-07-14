@@ -1,0 +1,20 @@
+[
+  { "name": "Rat", "difficulty": "Harmless", "imageUrl": "" },
+  { "name": "Cave Rat", "difficulty": "Harmless", "imageUrl": "" },
+  { "name": "Snake", "difficulty": "Harmless", "imageUrl": "" },
+  { "name": "Wolf", "difficulty": "Trivial", "imageUrl": "" },
+  { "name": "Rotworm", "difficulty": "Trivial", "imageUrl": "" },
+  { "name": "Skeleton", "difficulty": "Trivial", "imageUrl": "" },
+  { "name": "Orc", "difficulty": "Easy", "imageUrl": "" },
+  { "name": "Minotaur", "difficulty": "Easy", "imageUrl": "" },
+  { "name": "Dwarf Soldier", "difficulty": "Easy", "imageUrl": "" },
+  { "name": "Dragon", "difficulty": "Medium", "imageUrl": "" },
+  { "name": "Cyclops", "difficulty": "Medium", "imageUrl": "" },
+  { "name": "Ancient Scarab", "difficulty": "Medium", "imageUrl": "" },
+  { "name": "Dragon Lord", "difficulty": "Hard", "imageUrl": "" },
+  { "name": "Hydra", "difficulty": "Hard", "imageUrl": "" },
+  { "name": "Warlock", "difficulty": "Hard", "imageUrl": "" },
+  { "name": "Ferumbras", "difficulty": "Challenging", "imageUrl": "" },
+  { "name": "Orshabaal", "difficulty": "Challenging", "imageUrl": "" },
+  { "name": "Ghazbaran", "difficulty": "Challenging", "imageUrl": "" }
+]
