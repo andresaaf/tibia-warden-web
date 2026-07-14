@@ -25,6 +25,8 @@
 	let posting = $state(false);
 	let postError = $state('');
 	let creatureQuery = $state('');
+	let showCreatureList = $state(false);
+	let highlightIndex = $state(0);
 
 	let showAdmin = $state(false);
 
@@ -99,11 +101,42 @@
 		}
 	}
 
-	let filteredCreatures = $derived(
-		creatureQuery.trim()
-			? creatures.filter((c) => c.name.toLowerCase().includes(creatureQuery.trim().toLowerCase()))
-			: creatures
-	);
+	let filteredCreatures = $derived.by(() => {
+		const q = creatureQuery.trim().toLowerCase();
+		const list = q ? creatures.filter((c) => c.name.toLowerCase().includes(q)) : creatures;
+		return list.slice(0, 8);
+	});
+
+	function selectCreature(c: Creature) {
+		creatureId = c.id;
+		creatureQuery = c.name;
+		showCreatureList = false;
+	}
+
+	function onCreatureInput() {
+		// Typing invalidates any previous selection until a new one is chosen.
+		creatureId = '';
+		showCreatureList = true;
+		highlightIndex = 0;
+	}
+
+	function onCreatureKeydown(e: KeyboardEvent) {
+		if (e.key === 'ArrowDown') {
+			e.preventDefault();
+			showCreatureList = true;
+			highlightIndex = Math.min(highlightIndex + 1, filteredCreatures.length - 1);
+		} else if (e.key === 'ArrowUp') {
+			e.preventDefault();
+			highlightIndex = Math.max(highlightIndex - 1, 0);
+		} else if (e.key === 'Enter') {
+			if (showCreatureList && filteredCreatures[highlightIndex]) {
+				e.preventDefault();
+				selectCreature(filteredCreatures[highlightIndex]);
+			}
+		} else if (e.key === 'Escape') {
+			showCreatureList = false;
+		}
+	}
 
 	async function postAnnouncement(e: SubmitEvent) {
 		e.preventDefault();
@@ -124,6 +157,7 @@
 			location = '';
 			note = '';
 			creatureQuery = '';
+			showCreatureList = false;
 		} catch (err) {
 			postError = err instanceof ApiError ? err.message : 'Failed to post.';
 		} finally {
@@ -292,19 +326,36 @@
 		<form class="card stack post-form" onsubmit={postAnnouncement}>
 			<h3>Announce an Echo Warden</h3>
 			<div class="post-grid">
-				<div>
+				<div class="combobox">
 					<input
 						type="text"
-						placeholder="Filter creatures…"
+						placeholder="Search creature…"
 						bind:value={creatureQuery}
 						autocomplete="off"
+						oninput={onCreatureInput}
+						onfocus={() => (showCreatureList = true)}
+						onblur={() => setTimeout(() => (showCreatureList = false), 120)}
+						onkeydown={onCreatureKeydown}
 					/>
-					<select bind:value={creatureId} size="1">
-						<option value="" disabled selected>Select creature…</option>
-						{#each filteredCreatures as c (c.id)}
-							<option value={c.id}>{c.name} · {c.difficulty}</option>
-						{/each}
-					</select>
+					{#if showCreatureList && (filteredCreatures.length > 0 || creatureQuery.trim())}
+						<div class="combobox-list">
+							{#each filteredCreatures as c, i (c.id)}
+								<button
+									type="button"
+									class="opt"
+									class:highlight={i === highlightIndex}
+									onclick={() => selectCreature(c)}
+									onmousemove={() => (highlightIndex = i)}
+								>
+									<span class="opt-name">{c.name}</span>
+									<span class="badge diff" data-diff={c.difficulty}>{c.difficulty}</span>
+								</button>
+							{/each}
+							{#if filteredCreatures.length === 0}
+								<div class="opt empty muted">No creatures match</div>
+							{/if}
+						</div>
+					{/if}
 				</div>
 				<input type="text" placeholder="Location / spawn" bind:value={location} />
 			</div>
@@ -442,8 +493,68 @@
 		grid-template-columns: 1fr 1fr;
 		gap: 0.6rem;
 	}
-	.post-grid select {
-		margin-top: 0.4rem;
+	.combobox {
+		position: relative;
+	}
+	.combobox-list {
+		position: absolute;
+		z-index: 20;
+		top: calc(100% + 4px);
+		left: 0;
+		right: 0;
+		background: var(--bg-elev-2);
+		border: 1px solid var(--border);
+		border-radius: 8px;
+		box-shadow: var(--shadow);
+		max-height: 260px;
+		overflow-y: auto;
+		padding: 4px;
+	}
+	.opt {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.5rem;
+		width: 100%;
+		background: none;
+		border: none;
+		color: var(--text);
+		text-align: left;
+		padding: 0.45rem 0.55rem;
+		border-radius: 6px;
+	}
+	.opt.highlight {
+		background: var(--bg-elev);
+	}
+	.opt.empty {
+		cursor: default;
+	}
+	.opt-name {
+		font-weight: 550;
+	}
+	.diff[data-diff='Harmless'] {
+		color: var(--diff-harmless);
+		border-color: var(--diff-harmless);
+	}
+	.diff[data-diff='Trivial'] {
+		color: var(--diff-trivial);
+		border-color: var(--diff-trivial);
+	}
+	.diff[data-diff='Easy'] {
+		color: var(--diff-easy);
+		border-color: var(--diff-easy);
+	}
+	.diff[data-diff='Medium'] {
+		color: var(--diff-medium);
+		border-color: var(--diff-medium);
+	}
+	.diff[data-diff='Hard'] {
+		color: var(--diff-hard);
+		border-color: var(--diff-hard);
+	}
+	.diff[data-diff='Challenging'] {
+		color: var(--diff-challenging);
+		border-color: var(--diff-challenging);
 	}
 	.feed {
 		gap: 0.7rem;
