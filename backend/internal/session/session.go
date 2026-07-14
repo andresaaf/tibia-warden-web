@@ -1,5 +1,4 @@
 package session
-package session
 
 import (
 	"crypto/rand"

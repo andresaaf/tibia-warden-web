@@ -1,5 +1,4 @@
 package ws
-package ws
 
 import (
 	"context"
