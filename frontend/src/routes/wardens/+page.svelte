@@ -107,6 +107,15 @@
 					onclick={() => toggleKilled(creature)}
 				>
 					<span class="check" aria-hidden="true">{creature.killed ? '✓' : ''}</span>
+					{#if creature.imageUrl}
+						<img
+							class="creature-img"
+							src={creature.imageUrl}
+							alt=""
+							loading="lazy"
+							onerror={(e) => ((e.currentTarget as HTMLImageElement).style.visibility = 'hidden')}
+						/>
+					{/if}
 					<span class="name">{creature.name}</span>
 					<span class="badge diff" data-diff={creature.difficulty}>{creature.difficulty}</span>
 				</button>
@@ -174,6 +183,13 @@
 		border-color: var(--success);
 		background: var(--success);
 		color: #06210f;
+	}
+	.creature-img {
+		width: 32px;
+		height: 32px;
+		object-fit: contain;
+		flex: none;
+		image-rendering: pixelated;
 	}
 	.name {
 		flex: 1;

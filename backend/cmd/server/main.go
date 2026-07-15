@@ -49,12 +49,12 @@ func main() {
 
 	if cfg.CreaturesAPIURL != "" {
 		syncCtx, cancel := context.WithTimeout(ctx, 45*time.Second)
-		count, err := creatures.Sync(syncCtx, stores.Creatures, cfg.CreaturesAPIURL)
+		imported, pruned, err := creatures.Sync(syncCtx, stores.Creatures, cfg.CreaturesAPIURL)
 		cancel()
 		if err != nil {
 			slog.Warn("creature sync failed; continuing with existing data", "error", err)
 		} else {
-			slog.Info("synced creatures from api", "count", count)
+			slog.Info("synced creatures from api", "imported", imported, "pruned", pruned)
 		}
 	}
 
