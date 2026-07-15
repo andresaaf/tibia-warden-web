@@ -7,24 +7,25 @@ import (
 	"github.com/coder/websocket"
 )
 
-// Client represents a single WebSocket connection subscribed to a group room.
+// Client represents a single WebSocket connection subscribed to one or more
+// group rooms (a group room subscribes to one; the home feed to many).
 type Client struct {
-	hub     *Hub
-	conn    *websocket.Conn
-	groupID int64
-	userID  int64
-	send    chan []byte
+	hub      *Hub
+	conn     *websocket.Conn
+	groupIDs []int64
+	userID   int64
+	send     chan []byte
 }
 
-// Serve registers a new client for the group and pumps messages until the
-// connection closes. It blocks until the connection is done.
-func (h *Hub) Serve(ctx context.Context, conn *websocket.Conn, groupID, userID int64) {
+// Serve registers a new client for the given group rooms and pumps messages
+// until the connection closes. It blocks until the connection is done.
+func (h *Hub) Serve(ctx context.Context, conn *websocket.Conn, groupIDs []int64, userID int64) {
 	c := &Client{
-		hub:     h,
-		conn:    conn,
-		groupID: groupID,
-		userID:  userID,
-		send:    make(chan []byte, 32),
+		hub:      h,
+		conn:     conn,
+		groupIDs: groupIDs,
+		userID:   userID,
+		send:     make(chan []byte, 32),
 	}
 	h.register <- c
 

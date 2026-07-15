@@ -13,7 +13,7 @@
 		if (!$currentUser) {
 			goto('/', { replaceState: true });
 		} else if ($currentUser.characterName) {
-			goto('/groups', { replaceState: true });
+			goto('/', { replaceState: true });
 		} else if (!name) {
 			name = $currentUser.discordUsername;
 		}
@@ -31,7 +31,7 @@
 		try {
 			await api.updateCharacterName(trimmed);
 			await loadCurrentUser();
-			goto('/groups');
+			goto('/');
 		} catch (err) {
 			error = err instanceof ApiError ? err.message : 'Something went wrong.';
 		} finally {

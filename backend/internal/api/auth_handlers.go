@@ -85,7 +85,7 @@ func (s *Server) handleDiscordCallback(w http.ResponseWriter, r *http.Request) {
 	if user.CharacterName == "" {
 		dest += "/onboarding"
 	} else {
-		dest += "/groups"
+		dest += "/"
 	}
 	http.Redirect(w, r, dest, http.StatusTemporaryRedirect)
 }

@@ -46,24 +46,26 @@ func (h *Hub) Run(ctx context.Context) {
 			return
 		case c := <-h.register:
 			h.mu.Lock()
-			room := h.rooms[c.groupID]
-			if room == nil {
-				room = make(map[*Client]struct{})
-				h.rooms[c.groupID] = room
+			for _, gid := range c.groupIDs {
+				room := h.rooms[gid]
+				if room == nil {
+					room = make(map[*Client]struct{})
+					h.rooms[gid] = room
+				}
+				room[c] = struct{}{}
 			}
-			room[c] = struct{}{}
 			h.mu.Unlock()
 		case c := <-h.unregister:
 			h.mu.Lock()
-			if room, ok := h.rooms[c.groupID]; ok {
-				if _, ok := room[c]; ok {
+			for _, gid := range c.groupIDs {
+				if room, ok := h.rooms[gid]; ok {
 					delete(room, c)
-					close(c.send)
 					if len(room) == 0 {
-						delete(h.rooms, c.groupID)
+						delete(h.rooms, gid)
 					}
 				}
 			}
+			close(c.send)
 			h.mu.Unlock()
 		case b := <-h.broadcast:
 			h.mu.RLock()

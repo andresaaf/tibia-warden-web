@@ -135,6 +135,25 @@ func (s *GroupStore) Role(ctx context.Context, groupID, userID int64) (string, e
 	return role, err
 }
 
+// MemberGroupIDs returns the IDs of all groups the user belongs to.
+func (s *GroupStore) MemberGroupIDs(ctx context.Context, userID int64) ([]int64, error) {
+	rows, err := s.pool.Query(ctx,
+		`SELECT group_id FROM group_members WHERE user_id = $1`, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var ids []int64
+	for rows.Next() {
+		var id int64
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		ids = append(ids, id)
+	}
+	return ids, rows.Err()
+}
+
 // Members lists the members of a group with their display names.
 func (s *GroupStore) Members(ctx context.Context, groupID int64) ([]models.GroupMember, error) {
 	rows, err := s.pool.Query(ctx, `

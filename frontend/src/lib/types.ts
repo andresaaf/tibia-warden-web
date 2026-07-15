@@ -98,6 +98,7 @@ export interface Announcement {
 	groupId: number;
 	creatureId: number;
 	creatureName: string;
+	creatureImageUrl?: string;
 	authorId: number;
 	authorName: string;
 	location: string;
@@ -108,4 +109,6 @@ export interface Announcement {
 	createdAt: string;
 	responses: AnnouncementResponse[];
 	claims: AnnouncementClaim[];
+	groupName?: string;
+	viewerRole?: Role | '';
 }

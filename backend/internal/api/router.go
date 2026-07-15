@@ -58,6 +58,11 @@ func NewRouter(cfg *config.Config, stores *store.Stores, oauth *auth.DiscordProv
 			r.Patch("/me", s.handleUpdateMe)
 			r.Post("/auth/logout", s.handleLogout)
 
+			// Home feed (aggregated across the user's groups).
+			r.Get("/feed", s.handleListFeed)
+			r.Get("/feed/ws", s.handleFeedWebSocket)
+			r.Post("/announcements/broadcast", s.handleBroadcastAnnouncement)
+
 			// Warden list.
 			r.Get("/creatures", s.handleListCreatures)
 			r.Put("/wardens/{creatureID}", s.handleMarkKilled)
