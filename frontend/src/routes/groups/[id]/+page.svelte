@@ -20,7 +20,6 @@
 
 	// New announcement form.
 	let creatureId = $state<number | ''>('');
-	let location = $state('');
 	let note = $state('');
 	let posting = $state(false);
 	let postError = $state('');
@@ -151,12 +150,11 @@
 		try {
 			await api.createAnnouncement(groupId, {
 				creatureId: Number(creatureId),
-				location: location.trim(),
+				location: '',
 				note: note.trim(),
 				goldCost: 0
 			});
 			creatureId = '';
-			location = '';
 			note = '';
 			creatureQuery = '';
 			showCreatureList = false;
@@ -234,7 +232,29 @@
 	}
 
 	function copyCode(code: string) {
-		navigator.clipboard?.writeText(code);
+		// navigator.clipboard is only available in secure contexts (HTTPS/localhost);
+		// fall back to a temporary textarea for plain-HTTP LAN access.
+		if (navigator.clipboard && window.isSecureContext) {
+			navigator.clipboard.writeText(code).catch(() => fallbackCopy(code));
+		} else {
+			fallbackCopy(code);
+		}
+	}
+
+	function fallbackCopy(text: string) {
+		const ta = document.createElement('textarea');
+		ta.value = text;
+		ta.style.position = 'fixed';
+		ta.style.opacity = '0';
+		document.body.appendChild(ta);
+		ta.focus();
+		ta.select();
+		try {
+			document.execCommand('copy');
+		} catch {
+			/* ignore */
+		}
+		document.body.removeChild(ta);
 	}
 
 	async function generateDiscordCode() {
@@ -386,41 +406,38 @@
 
 		<form class="card stack post-form" onsubmit={postAnnouncement}>
 			<h3>Announce an Echo Warden</h3>
-			<div class="post-grid">
-				<div class="combobox">
-					<input
-						type="text"
-						placeholder="Search creature…"
-						bind:value={creatureQuery}
-						autocomplete="off"
-						oninput={onCreatureInput}
-						onfocus={() => (showCreatureList = true)}
-						onblur={() => setTimeout(() => (showCreatureList = false), 120)}
-						onkeydown={onCreatureKeydown}
-					/>
-					{#if showCreatureList && (filteredCreatures.length > 0 || creatureQuery.trim())}
-						<div class="combobox-list">
-							{#each filteredCreatures as c, i (c.id)}
-								<button
-									type="button"
-									class="opt"
-									class:highlight={i === highlightIndex}
-									onclick={() => selectCreature(c)}
-									onmousemove={() => (highlightIndex = i)}
-								>
-									<span class="opt-name">{c.name}</span>
-									<span class="badge diff" data-diff={c.difficulty}>{c.difficulty}</span>
-								</button>
-							{/each}
-							{#if filteredCreatures.length === 0}
-								<div class="opt empty muted">No creatures match</div>
-							{/if}
-						</div>
-					{/if}
-				</div>
-				<input type="text" placeholder="Location / spawn" bind:value={location} />
+			<div class="combobox">
+				<input
+					type="text"
+					placeholder="Search creature…"
+					bind:value={creatureQuery}
+					autocomplete="off"
+					oninput={onCreatureInput}
+					onfocus={() => (showCreatureList = true)}
+					onblur={() => setTimeout(() => (showCreatureList = false), 120)}
+					onkeydown={onCreatureKeydown}
+				/>
+				{#if showCreatureList && (filteredCreatures.length > 0 || creatureQuery.trim())}
+					<div class="combobox-list">
+						{#each filteredCreatures as c, i (c.id)}
+							<button
+								type="button"
+								class="opt"
+								class:highlight={i === highlightIndex}
+								onclick={() => selectCreature(c)}
+								onmousemove={() => (highlightIndex = i)}
+							>
+								<span class="opt-name">{c.name}</span>
+								<span class="badge diff" data-diff={c.difficulty}>{c.difficulty}</span>
+							</button>
+						{/each}
+						{#if filteredCreatures.length === 0}
+							<div class="opt empty muted">No creatures match</div>
+						{/if}
+					</div>
+				{/if}
 			</div>
-			<input type="text" placeholder="Note (optional)" bind:value={note} />
+			<input type="text" placeholder="Note — location, price, details… (optional)" bind:value={note} />
 			{#if postError}<p class="error">{postError}</p>{/if}
 			<button class="btn btn-primary" type="submit" disabled={posting}>
 				{posting ? 'Posting…' : 'Post announcement'}
@@ -467,7 +484,7 @@
 							>
 								✅ Ready
 							</button>
-							{#if a.authorId === me?.id}
+							{#if a.authorId === me?.id || isManager}
 								<button class="btn btn-sm btn-danger" onclick={() => markKilled(a)}>
 									💀 Killed
 								</button>
@@ -570,11 +587,6 @@
 	}
 	.post-form {
 		margin-bottom: 1.25rem;
-	}
-	.post-grid {
-		display: grid;
-		grid-template-columns: 1fr 1fr;
-		gap: 0.6rem;
 	}
 	.combobox {
 		position: relative;

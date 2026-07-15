@@ -156,15 +156,15 @@ func (s *AnnouncementStore) ClearResponse(ctx context.Context, announcementID, u
 	return err
 }
 
-// MarkKilled sets an announcement's status to killed. Only the author may do this;
-// the caller is responsible for authorization. Returns ErrNotFound if already killed
-// or not owned by the author.
-func (s *AnnouncementStore) MarkKilled(ctx context.Context, announcementID, authorID int64) error {
+// MarkKilled sets an announcement's status to killed if it is currently open.
+// Authorization (poster or group admin) is the caller's responsibility.
+// Returns ErrNotFound if the announcement does not exist or is already killed.
+func (s *AnnouncementStore) MarkKilled(ctx context.Context, announcementID int64) error {
 	tag, err := s.pool.Exec(ctx, `
 		UPDATE announcements
 		SET status = 'killed', killed_at = now()
-		WHERE id = $1 AND author_id = $2 AND status = 'open'`,
-		announcementID, authorID)
+		WHERE id = $1 AND status = 'open'`,
+		announcementID)
 	if err != nil {
 		return err
 	}

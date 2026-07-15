@@ -132,26 +132,40 @@ func (s *Server) handleClearResponse(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 }
 
-// handleMarkAnnouncementKilled marks the reveal as killed (author only).
+// handleMarkAnnouncementKilled marks the reveal as killed (poster or group admin).
 func (s *Server) handleMarkAnnouncementKilled(w http.ResponseWriter, r *http.Request) {
 	announcementID, ok := parseID(w, r, "announcementID")
 	if !ok {
 		return
 	}
-	groupID, err := s.authorizeAnnouncement(r, announcementID)
+	uid := userID(r)
+	ann, err := s.stores.Announcements.GetByID(r.Context(), announcementID)
 	if err != nil {
-		writeMembershipError(w, err)
+		if errors.Is(err, store.ErrNotFound) {
+			writeError(w, http.StatusNotFound, "announcement not found")
+			return
+		}
+		writeError(w, http.StatusInternalServerError, "failed to load announcement")
 		return
 	}
-	if err := s.stores.Announcements.MarkKilled(r.Context(), announcementID, userID(r)); err != nil {
+	role, err := s.stores.Groups.Role(r.Context(), ann.GroupID, uid)
+	if err != nil {
+		writeError(w, http.StatusForbidden, "you are not a member of this group")
+		return
+	}
+	if uid != ann.AuthorID && role != models.RoleOwner && role != models.RoleAdmin {
+		writeError(w, http.StatusForbidden, "only the person who announced it or a group admin can mark it killed")
+		return
+	}
+	if err := s.stores.Announcements.MarkKilled(r.Context(), announcementID); err != nil {
 		if errors.Is(err, store.ErrNotFound) {
-			writeError(w, http.StatusForbidden, "only the author can mark this as killed, and only once")
+			writeError(w, http.StatusBadRequest, "this is already marked killed")
 			return
 		}
 		writeError(w, http.StatusInternalServerError, "failed to mark as killed")
 		return
 	}
-	s.broadcastAnnouncement(r, groupID, announcementID)
+	s.broadcastAnnouncement(r, ann.GroupID, announcementID)
 	writeJSON(w, http.StatusOK, map[string]string{"status": "killed"})
 }
 
