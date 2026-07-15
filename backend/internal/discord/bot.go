@@ -413,13 +413,17 @@ func buildEmbed(a *models.Announcement) *discordgo.MessageEmbed {
 		fields = append(fields, &discordgo.MessageEmbedField{Name: "🎯 Got the kill", Value: claims})
 	}
 
-	return &discordgo.MessageEmbed{
-		Title:       "Echo Warden: " + a.CreatureName,
+	embed := &discordgo.MessageEmbed{
+		Title:       a.CreatureName + " — Echo Warden",
 		Description: status,
 		Color:       color,
 		Fields:      fields,
 		Footer:      &discordgo.MessageEmbedFooter{Text: "Announced by " + a.AuthorName},
 	}
+	if a.CreatureImageURL != "" {
+		embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL: a.CreatureImageURL}
+	}
+	return embed
 }
 
 func buildComponents(a *models.Announcement) []discordgo.MessageComponent {
