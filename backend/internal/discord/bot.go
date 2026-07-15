@@ -451,7 +451,7 @@ func namesByStatus(a *models.Announcement, status string) string {
 			names = append(names, r.CharacterName)
 		}
 	}
-	return strings.Join(names, ", ")
+	return strings.Join(names, "\n")
 }
 
 func claimNames(a *models.Announcement) string {
@@ -459,5 +459,5 @@ func claimNames(a *models.Announcement) string {
 	for _, c := range a.Claims {
 		names = append(names, c.CharacterName)
 	}
-	return strings.Join(names, ", ")
+	return strings.Join(names, "\n")
 }

@@ -93,21 +93,21 @@ type InviteCode struct {
 }
 
 type Announcement struct {
-	ID           int64                  `json:"id"`
-	GroupID      int64                  `json:"groupId"`
-	CreatureID   int64                  `json:"creatureId"`
-	CreatureName string                 `json:"creatureName"`
-	CreatureImageURL string             `json:"creatureImageUrl,omitempty"`
-	AuthorID     int64                  `json:"authorId"`
-	AuthorName   string                 `json:"authorName"`
-	Location     string                 `json:"location"`
-	Note         string                 `json:"note"`
-	GoldCost     int                    `json:"goldCost"`
-	Status       string                 `json:"status"`
-	KilledAt     *time.Time             `json:"killedAt,omitempty"`
-	CreatedAt    time.Time              `json:"createdAt"`
-	Responses    []AnnouncementResponse `json:"responses"`
-	Claims       []AnnouncementClaim    `json:"claims"`
+	ID               int64                  `json:"id"`
+	GroupID          int64                  `json:"groupId"`
+	CreatureID       int64                  `json:"creatureId"`
+	CreatureName     string                 `json:"creatureName"`
+	CreatureImageURL string                 `json:"creatureImageUrl,omitempty"`
+	AuthorID         int64                  `json:"authorId"`
+	AuthorName       string                 `json:"authorName"`
+	Location         string                 `json:"location"`
+	Note             string                 `json:"note"`
+	GoldCost         int                    `json:"goldCost"`
+	Status           string                 `json:"status"`
+	KilledAt         *time.Time             `json:"killedAt,omitempty"`
+	CreatedAt        time.Time              `json:"createdAt"`
+	Responses        []AnnouncementResponse `json:"responses"`
+	Claims           []AnnouncementClaim    `json:"claims"`
 	// DiscordMessageID is the mirrored Discord message, when the group is linked.
 	DiscordMessageID string `json:"-"`
 }
