@@ -75,6 +75,8 @@ export interface InviteCode {
 	usedAt?: string | null;
 	expiresAt?: string | null;
 	createdAt: string;
+	maxUses: number | null;
+	useCount: number;
 }
 
 export type AnnouncementStatus = 'open' | 'killed';

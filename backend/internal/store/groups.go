@@ -189,15 +189,15 @@ func (s *GroupStore) RemoveMember(ctx context.Context, groupID, userID int64) er
 	return nil
 }
 
-// CreateInvite creates a one-time invite code for a private group.
-func (s *GroupStore) CreateInvite(ctx context.Context, groupID, createdBy int64, code string, expiresAt *time.Time) (*models.InviteCode, error) {
+// CreateInvite creates an invite code for a group. maxUses is nil for unlimited.
+func (s *GroupStore) CreateInvite(ctx context.Context, groupID, createdBy int64, code string, expiresAt *time.Time, maxUses *int) (*models.InviteCode, error) {
 	var inv models.InviteCode
 	err := s.pool.QueryRow(ctx, `
-		INSERT INTO invite_codes (group_id, code, created_by, expires_at)
-		VALUES ($1, $2, $3, $4)
-		RETURNING id, group_id, code, created_by, used_by, used_at, expires_at, created_at`,
-		groupID, code, createdBy, expiresAt,
-	).Scan(&inv.ID, &inv.GroupID, &inv.Code, &inv.CreatedBy, &inv.UsedBy, &inv.UsedAt, &inv.ExpiresAt, &inv.CreatedAt)
+		INSERT INTO invite_codes (group_id, code, created_by, expires_at, max_uses)
+		VALUES ($1, $2, $3, $4, $5)
+		RETURNING id, group_id, code, created_by, used_by, used_at, expires_at, created_at, max_uses, use_count`,
+		groupID, code, createdBy, expiresAt, maxUses,
+	).Scan(&inv.ID, &inv.GroupID, &inv.Code, &inv.CreatedBy, &inv.UsedBy, &inv.UsedAt, &inv.ExpiresAt, &inv.CreatedAt, &inv.MaxUses, &inv.UseCount)
 	if err != nil {
 		return nil, err
 	}
@@ -207,7 +207,7 @@ func (s *GroupStore) CreateInvite(ctx context.Context, groupID, createdBy int64,
 // ListInvites returns the invite codes for a group.
 func (s *GroupStore) ListInvites(ctx context.Context, groupID int64) ([]models.InviteCode, error) {
 	rows, err := s.pool.Query(ctx, `
-		SELECT id, group_id, code, created_by, used_by, used_at, expires_at, created_at
+		SELECT id, group_id, code, created_by, used_by, used_at, expires_at, created_at, max_uses, use_count
 		FROM invite_codes WHERE group_id = $1 ORDER BY created_at DESC`, groupID)
 	if err != nil {
 		return nil, err
@@ -217,7 +217,7 @@ func (s *GroupStore) ListInvites(ctx context.Context, groupID int64) ([]models.I
 	var out []models.InviteCode
 	for rows.Next() {
 		var inv models.InviteCode
-		if err := rows.Scan(&inv.ID, &inv.GroupID, &inv.Code, &inv.CreatedBy, &inv.UsedBy, &inv.UsedAt, &inv.ExpiresAt, &inv.CreatedAt); err != nil {
+		if err := rows.Scan(&inv.ID, &inv.GroupID, &inv.Code, &inv.CreatedBy, &inv.UsedBy, &inv.UsedAt, &inv.ExpiresAt, &inv.CreatedAt, &inv.MaxUses, &inv.UseCount); err != nil {
 			return nil, err
 		}
 		out = append(out, inv)
@@ -251,7 +251,7 @@ func (s *GroupStore) RedeemInvite(ctx context.Context, userID int64, code string
 	err = tx.QueryRow(ctx, `
 		SELECT group_id FROM invite_codes
 		WHERE code = $1
-		  AND used_by IS NULL
+		  AND (max_uses IS NULL OR use_count < max_uses)
 		  AND (expires_at IS NULL OR expires_at > now())
 		FOR UPDATE`, code,
 	).Scan(&groupID)
@@ -263,7 +263,7 @@ func (s *GroupStore) RedeemInvite(ctx context.Context, userID int64, code string
 	}
 
 	if _, err = tx.Exec(ctx, `
-		UPDATE invite_codes SET used_by = $1, used_at = now() WHERE code = $2`,
+		UPDATE invite_codes SET use_count = use_count + 1, used_by = $1, used_at = now() WHERE code = $2`,
 		userID, code); err != nil {
 		return 0, err
 	}

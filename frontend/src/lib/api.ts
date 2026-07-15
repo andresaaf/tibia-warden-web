@@ -80,8 +80,8 @@ export const api = {
 	removeMember: (id: number, userId: number) =>
 		request<void>('DELETE', `/api/groups/${id}/members/${userId}`),
 	invites: (id: number) => request<InviteCode[]>('GET', `/api/groups/${id}/invites`),
-	createInvite: (id: number, expiresInHours = 0) =>
-		request<InviteCode>('POST', `/api/groups/${id}/invites`, { expiresInHours }),
+	createInvite: (id: number, expiresInHours = 0, maxUses = 1) =>
+		request<InviteCode>('POST', `/api/groups/${id}/invites`, { expiresInHours, maxUses }),
 	deleteInvite: (id: number, inviteId: number) =>
 		request<void>('DELETE', `/api/groups/${id}/invites/${inviteId}`),
 	createDiscordLinkCode: (id: number) =>
