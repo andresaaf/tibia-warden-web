@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/baz/tibia-warden-web/backend/internal/models"
-	"github.com/baz/tibia-warden-web/backend/internal/store"
-	"github.com/baz/tibia-warden-web/backend/internal/ws"
+	"github.com/andresaaf/tibia-warden-web/backend/internal/models"
+	"github.com/andresaaf/tibia-warden-web/backend/internal/store"
+	"github.com/andresaaf/tibia-warden-web/backend/internal/ws"
 )
 
 // handleListAnnouncements returns recent announcements for a group.

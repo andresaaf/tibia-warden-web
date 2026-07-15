@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/baz/tibia-warden-web/backend/internal/session"
+	"github.com/andresaaf/tibia-warden-web/backend/internal/session"
 )
 
 const oauthStateCookie = "tww_oauth_state"

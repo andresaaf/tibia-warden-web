@@ -5,8 +5,8 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/baz/tibia-warden-web/backend/internal/session"
-	"github.com/baz/tibia-warden-web/backend/internal/store"
+	"github.com/andresaaf/tibia-warden-web/backend/internal/session"
+	"github.com/andresaaf/tibia-warden-web/backend/internal/store"
 )
 
 type contextKey string

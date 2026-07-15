@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/baz/tibia-warden-web/backend/internal/models"
+	"github.com/andresaaf/tibia-warden-web/backend/internal/models"
 )
 
 var validDifficulties = map[string]struct{}{

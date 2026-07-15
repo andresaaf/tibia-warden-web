@@ -21,8 +21,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/baz/tibia-warden-web/backend/internal/database"
-	"github.com/baz/tibia-warden-web/backend/internal/store"
+	"github.com/andresaaf/tibia-warden-web/backend/internal/database"
+	"github.com/andresaaf/tibia-warden-web/backend/internal/store"
 )
 
 type creatureRecord struct {
