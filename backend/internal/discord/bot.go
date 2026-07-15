@@ -183,11 +183,12 @@ func (b *Bot) handleComponent(s *discordgo.Session, i *discordgo.InteractionCrea
 			_ = b.stores.Announcements.SetResponse(ctx, annID, u.ID, action)
 		}
 	case "killed":
-		if u.ID != ann.AuthorID {
-			b.ephemeral(s, i, "Only the person who announced this can mark it killed.")
+		role, _ := b.stores.Groups.Role(ctx, ann.GroupID, u.ID)
+		if u.ID != ann.AuthorID && role != models.RoleOwner && role != models.RoleAdmin {
+			b.ephemeral(s, i, "Only the person who announced it or a group admin can mark it killed.")
 			return
 		}
-		if err := b.stores.Announcements.MarkKilled(ctx, annID, u.ID); err != nil {
+		if err := b.stores.Announcements.MarkKilled(ctx, annID); err != nil {
 			b.ephemeral(s, i, "This is already marked killed.")
 			return
 		}
