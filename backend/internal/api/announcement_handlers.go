@@ -82,6 +82,83 @@ func (s *Server) handleCreateAnnouncement(w http.ResponseWriter, r *http.Request
 	writeJSON(w, http.StatusCreated, announcement)
 }
 
+// handleListFeed returns recent announcements across all the user's groups.
+func (s *Server) handleListFeed(w http.ResponseWriter, r *http.Request) {
+	announcements, err := s.stores.Announcements.ListForUser(r.Context(), userID(r), 50)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to load feed")
+		return
+	}
+	if announcements == nil {
+		announcements = []models.Announcement{}
+	}
+	writeJSON(w, http.StatusOK, announcements)
+}
+
+// handleBroadcastAnnouncement posts an Echo Warden reveal to several groups at
+// once (all of the user's groups when no groupIds are given).
+func (s *Server) handleBroadcastAnnouncement(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		CreatureID int64   `json:"creatureId"`
+		Note       string  `json:"note"`
+		GoldCost   int     `json:"goldCost"`
+		GroupIDs   []int64 `json:"groupIds"`
+	}
+	if err := decodeJSON(r, &body); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	if body.CreatureID <= 0 {
+		writeError(w, http.StatusBadRequest, "a creature is required")
+		return
+	}
+	exists, err := s.stores.Creatures.Exists(r.Context(), body.CreatureID)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to verify creature")
+		return
+	}
+	if !exists {
+		writeError(w, http.StatusBadRequest, "unknown creature")
+		return
+	}
+	if body.GoldCost < 0 {
+		body.GoldCost = 0
+	}
+
+	uid := userID(r)
+	var targets []int64
+	if len(body.GroupIDs) > 0 {
+		for _, gid := range body.GroupIDs {
+			if _, err := s.stores.Groups.Role(r.Context(), gid, uid); err == nil {
+				targets = append(targets, gid)
+			}
+		}
+	} else {
+		targets, err = s.stores.Groups.MemberGroupIDs(r.Context(), uid)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "failed to load groups")
+			return
+		}
+	}
+	if len(targets) == 0 {
+		writeError(w, http.StatusBadRequest, "you have no groups to announce to")
+		return
+	}
+
+	note := strings.TrimSpace(body.Note)
+	created := []models.Announcement{}
+	for _, gid := range targets {
+		ann, err := s.stores.Announcements.Create(r.Context(), gid, body.CreatureID, uid, "", note, body.GoldCost)
+		if err != nil {
+			continue
+		}
+		s.hub.Broadcast(gid, ws.EventAnnouncementCreated, ann)
+		s.bot.PostAnnouncement(r.Context(), ann)
+		created = append(created, *ann)
+	}
+	writeJSON(w, http.StatusCreated, created)
+}
+
 // handleSetResponse records the current user's coming/ready state.
 func (s *Server) handleSetResponse(w http.ResponseWriter, r *http.Request) {
 	announcementID, ok := parseID(w, r, "announcementID")

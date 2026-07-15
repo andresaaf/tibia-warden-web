@@ -17,15 +17,20 @@
 	}
 
 	const navItems = [
+		{ href: '/', label: 'Home' },
 		{ href: '/groups', label: 'Groups' },
 		{ href: '/wardens', label: 'Warden List' }
 	];
+
+	function isActive(pathname: string, href: string): boolean {
+		return href === '/' ? pathname === '/' : pathname.startsWith(href);
+	}
 </script>
 
 <div class="app">
 	<header class="topbar">
 		<div class="topbar-inner">
-			<a class="brand" href="/groups">
+			<a class="brand" href="/">
 				<span class="brand-mark">◈</span> Echo Warden Tracker
 			</a>
 
@@ -34,7 +39,7 @@
 					{#each navItems as item}
 						<a
 							class="nav-link"
-							class:active={$page.url.pathname.startsWith(item.href)}
+							class:active={isActive($page.url.pathname, item.href)}
 							href={item.href}>{item.label}</a
 						>
 					{/each}

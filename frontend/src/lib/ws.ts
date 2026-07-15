@@ -5,17 +5,17 @@ export type RoomEvent =
 	| { type: 'announcement.updated'; payload: Announcement };
 
 /**
- * GroupRoom maintains a resilient WebSocket connection to a group's live
- * announcement feed, reconnecting automatically with backoff.
+ * LiveRoom maintains a resilient WebSocket connection to a live announcement
+ * feed at a given path, reconnecting automatically with backoff.
  */
-export class GroupRoom {
+class LiveRoom {
 	private ws: WebSocket | null = null;
 	private closed = false;
 	private retry = 0;
 	private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 
 	constructor(
-		private groupId: number,
+		private path: string,
 		private onEvent: (event: RoomEvent) => void
 	) {}
 
@@ -26,7 +26,7 @@ export class GroupRoom {
 
 	private open() {
 		const proto = location.protocol === 'https:' ? 'wss' : 'ws';
-		const url = `${proto}://${location.host}/api/groups/${this.groupId}/ws`;
+		const url = `${proto}://${location.host}${this.path}`;
 		const ws = new WebSocket(url);
 		this.ws = ws;
 
@@ -61,5 +61,19 @@ export class GroupRoom {
 		if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
 		this.ws?.close();
 		this.ws = null;
+	}
+}
+
+/** Live updates for a single group room. */
+export class GroupRoom extends LiveRoom {
+	constructor(groupId: number, onEvent: (event: RoomEvent) => void) {
+		super(`/api/groups/${groupId}/ws`, onEvent);
+	}
+}
+
+/** Live updates across all of the user's groups (home feed). */
+export class FeedRoom extends LiveRoom {
+	constructor(onEvent: (event: RoomEvent) => void) {
+		super('/api/feed/ws', onEvent);
 	}
 }

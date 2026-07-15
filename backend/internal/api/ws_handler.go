@@ -26,7 +26,26 @@ func (s *Server) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.hub.Serve(r.Context(), conn, groupID, userID(r))
+	s.hub.Serve(r.Context(), conn, []int64{groupID}, userID(r))
+}
+
+// handleFeedWebSocket subscribes the user to live updates from all of their
+// groups at once (the home dashboard feed).
+func (s *Server) handleFeedWebSocket(w http.ResponseWriter, r *http.Request) {
+	groupIDs, err := s.stores.Groups.MemberGroupIDs(r.Context(), userID(r))
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to load groups")
+		return
+	}
+
+	conn, err := websocket.Accept(w, r, &websocket.AcceptOptions{
+		OriginPatterns: originPatterns(s.cfg.AllowedOrigins),
+	})
+	if err != nil {
+		return
+	}
+
+	s.hub.Serve(r.Context(), conn, groupIDs, userID(r))
 }
 
 // originPatterns strips the scheme from configured origins to build the host

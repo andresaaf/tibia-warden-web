@@ -112,8 +112,9 @@ type Announcement struct {
 	Responses        []AnnouncementResponse `json:"responses"`
 	Claims           []AnnouncementClaim    `json:"claims"`
 	// DiscordMessageID is the mirrored Discord message, when the group is linked.
-	DiscordMessageID string `json:"-"`
-}
+	DiscordMessageID string `json:"-"`	// GroupName and ViewerRole are populated for the aggregated home feed.
+	GroupName  string `json:"groupName,omitempty"`
+	ViewerRole string `json:"viewerRole,omitempty"`}
 
 type AnnouncementResponse struct {
 	UserID        int64  `json:"userId"`

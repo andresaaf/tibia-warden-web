@@ -97,6 +97,13 @@ export const api = {
 	// Announcements
 	announcements: (groupId: number) =>
 		request<Announcement[]>('GET', `/api/groups/${groupId}/announcements`),
+	feed: () => request<Announcement[]>('GET', '/api/feed'),
+	broadcastAnnouncement: (payload: {
+		creatureId: number;
+		note: string;
+		goldCost: number;
+		groupIds?: number[];
+	}) => request<Announcement[]>('POST', '/api/announcements/broadcast', payload),
 	createAnnouncement: (
 		groupId: number,
 		payload: { creatureId: number; location: string; note: string; goldCost: number }
