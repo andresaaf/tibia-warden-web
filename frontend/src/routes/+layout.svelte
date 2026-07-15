@@ -40,7 +40,9 @@
 					{/each}
 				</nav>
 				<div class="user">
-					<span class="muted">{$currentUser.characterName || $currentUser.discordUsername}</span>
+					<a class="user-name" href="/settings" title="Account settings">
+						{$currentUser.characterName || $currentUser.discordUsername}
+					</a>
 					<button class="btn btn-sm" onclick={handleLogout}>Log out</button>
 				</div>
 			{/if}
@@ -110,5 +112,15 @@
 		display: flex;
 		align-items: center;
 		gap: 0.6rem;
+	}
+	.user-name {
+		color: var(--text-dim);
+		font-weight: 550;
+		padding: 0.25rem 0.5rem;
+		border-radius: 8px;
+	}
+	.user-name:hover {
+		color: var(--text);
+		background: var(--bg-elev-2);
 	}
 </style>
