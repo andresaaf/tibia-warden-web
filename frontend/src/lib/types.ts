@@ -46,6 +46,15 @@ export interface Group {
 	role?: Role | '';
 	discordGuildId?: string;
 	discordChannelId?: string;
+	discordRoleId?: string;
+	discordRoleName?: string;
+}
+
+export interface DiscordRole {
+	id: string;
+	name: string;
+	color: number;
+	mentionable: boolean;
 }
 
 export interface GroupMember {

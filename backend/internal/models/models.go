@@ -67,6 +67,8 @@ type Group struct {
 	// Discord link (populated on single-group fetches).
 	DiscordGuildID   string `json:"discordGuildId,omitempty"`
 	DiscordChannelID string `json:"discordChannelId,omitempty"`
+	DiscordRoleID    string `json:"discordRoleId,omitempty"`
+	DiscordRoleName  string `json:"discordRoleName,omitempty"`
 }
 
 type GroupMember struct {
@@ -116,4 +118,12 @@ type AnnouncementResponse struct {
 type AnnouncementClaim struct {
 	UserID        int64  `json:"userId"`
 	CharacterName string `json:"characterName"`
+}
+
+// DiscordRole is a selectable role in a linked Discord guild.
+type DiscordRole struct {
+	ID          string `json:"id"`
+	Name        string `json:"name"`
+	Color       int    `json:"color"`
+	Mentionable bool   `json:"mentionable"`
 }

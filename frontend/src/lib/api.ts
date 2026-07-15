@@ -1,6 +1,7 @@
 import type {
 	Announcement,
 	Creature,
+	DiscordRole,
 	Group,
 	GroupMember,
 	InviteCode,
@@ -84,6 +85,10 @@ export const api = {
 	createDiscordLinkCode: (id: number) =>
 		request<{ code: string; expiresAt: string }>('POST', `/api/groups/${id}/discord/link-code`),
 	unlinkDiscord: (id: number) => request<void>('DELETE', `/api/groups/${id}/discord`),
+	discordRoles: (id: number) => request<DiscordRole[]>('GET', `/api/groups/${id}/discord/roles`),
+	setDiscordRole: (id: number, roleId: string, roleName: string) =>
+		request<void>('PUT', `/api/groups/${id}/discord/role`, { roleId, roleName }),
+	clearDiscordRole: (id: number) => request<void>('DELETE', `/api/groups/${id}/discord/role`),
 
 	// Announcements
 	announcements: (groupId: number) =>
