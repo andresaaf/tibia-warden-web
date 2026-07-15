@@ -86,3 +86,19 @@ func (s *CreatureStore) Exists(ctx context.Context, creatureID int64) (bool, err
 		`SELECT EXISTS(SELECT 1 FROM creatures WHERE id = $1)`, creatureID).Scan(&exists)
 	return exists, err
 }
+
+// PruneExcept deletes creatures whose name is not in keepNames, but only when
+// they have no kill history and are not referenced by any announcement. Returns
+// the number of creatures deleted.
+func (s *CreatureStore) PruneExcept(ctx context.Context, keepNames []string) (int, error) {
+	tag, err := s.pool.Exec(ctx, `
+		DELETE FROM creatures c
+		WHERE c.name <> ALL($1)
+		  AND NOT EXISTS (SELECT 1 FROM warden_kills wk WHERE wk.creature_id = c.id)
+		  AND NOT EXISTS (SELECT 1 FROM announcements a WHERE a.creature_id = c.id)`,
+		keepNames)
+	if err != nil {
+		return 0, err
+	}
+	return int(tag.RowsAffected()), nil
+}
