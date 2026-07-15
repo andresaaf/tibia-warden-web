@@ -10,14 +10,14 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/baz/tibia-warden-web/backend/internal/api"
-	"github.com/baz/tibia-warden-web/backend/internal/auth"
-	"github.com/baz/tibia-warden-web/backend/internal/config"
-	"github.com/baz/tibia-warden-web/backend/internal/creatures"
-	"github.com/baz/tibia-warden-web/backend/internal/database"
-	"github.com/baz/tibia-warden-web/backend/internal/discord"
-	"github.com/baz/tibia-warden-web/backend/internal/store"
-	"github.com/baz/tibia-warden-web/backend/internal/ws"
+	"github.com/andresaaf/tibia-warden-web/backend/internal/api"
+	"github.com/andresaaf/tibia-warden-web/backend/internal/auth"
+	"github.com/andresaaf/tibia-warden-web/backend/internal/config"
+	"github.com/andresaaf/tibia-warden-web/backend/internal/creatures"
+	"github.com/andresaaf/tibia-warden-web/backend/internal/database"
+	"github.com/andresaaf/tibia-warden-web/backend/internal/discord"
+	"github.com/andresaaf/tibia-warden-web/backend/internal/store"
+	"github.com/andresaaf/tibia-warden-web/backend/internal/ws"
 )
 
 func main() {

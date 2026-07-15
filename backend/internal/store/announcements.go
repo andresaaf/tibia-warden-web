@@ -5,7 +5,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/baz/tibia-warden-web/backend/internal/models"
+	"github.com/andresaaf/tibia-warden-web/backend/internal/models"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )

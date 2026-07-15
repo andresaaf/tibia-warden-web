@@ -1,4 +1,4 @@
-module github.com/baz/tibia-warden-web/backend
+module github.com/andresaaf/tibia-warden-web/backend
 
 go 1.26.5
 

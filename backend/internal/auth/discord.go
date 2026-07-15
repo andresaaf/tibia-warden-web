@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/baz/tibia-warden-web/backend/internal/config"
+	"github.com/andresaaf/tibia-warden-web/backend/internal/config"
 	"golang.org/x/oauth2"
 )
 
