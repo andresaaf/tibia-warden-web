@@ -11,6 +11,7 @@
 	let feed = $state<Announcement[]>([]);
 	let groups = $state<Group[]>([]);
 	let creatures = $state<Creature[]>([]);
+	let killedIds = $state<number[]>([]);
 	let loading = $state(true);
 	let error = $state('');
 	let room: FeedRoom | null = null;
@@ -49,14 +50,16 @@
 	async function init() {
 		loading = true;
 		try {
-			const [f, g, c] = await Promise.all([
+			const [f, g, c, k] = await Promise.all([
 				api.feed(),
 				api.listGroups('mine'),
-				api.creatures('', [])
+				api.creatures('', []),
+				api.killedCreatures()
 			]);
 			feed = f;
 			groups = g;
 			creatures = c;
+			killedIds = k;
 			room = new FeedRoom(handleEvent);
 			room.connect();
 		} catch {
@@ -162,7 +165,17 @@
 				<p class="muted">No announcements yet across your groups.</p>
 			{:else}
 				{#each feed as a (a.id)}
-					<AnnouncementCard {a} meId={me?.id} canManage={canManage(a)} showGroup={true} onactionerror={(m) => (error = m)} />
+					<AnnouncementCard
+						{a}
+						meId={me?.id}
+						canManage={canManage(a)}
+						showGroup={true}
+						alreadyKilled={killedIds.includes(a.creatureId)}
+						onactionerror={(m) => (error = m)}
+						onclaimed={(cid) => {
+							if (!killedIds.includes(cid)) killedIds = [...killedIds, cid];
+						}}
+					/>
 				{/each}
 			{/if}
 		</div>

@@ -43,6 +43,19 @@ func (s *Server) handleListCreatures(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, creatures)
 }
 
+// handleListKilled returns the creature IDs the current user has marked killed.
+func (s *Server) handleListKilled(w http.ResponseWriter, r *http.Request) {
+	ids, err := s.stores.Creatures.KilledIDs(r.Context(), userID(r))
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to load warden list")
+		return
+	}
+	if ids == nil {
+		ids = []int64{}
+	}
+	writeJSON(w, http.StatusOK, ids)
+}
+
 // handleMarkKilled marks a creature as killed for the current user.
 func (s *Server) handleMarkKilled(w http.ResponseWriter, r *http.Request) {
 	creatureID, err := strconv.ParseInt(chiURLParam(r, "creatureID"), 10, 64)
