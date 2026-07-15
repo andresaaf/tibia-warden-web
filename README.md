@@ -95,12 +95,18 @@ go run ./cmd/seed -file ../data/creatures.json
 
 ## Production (Docker Compose)
 
-On your Linux home server:
+The stack includes a **Caddy** reverse proxy that terminates HTTPS and
+auto-provisions a Let's Encrypt certificate. Requirements: a domain whose DNS
+points at the server, and ports **80** and **443** reachable from the internet.
 
-1. `cp .env.example .env` and set real values. Use your public HTTPS URL for
-   `PUBLIC_BASE_URL`, `ALLOWED_ORIGINS`, and `DISCORD_REDIRECT_URL`
-   (e.g. `https://warden.example.com/api/auth/discord/callback`), and set
-   `COOKIE_SECURE=true`.
+On your Linux server:
+
+1. `cp .env.example .env` and set real values:
+   - `APP_DOMAIN` — your domain (e.g. `warden.example.com`).
+   - `PUBLIC_BASE_URL`, `ALLOWED_ORIGINS` — `https://your-domain`.
+   - `DISCORD_REDIRECT_URL` — `https://your-domain/api/auth/discord/callback`
+     (add this exact URL to your Discord app's OAuth2 redirects).
+   - `COOKIE_SECURE=true`.
 
 2. Build and start:
 
@@ -108,7 +114,8 @@ On your Linux home server:
    docker compose up -d --build
    ```
 
-   The app container serves the SPA, REST API, and WebSocket on port `8080`.
+   Caddy obtains the certificate on first start and proxies HTTPS to the app
+   (REST, SPA, and WebSocket). The app itself is not exposed on the host.
    Migrations run automatically on startup.
 
 3. Seed creatures inside the running container:
@@ -118,10 +125,6 @@ On your Linux home server:
    ```
 
    (Mount or copy your data file into the container first, or bake it into the image.)
-
-4. Put a TLS-terminating reverse proxy (Caddy, nginx, or Traefik) in front of
-   port `8080` for HTTPS. WebSocket upgrades on `/api/groups/{id}/ws` must be
-   forwarded.
 
 ## Environment variables
 
