@@ -5,7 +5,9 @@ package discord
 
 import (
 	"context"
+	"errors"
 	"log/slog"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -16,6 +18,10 @@ import (
 	"github.com/baz/tibia-warden-web/backend/internal/ws"
 	"github.com/bwmarrin/discordgo"
 )
+
+// ErrBotDisabled is returned when a bot operation is attempted while the bot is
+// not configured.
+var ErrBotDisabled = errors.New("discord bot is not enabled")
 
 // Bot wraps a Discord gateway session and the shared application state it needs
 // to record interactions and broadcast live updates back to website clients.
@@ -222,14 +228,27 @@ func (b *Bot) PostAnnouncement(ctx context.Context, ann *models.Announcement) {
 	if b == nil || b.session == nil || ann == nil {
 		return
 	}
-	_, channelID, err := b.stores.Groups.DiscordChannel(ctx, ann.GroupID)
+	_, channelID, roleID, err := b.stores.Groups.DiscordSettings(ctx, ann.GroupID)
 	if err != nil || channelID == "" {
 		return
 	}
-	msg, err := b.session.ChannelMessageSendComplex(channelID, &discordgo.MessageSend{
+	send := &discordgo.MessageSend{
 		Embeds:     []*discordgo.MessageEmbed{buildEmbed(ann)},
 		Components: buildComponents(ann),
-	})
+	}
+	if roleID != "" {
+		send.Content = "<@&" + roleID + ">"
+		send.AllowedMentions = &discordgo.MessageAllowedMentions{Roles: []string{roleID}}
+	}
+	msg, err := b.session.ChannelMessageSendComplex(channelID, send)
+	if err != nil && roleID != "" {
+		// The mention may be rejected (e.g. missing permission); retry without it
+		// so the announcement is still mirrored.
+		slog.Warn("discord: post with role mention failed, retrying without", "error", err)
+		send.Content = ""
+		send.AllowedMentions = nil
+		msg, err = b.session.ChannelMessageSendComplex(channelID, send)
+	}
 	if err != nil {
 		slog.Error("discord: failed to post announcement", "error", err)
 		return
@@ -259,6 +278,33 @@ func (b *Bot) SyncAnnouncement(ctx context.Context, ann *models.Announcement) {
 	}); err != nil {
 		slog.Error("discord: failed to edit announcement message", "error", err)
 	}
+}
+
+// GuildRoles returns the assignable roles of a guild, most-prominent first,
+// excluding @everyone and integration-managed roles.
+func (b *Bot) GuildRoles(guildID string) ([]models.DiscordRole, error) {
+	if b == nil || b.session == nil {
+		return nil, ErrBotDisabled
+	}
+	roles, err := b.session.GuildRoles(guildID)
+	if err != nil {
+		return nil, err
+	}
+	sort.Slice(roles, func(i, j int) bool { return roles[i].Position > roles[j].Position })
+
+	out := make([]models.DiscordRole, 0, len(roles))
+	for _, r := range roles {
+		if r.ID == guildID || r.Managed {
+			continue
+		}
+		out = append(out, models.DiscordRole{
+			ID:          r.ID,
+			Name:        r.Name,
+			Color:       r.Color,
+			Mentionable: r.Mentionable,
+		})
+	}
+	return out, nil
 }
 
 func (b *Bot) ephemeral(s *discordgo.Session, i *discordgo.InteractionCreate, msg string) {

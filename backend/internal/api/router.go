@@ -77,6 +77,9 @@ func NewRouter(cfg *config.Config, stores *store.Stores, oauth *auth.DiscordProv
 			r.Post("/groups/{groupID}/invites", s.handleCreateInvite)
 			r.Post("/groups/{groupID}/discord/link-code", s.handleCreateDiscordLinkCode)
 			r.Delete("/groups/{groupID}/discord", s.handleUnlinkDiscord)
+			r.Get("/groups/{groupID}/discord/roles", s.handleListDiscordRoles)
+			r.Put("/groups/{groupID}/discord/role", s.handleSetDiscordRole)
+			r.Delete("/groups/{groupID}/discord/role", s.handleClearDiscordRole)
 
 			// Announcements.
 			r.Get("/groups/{groupID}/announcements", s.handleListAnnouncements)

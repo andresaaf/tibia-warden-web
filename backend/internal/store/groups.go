@@ -53,12 +53,12 @@ func (s *GroupStore) GetByID(ctx context.Context, groupID, viewerID int64) (*mod
 	var role *string
 	err := s.pool.QueryRow(ctx, `
 		SELECT g.id, g.name, g.description, g.visibility, g.owner_id, g.created_at,
-		       g.discord_guild_id, g.discord_channel_id,
+		       g.discord_guild_id, g.discord_channel_id, g.discord_role_id, g.discord_role_name,
 		       (SELECT COUNT(*) FROM group_members m WHERE m.group_id = g.id) AS member_count,
 		       (SELECT m.role FROM group_members m WHERE m.group_id = g.id AND m.user_id = $2) AS role
 		FROM groups g WHERE g.id = $1`, groupID, viewerID,
 	).Scan(&g.ID, &g.Name, &g.Description, &g.Visibility, &g.OwnerID, &g.CreatedAt,
-		&g.DiscordGuildID, &g.DiscordChannelID, &g.MemberCount, &role)
+		&g.DiscordGuildID, &g.DiscordChannelID, &g.DiscordRoleID, &g.DiscordRoleName, &g.MemberCount, &role)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, ErrNotFound
 	}
@@ -300,10 +300,12 @@ func (s *GroupStore) SetDiscordLink(ctx context.Context, groupID int64, guildID,
 	return nil
 }
 
-// ClearDiscordLink removes a group's Discord channel link.
+// ClearDiscordLink removes a group's Discord channel link (and mention role).
 func (s *GroupStore) ClearDiscordLink(ctx context.Context, groupID int64) error {
 	_, err := s.pool.Exec(ctx, `
-		UPDATE groups SET discord_guild_id = '', discord_channel_id = '' WHERE id = $1`, groupID)
+		UPDATE groups
+		SET discord_guild_id = '', discord_channel_id = '', discord_role_id = '', discord_role_name = ''
+		WHERE id = $1`, groupID)
 	return err
 }
 
@@ -317,6 +319,39 @@ func (s *GroupStore) DiscordChannel(ctx context.Context, groupID int64) (guildID
 		return "", "", ErrNotFound
 	}
 	return guildID, channelID, err
+}
+
+// DiscordSettings returns the linked guild, channel, and mention-role IDs for a
+// group. Fields are empty strings when unset.
+func (s *GroupStore) DiscordSettings(ctx context.Context, groupID int64) (guildID, channelID, roleID string, err error) {
+	err = s.pool.QueryRow(ctx,
+		`SELECT discord_guild_id, discord_channel_id, discord_role_id FROM groups WHERE id = $1`, groupID,
+	).Scan(&guildID, &channelID, &roleID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return "", "", "", ErrNotFound
+	}
+	return guildID, channelID, roleID, err
+}
+
+// SetDiscordRole sets the role to @mention on announcements for a group.
+func (s *GroupStore) SetDiscordRole(ctx context.Context, groupID int64, roleID, roleName string) error {
+	tag, err := s.pool.Exec(ctx,
+		`UPDATE groups SET discord_role_id = $2, discord_role_name = $3 WHERE id = $1`,
+		groupID, roleID, roleName)
+	if err != nil {
+		return err
+	}
+	if tag.RowsAffected() == 0 {
+		return ErrNotFound
+	}
+	return nil
+}
+
+// ClearDiscordRole removes the mention role from a group.
+func (s *GroupStore) ClearDiscordRole(ctx context.Context, groupID int64) error {
+	_, err := s.pool.Exec(ctx,
+		`UPDATE groups SET discord_role_id = '', discord_role_name = '' WHERE id = $1`, groupID)
+	return err
 }
 
 // CreateDiscordLinkCode stores a one-time link code for a group.

@@ -5,7 +5,7 @@
 	import { api, ApiError } from '$lib/api';
 	import { currentUser, authLoading } from '$lib/stores';
 	import { GroupRoom, type RoomEvent } from '$lib/ws';
-	import type { Announcement, Creature, Group, GroupMember, InviteCode } from '$lib/types';
+	import type { Announcement, Creature, DiscordRole, Group, GroupMember, InviteCode } from '$lib/types';
 
 	let groupId = $derived(Number($page.params.id));
 
@@ -30,6 +30,8 @@
 	let showAdmin = $state(false);
 	let discordCode = $state('');
 	let discordBusy = $state(false);
+	let discordRoles = $state<DiscordRole[]>([]);
+	let showRoles = $state(false);
 
 	let me = $derived($currentUser);
 	let isManager = $derived(group?.role === 'owner' || group?.role === 'admin');
@@ -283,6 +285,44 @@
 		}
 	}
 
+	async function openRolePicker() {
+		discordBusy = true;
+		try {
+			discordRoles = await api.discordRoles(groupId);
+			showRoles = true;
+		} catch (err) {
+			error = err instanceof ApiError ? err.message : 'Failed to load Discord roles.';
+		} finally {
+			discordBusy = false;
+		}
+	}
+
+	async function pickRole(role: DiscordRole) {
+		discordBusy = true;
+		try {
+			await api.setDiscordRole(groupId, role.id, role.name);
+			showRoles = false;
+			group = await api.getGroup(groupId);
+		} catch (err) {
+			error = err instanceof ApiError ? err.message : 'Failed to set role.';
+		} finally {
+			discordBusy = false;
+		}
+	}
+
+	async function clearRole() {
+		discordBusy = true;
+		try {
+			await api.clearDiscordRole(groupId);
+			showRoles = false;
+			group = await api.getGroup(groupId);
+		} catch (err) {
+			error = err instanceof ApiError ? err.message : 'Failed to clear role.';
+		} finally {
+			discordBusy = false;
+		}
+	}
+
 	function comingList(a: Announcement) {
 		return a.responses.filter((r) => r.status === 'coming');
 	}
@@ -383,6 +423,44 @@
 							✅ Connected. New announcements are mirrored to your Discord channel with interactive
 							Coming / Ready / Killed buttons.
 						</p>
+
+						<div class="role-config">
+							{#if group.discordRoleName}
+								<span class="muted small">Mentions <span class="role-pill">@{group.discordRoleName}</span> on new posts.</span>
+								<div class="row">
+									<button class="btn btn-sm" onclick={openRolePicker} disabled={discordBusy}>Change</button>
+									<button class="btn btn-sm" onclick={clearRole} disabled={discordBusy}>Clear</button>
+								</div>
+							{:else}
+								<span class="muted small">No role pinged on announcements.</span>
+								<button class="btn btn-sm" onclick={openRolePicker} disabled={discordBusy}>
+									{discordBusy ? 'Loading…' : 'Set role to ping'}
+								</button>
+							{/if}
+						</div>
+
+						{#if showRoles}
+							<div class="role-list">
+								{#if discordRoles.length === 0}
+									<div class="muted small" style="padding: 0.4rem 0.55rem">No roles found in this server.</div>
+								{:else}
+									{#each discordRoles as role (role.id)}
+										<button type="button" class="role-opt" onclick={() => pickRole(role)} disabled={discordBusy}>
+											<span
+												class="role-dot"
+												style={`background: ${role.color ? `#${role.color.toString(16).padStart(6, '0')}` : 'var(--text-dim)'}`}
+											></span>
+											<span>@{role.name}</span>
+											{#if !role.mentionable}<span class="badge">not mentionable</span>{/if}
+										</button>
+									{/each}
+								{/if}
+							</div>
+							<p class="muted small">
+								If a role is “not mentionable”, either enable Allow anyone to @mention this role in Discord,
+								or give the bot the Mention @everyone, @here, and All Roles permission.
+							</p>
+						{/if}
 					{:else}
 						<p class="muted small">
 							Mirror announcements to a Discord channel. Invite the bot to your server, then generate
@@ -437,7 +515,7 @@
 					</div>
 				{/if}
 			</div>
-			<input type="text" placeholder="Note — location, price, details… (optional)" bind:value={note} />
+			<input type="text" placeholder="Note (optional)" bind:value={note} />
 			{#if postError}<p class="error">{postError}</p>{/if}
 			<button class="btn btn-primary" type="submit" disabled={posting}>
 				{posting ? 'Posting…' : 'Post announcement'}
@@ -584,6 +662,50 @@
 	.link-code code {
 		font-family: ui-monospace, monospace;
 		letter-spacing: 0.03em;
+	}
+	.role-config {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.6rem;
+		flex-wrap: wrap;
+		margin-top: 0.25rem;
+	}
+	.role-pill {
+		color: var(--accent);
+		font-weight: 600;
+	}
+	.role-list {
+		display: flex;
+		flex-direction: column;
+		gap: 0.2rem;
+		margin-top: 0.5rem;
+		max-height: 220px;
+		overflow-y: auto;
+		border: 1px solid var(--border);
+		border-radius: 8px;
+		padding: 4px;
+	}
+	.role-opt {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		width: 100%;
+		background: none;
+		border: none;
+		color: var(--text);
+		text-align: left;
+		padding: 0.4rem 0.55rem;
+		border-radius: 6px;
+	}
+	.role-opt:hover {
+		background: var(--bg-elev);
+	}
+	.role-dot {
+		width: 12px;
+		height: 12px;
+		border-radius: 50%;
+		flex: none;
 	}
 	.post-form {
 		margin-bottom: 1.25rem;

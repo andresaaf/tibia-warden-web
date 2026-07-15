@@ -399,3 +399,100 @@ func (s *Server) handleUnlinkDiscord(w http.ResponseWriter, r *http.Request) {
 	}
 	writeJSON(w, http.StatusOK, map[string]string{"status": "unlinked"})
 }
+
+// handleListDiscordRoles returns the assignable roles of a group's linked guild
+// (owner/admin only) so one can be chosen to @mention on announcements.
+func (s *Server) handleListDiscordRoles(w http.ResponseWriter, r *http.Request) {
+	groupID, ok := parseID(w, r, "groupID")
+	if !ok {
+		return
+	}
+	role, err := s.requireMembership(r, groupID)
+	if err != nil {
+		writeMembershipError(w, err)
+		return
+	}
+	if role != models.RoleOwner && role != models.RoleAdmin {
+		writeError(w, http.StatusForbidden, "only owners and admins can manage Discord")
+		return
+	}
+	guildID, _, _, err := s.stores.Groups.DiscordSettings(r.Context(), groupID)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to load group")
+		return
+	}
+	if guildID == "" {
+		writeError(w, http.StatusBadRequest, "link a Discord channel first")
+		return
+	}
+	if s.bot == nil {
+		writeError(w, http.StatusBadRequest, "the Discord bot is not enabled")
+		return
+	}
+	roles, err := s.bot.GuildRoles(guildID)
+	if err != nil {
+		writeError(w, http.StatusBadGateway, "failed to fetch roles from Discord")
+		return
+	}
+	if roles == nil {
+		roles = []models.DiscordRole{}
+	}
+	writeJSON(w, http.StatusOK, roles)
+}
+
+// handleSetDiscordRole sets the role to @mention on announcements (owner/admin only).
+func (s *Server) handleSetDiscordRole(w http.ResponseWriter, r *http.Request) {
+	groupID, ok := parseID(w, r, "groupID")
+	if !ok {
+		return
+	}
+	role, err := s.requireMembership(r, groupID)
+	if err != nil {
+		writeMembershipError(w, err)
+		return
+	}
+	if role != models.RoleOwner && role != models.RoleAdmin {
+		writeError(w, http.StatusForbidden, "only owners and admins can manage Discord")
+		return
+	}
+	var body struct {
+		RoleID   string `json:"roleId"`
+		RoleName string `json:"roleName"`
+	}
+	if err := decodeJSON(r, &body); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	roleID := strings.TrimSpace(body.RoleID)
+	if roleID == "" {
+		writeError(w, http.StatusBadRequest, "a role is required")
+		return
+	}
+	if err := s.stores.Groups.SetDiscordRole(r.Context(), groupID, roleID, strings.TrimSpace(body.RoleName)); err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to set role")
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]string{"status": "set"})
+}
+
+// handleClearDiscordRole removes the announcement mention role (owner/admin only).
+func (s *Server) handleClearDiscordRole(w http.ResponseWriter, r *http.Request) {
+	groupID, ok := parseID(w, r, "groupID")
+	if !ok {
+		return
+	}
+	role, err := s.requireMembership(r, groupID)
+	if err != nil {
+		writeMembershipError(w, err)
+		return
+	}
+	if role != models.RoleOwner && role != models.RoleAdmin {
+		writeError(w, http.StatusForbidden, "only owners and admins can manage Discord")
+		return
+	}
+	if err := s.stores.Groups.ClearDiscordRole(r.Context(), groupID); err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to clear role")
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]string{"status": "cleared"})
+}
