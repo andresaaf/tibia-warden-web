@@ -112,9 +112,28 @@
 
 	let filteredCreatures = $derived.by(() => {
 		const q = creatureQuery.trim().toLowerCase();
-		const list = q ? creatures.filter((c) => c.name.toLowerCase().includes(q)) : creatures;
-		return list.slice(0, 8);
+		if (!q) return creatures.slice(0, 8);
+		return creatures
+			.map((c) => ({ c, score: matchScore(c.name.toLowerCase(), q) }))
+			.filter((x) => x.score < 4)
+			.sort(
+				(a, b) =>
+					a.score - b.score ||
+					a.c.name.length - b.c.name.length ||
+					a.c.name.localeCompare(b.c.name)
+			)
+			.slice(0, 8)
+			.map((x) => x.c);
 	});
+
+	// Lower score = better match: exact, prefix, word-start, then substring.
+	function matchScore(name: string, q: string): number {
+		if (name === q) return 0;
+		if (name.startsWith(q)) return 1;
+		if (name.split(/\s+/).some((w) => w.startsWith(q))) return 2;
+		if (name.includes(q)) return 3;
+		return 4;
+	}
 
 	function selectCreature(c: Creature) {
 		creatureId = c.id;
