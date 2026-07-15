@@ -1,0 +1,7 @@
+# Reverse proxy with automatic HTTPS (Let's Encrypt) for the Echo Warden app.
+# The domain is provided via the APP_DOMAIN environment variable.
+{$APP_DOMAIN} {
+	encode zstd gzip
+	# Proxies REST, the SPA, and WebSocket upgrades to the app container.
+	reverse_proxy app:8080
+}
