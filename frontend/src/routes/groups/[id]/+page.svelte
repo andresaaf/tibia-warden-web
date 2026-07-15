@@ -32,6 +32,11 @@
 	let discordBusy = $state(false);
 	let discordRoles = $state<DiscordRole[]>([]);
 	let showRoles = $state(false);
+	let autodelete = $state(-1);
+
+	$effect(() => {
+		autodelete = group?.discordAutodeleteSeconds ?? -1;
+	});
 
 	let me = $derived($currentUser);
 	let isManager = $derived(group?.role === 'owner' || group?.role === 'admin');
@@ -331,6 +336,18 @@
 		}
 	}
 
+	async function setAutodelete(seconds: number) {
+		discordBusy = true;
+		try {
+			await api.setDiscordAutodelete(groupId, seconds);
+			group = await api.getGroup(groupId);
+		} catch (err) {
+			error = err instanceof ApiError ? err.message : 'Failed to update setting.';
+		} finally {
+			discordBusy = false;
+		}
+	}
+
 	function comingList(a: Announcement) {
 		return a.responses.filter((r) => r.status === 'coming');
 	}
@@ -470,6 +487,22 @@
 								or give the bot the Mention @everyone, @here, and All Roles permission.
 							</p>
 						{/if}
+
+						<div class="role-config">
+							<span class="muted small">Auto-delete the Discord post after a kill</span>
+							<select
+								bind:value={autodelete}
+								onchange={() => setAutodelete(autodelete)}
+								disabled={discordBusy}
+							>
+								<option value={-1}>Never</option>
+								<option value={0}>Immediately</option>
+								<option value={600}>After 10 minutes</option>
+								<option value={3600}>After 1 hour</option>
+								<option value={86400}>After 24 hours</option>
+							</select>
+						</div>
+						<p class="muted small">The announcement always stays in the website feed.</p>
 					{:else}
 						<p class="muted small">
 							Mirror announcements to a Discord channel. Invite the bot to your server, then generate
@@ -696,6 +729,10 @@
 	.role-pill {
 		color: var(--accent);
 		font-weight: 600;
+	}
+	.role-config select {
+		width: auto;
+		max-width: 220px;
 	}
 	.role-list {
 		display: flex;

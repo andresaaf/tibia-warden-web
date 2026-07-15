@@ -50,12 +50,17 @@ func New(cfg *config.Config, stores *store.Stores, hub *ws.Hub) (*Bot, error) {
 	return b, nil
 }
 
-// Start opens the gateway connection. Safe to call on a nil bot.
-func (b *Bot) Start() error {
+// Start opens the gateway connection and launches the auto-delete sweeper.
+// Safe to call on a nil bot.
+func (b *Bot) Start(ctx context.Context) error {
 	if b == nil {
 		return nil
 	}
-	return b.session.Open()
+	if err := b.session.Open(); err != nil {
+		return err
+	}
+	go b.runSweeper(ctx)
+	return nil
 }
 
 // Stop closes the gateway connection. Safe to call on a nil bot.
@@ -220,6 +225,10 @@ func (b *Bot) handleComponent(s *discordgo.Session, i *discordgo.InteractionCrea
 			Components: buildComponents(ann),
 		},
 	})
+
+	if action == "killed" {
+		b.OnAnnouncementKilled(ctx, annID)
+	}
 }
 
 // PostAnnouncement posts a new announcement to the group's linked channel (if any)
@@ -277,6 +286,64 @@ func (b *Bot) SyncAnnouncement(ctx context.Context, ann *models.Announcement) {
 		Components: &components,
 	}); err != nil {
 		slog.Error("discord: failed to edit announcement message", "error", err)
+	}
+}
+
+// OnAnnouncementKilled applies the group's auto-delete policy to a mirrored
+// message once its announcement is marked killed. Safe to call on a nil bot.
+func (b *Bot) OnAnnouncementKilled(ctx context.Context, announcementID int64) {
+	if b == nil || b.session == nil {
+		return
+	}
+	ann, err := b.stores.Announcements.GetByID(ctx, announcementID)
+	if err != nil || ann.DiscordMessageID == "" {
+		return
+	}
+	seconds, err := b.stores.Groups.DiscordAutodelete(ctx, ann.GroupID)
+	if err != nil || seconds < 0 {
+		return // never
+	}
+	if seconds == 0 {
+		_, channelID, _, err := b.stores.Groups.DiscordSettings(ctx, ann.GroupID)
+		if err == nil && channelID != "" {
+			_ = b.session.ChannelMessageDelete(channelID, ann.DiscordMessageID)
+		}
+		_ = b.stores.Announcements.ClearDiscordMessage(ctx, announcementID)
+		return
+	}
+	_ = b.stores.Announcements.ScheduleDiscordDelete(ctx, announcementID,
+		time.Now().Add(time.Duration(seconds)*time.Second))
+}
+
+// runSweeper periodically deletes mirrored messages whose scheduled delete time
+// has passed. Restart-safe because the schedule is persisted in the database.
+func (b *Bot) runSweeper(ctx context.Context) {
+	ticker := time.NewTicker(30 * time.Second)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			b.sweep(ctx)
+		}
+	}
+}
+
+func (b *Bot) sweep(ctx context.Context) {
+	due, err := b.stores.Announcements.DueDiscordDeletes(ctx)
+	if err != nil {
+		slog.Error("discord: failed to query due deletions", "error", err)
+		return
+	}
+	for _, d := range due {
+		_, channelID, _, err := b.stores.Groups.DiscordSettings(ctx, d.GroupID)
+		if err == nil && channelID != "" {
+			if err := b.session.ChannelMessageDelete(channelID, d.MessageID); err != nil {
+				slog.Error("discord: failed to delete mirrored message", "error", err)
+			}
+		}
+		_ = b.stores.Announcements.ClearDiscordMessage(ctx, d.AnnouncementID)
 	}
 }
 

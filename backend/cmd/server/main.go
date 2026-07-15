@@ -56,7 +56,7 @@ func main() {
 		os.Exit(1)
 	}
 	if bot != nil {
-		if err := bot.Start(); err != nil {
+		if err := bot.Start(ctx); err != nil {
 			slog.Error("failed to start discord bot", "error", err)
 			os.Exit(1)
 		}

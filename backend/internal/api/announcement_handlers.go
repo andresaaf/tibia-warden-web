@@ -166,6 +166,7 @@ func (s *Server) handleMarkAnnouncementKilled(w http.ResponseWriter, r *http.Req
 		return
 	}
 	s.broadcastAnnouncement(r, ann.GroupID, announcementID)
+	s.bot.OnAnnouncementKilled(r.Context(), announcementID)
 	writeJSON(w, http.StatusOK, map[string]string{"status": "killed"})
 }
 

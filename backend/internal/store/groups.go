@@ -54,11 +54,13 @@ func (s *GroupStore) GetByID(ctx context.Context, groupID, viewerID int64) (*mod
 	err := s.pool.QueryRow(ctx, `
 		SELECT g.id, g.name, g.description, g.visibility, g.owner_id, g.created_at,
 		       g.discord_guild_id, g.discord_channel_id, g.discord_role_id, g.discord_role_name,
+		       g.discord_autodelete_seconds,
 		       (SELECT COUNT(*) FROM group_members m WHERE m.group_id = g.id) AS member_count,
 		       (SELECT m.role FROM group_members m WHERE m.group_id = g.id AND m.user_id = $2) AS role
 		FROM groups g WHERE g.id = $1`, groupID, viewerID,
 	).Scan(&g.ID, &g.Name, &g.Description, &g.Visibility, &g.OwnerID, &g.CreatedAt,
-		&g.DiscordGuildID, &g.DiscordChannelID, &g.DiscordRoleID, &g.DiscordRoleName, &g.MemberCount, &role)
+		&g.DiscordGuildID, &g.DiscordChannelID, &g.DiscordRoleID, &g.DiscordRoleName,
+		&g.DiscordAutodeleteSeconds, &g.MemberCount, &role)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, ErrNotFound
 	}
@@ -365,6 +367,31 @@ func (s *GroupStore) ClearDiscordRole(ctx context.Context, groupID int64) error 
 	_, err := s.pool.Exec(ctx,
 		`UPDATE groups SET discord_role_id = '', discord_role_name = '' WHERE id = $1`, groupID)
 	return err
+}
+
+// SetDiscordAutodelete sets the auto-delete policy (seconds) for a group's
+// mirrored Discord messages.
+func (s *GroupStore) SetDiscordAutodelete(ctx context.Context, groupID int64, seconds int) error {
+	tag, err := s.pool.Exec(ctx,
+		`UPDATE groups SET discord_autodelete_seconds = $2 WHERE id = $1`, groupID, seconds)
+	if err != nil {
+		return err
+	}
+	if tag.RowsAffected() == 0 {
+		return ErrNotFound
+	}
+	return nil
+}
+
+// DiscordAutodelete returns the auto-delete policy (seconds) for a group.
+func (s *GroupStore) DiscordAutodelete(ctx context.Context, groupID int64) (int, error) {
+	var seconds int
+	err := s.pool.QueryRow(ctx,
+		`SELECT discord_autodelete_seconds FROM groups WHERE id = $1`, groupID).Scan(&seconds)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return -1, ErrNotFound
+	}
+	return seconds, err
 }
 
 // CreateDiscordLinkCode stores a one-time link code for a group.

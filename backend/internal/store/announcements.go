@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/baz/tibia-warden-web/backend/internal/models"
 	"github.com/jackc/pgx/v5"
@@ -236,4 +237,47 @@ func (s *AnnouncementStore) SetDiscordMessageID(ctx context.Context, announcemen
 	_, err := s.pool.Exec(ctx,
 		`UPDATE announcements SET discord_message_id = $2 WHERE id = $1`, announcementID, messageID)
 	return err
+}
+
+// ScheduleDiscordDelete marks an announcement's Discord message for deletion at a time.
+func (s *AnnouncementStore) ScheduleDiscordDelete(ctx context.Context, announcementID int64, at time.Time) error {
+	_, err := s.pool.Exec(ctx,
+		`UPDATE announcements SET discord_delete_at = $2 WHERE id = $1`, announcementID, at)
+	return err
+}
+
+// ClearDiscordMessage forgets the mirrored message (after it has been deleted).
+func (s *AnnouncementStore) ClearDiscordMessage(ctx context.Context, announcementID int64) error {
+	_, err := s.pool.Exec(ctx,
+		`UPDATE announcements SET discord_message_id = '', discord_delete_at = NULL WHERE id = $1`, announcementID)
+	return err
+}
+
+// DueDiscordDelete identifies a mirrored message that is due for deletion.
+type DueDiscordDelete struct {
+	AnnouncementID int64
+	GroupID        int64
+	MessageID      string
+}
+
+// DueDiscordDeletes returns mirrored messages whose scheduled delete time has passed.
+func (s *AnnouncementStore) DueDiscordDeletes(ctx context.Context) ([]DueDiscordDelete, error) {
+	rows, err := s.pool.Query(ctx, `
+		SELECT id, group_id, discord_message_id
+		FROM announcements
+		WHERE discord_message_id <> '' AND discord_delete_at IS NOT NULL AND discord_delete_at <= now()
+		LIMIT 100`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []DueDiscordDelete
+	for rows.Next() {
+		var d DueDiscordDelete
+		if err := rows.Scan(&d.AnnouncementID, &d.GroupID, &d.MessageID); err != nil {
+			return nil, err
+		}
+		out = append(out, d)
+	}
+	return out, rows.Err()
 }
