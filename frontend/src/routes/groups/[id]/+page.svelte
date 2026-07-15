@@ -12,6 +12,7 @@
 	let group = $state<Group | null>(null);
 	let announcements = $state<Announcement[]>([]);
 	let creatures = $state<Creature[]>([]);
+	let killedIds = $state<number[]>([]);
 	let members = $state<GroupMember[]>([]);
 	let invites = $state<InviteCode[]>([]);
 	let loading = $state(true);
@@ -58,12 +59,14 @@
 		error = '';
 		try {
 			group = await api.getGroup(groupId);
-			const [ann, crt] = await Promise.all([
+			const [ann, crt, killed] = await Promise.all([
 				api.announcements(groupId),
-				api.creatures('', [])
+				api.creatures('', []),
+				api.killedCreatures()
 			]);
 			announcements = ann;
 			creatures = crt;
+			killedIds = killed;
 			if (isManager) await loadAdminData();
 			connectRoom();
 		} catch (err) {
@@ -217,6 +220,7 @@
 	async function claim(a: Announcement) {
 		try {
 			await api.claimAnnouncement(a.id);
+			if (!killedIds.includes(a.creatureId)) killedIds = [...killedIds, a.creatureId];
 		} catch {
 			/* live update will reconcile */
 		}
@@ -608,6 +612,9 @@
 						<div>
 							<div class="row" style="gap: 0.5rem">
 								<strong class="creature-name">{a.creatureName}</strong>
+								{#if killedIds.includes(a.creatureId)}
+									<span class="badge mine" title="You've already killed this Echo Warden">✓ In your list</span>
+								{/if}
 								{#if a.status === 'killed'}
 									<span class="badge status-killed">Killed</span>
 								{:else}
@@ -917,5 +924,9 @@
 	.status-killed {
 		color: var(--danger);
 		border-color: var(--danger);
+	}
+	.mine {
+		color: var(--success);
+		border-color: var(--success);
 	}
 </style>

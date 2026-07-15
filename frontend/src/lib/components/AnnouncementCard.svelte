@@ -7,13 +7,17 @@
 		meId,
 		canManage = false,
 		showGroup = false,
-		onactionerror
+		alreadyKilled = false,
+		onactionerror,
+		onclaimed
 	}: {
 		a: Announcement;
 		meId: number | undefined;
 		canManage?: boolean;
 		showGroup?: boolean;
+		alreadyKilled?: boolean;
 		onactionerror?: (msg: string) => void;
+		onclaimed?: (creatureId: number) => void;
 	} = $props();
 
 	function fail(err: unknown) {
@@ -48,6 +52,7 @@
 	async function claim() {
 		try {
 			await api.claimAnnouncement(a.id);
+			onclaimed?.(a.creatureId);
 		} catch (err) {
 			fail(err);
 		}
@@ -74,6 +79,9 @@
 				{/if}
 				{#if showGroup && a.groupName}
 					<a class="badge group-badge" href={`/groups/${a.groupId}`}>{a.groupName}</a>
+				{/if}
+				{#if alreadyKilled}
+					<span class="badge mine" title="You've already killed this Echo Warden">✓ In your list</span>
 				{/if}
 			</div>
 			{#if a.note}<div class="muted note">{a.note}</div>{/if}
@@ -180,5 +188,9 @@
 	.group-badge {
 		color: var(--info);
 		border-color: var(--info);
+	}
+	.mine {
+		color: var(--success);
+		border-color: var(--success);
 	}
 </style>

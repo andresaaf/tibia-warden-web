@@ -65,6 +65,7 @@ func NewRouter(cfg *config.Config, stores *store.Stores, oauth *auth.DiscordProv
 
 			// Warden list.
 			r.Get("/creatures", s.handleListCreatures)
+			r.Get("/wardens", s.handleListKilled)
 			r.Put("/wardens/{creatureID}", s.handleMarkKilled)
 			r.Delete("/wardens/{creatureID}", s.handleUnmarkKilled)
 

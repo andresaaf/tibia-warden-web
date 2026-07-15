@@ -59,6 +59,7 @@ export const api = {
 	},
 	markKilled: (creatureId: number) => request<void>('PUT', `/api/wardens/${creatureId}`),
 	unmarkKilled: (creatureId: number) => request<void>('DELETE', `/api/wardens/${creatureId}`),
+	killedCreatures: () => request<number[]>('GET', '/api/wardens'),
 
 	// Groups
 	listGroups: (scope: 'public' | 'mine', search = '') => {

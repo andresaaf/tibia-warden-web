@@ -87,6 +87,25 @@ func (s *CreatureStore) Exists(ctx context.Context, creatureID int64) (bool, err
 	return exists, err
 }
 
+// KilledIDs returns the creature IDs a user has marked killed on their warden list.
+func (s *CreatureStore) KilledIDs(ctx context.Context, userID int64) ([]int64, error) {
+	rows, err := s.pool.Query(ctx,
+		`SELECT creature_id FROM warden_kills WHERE user_id = $1`, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var ids []int64
+	for rows.Next() {
+		var id int64
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		ids = append(ids, id)
+	}
+	return ids, rows.Err()
+}
+
 // PruneExcept deletes creatures whose name is not in keepNames, but only when
 // they have no kill history and are not referenced by any announcement. Returns
 // the number of creatures deleted.
