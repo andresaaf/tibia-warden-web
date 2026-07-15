@@ -138,7 +138,7 @@
 				{#key composerKey}
 					<CreatureCombobox {creatures} bind:value={creatureId} />
 				{/key}
-				<input type="text" placeholder="Note — location, price, details… (optional)" bind:value={note} />
+				<input type="text" placeholder="Note (optional)" bind:value={note} />
 				<div class="row target-row">
 					<span class="muted small">Post to</span>
 					<select bind:value={target}>
