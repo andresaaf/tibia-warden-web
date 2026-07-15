@@ -44,6 +44,8 @@ export interface Group {
 	createdAt: string;
 	memberCount: number;
 	role?: Role | '';
+	discordGuildId?: string;
+	discordChannelId?: string;
 }
 
 export interface GroupMember {

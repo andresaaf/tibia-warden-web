@@ -53,10 +53,12 @@ func (s *GroupStore) GetByID(ctx context.Context, groupID, viewerID int64) (*mod
 	var role *string
 	err := s.pool.QueryRow(ctx, `
 		SELECT g.id, g.name, g.description, g.visibility, g.owner_id, g.created_at,
+		       g.discord_guild_id, g.discord_channel_id,
 		       (SELECT COUNT(*) FROM group_members m WHERE m.group_id = g.id) AS member_count,
 		       (SELECT m.role FROM group_members m WHERE m.group_id = g.id AND m.user_id = $2) AS role
 		FROM groups g WHERE g.id = $1`, groupID, viewerID,
-	).Scan(&g.ID, &g.Name, &g.Description, &g.Visibility, &g.OwnerID, &g.CreatedAt, &g.MemberCount, &role)
+	).Scan(&g.ID, &g.Name, &g.Description, &g.Visibility, &g.OwnerID, &g.CreatedAt,
+		&g.DiscordGuildID, &g.DiscordChannelID, &g.MemberCount, &role)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, ErrNotFound
 	}
@@ -282,4 +284,73 @@ func (s *GroupStore) JoinPublic(ctx context.Context, userID, groupID int64) erro
 		VALUES ($1, $2, 'member')
 		ON CONFLICT (group_id, user_id) DO NOTHING`, groupID, userID)
 	return err
+}
+
+// SetDiscordLink connects a group to a Discord guild + channel.
+func (s *GroupStore) SetDiscordLink(ctx context.Context, groupID int64, guildID, channelID string) error {
+	tag, err := s.pool.Exec(ctx, `
+		UPDATE groups SET discord_guild_id = $2, discord_channel_id = $3 WHERE id = $1`,
+		groupID, guildID, channelID)
+	if err != nil {
+		return err
+	}
+	if tag.RowsAffected() == 0 {
+		return ErrNotFound
+	}
+	return nil
+}
+
+// ClearDiscordLink removes a group's Discord channel link.
+func (s *GroupStore) ClearDiscordLink(ctx context.Context, groupID int64) error {
+	_, err := s.pool.Exec(ctx, `
+		UPDATE groups SET discord_guild_id = '', discord_channel_id = '' WHERE id = $1`, groupID)
+	return err
+}
+
+// DiscordChannel returns the linked guild and channel IDs for a group. Both are
+// empty strings when the group is not linked.
+func (s *GroupStore) DiscordChannel(ctx context.Context, groupID int64) (guildID, channelID string, err error) {
+	err = s.pool.QueryRow(ctx,
+		`SELECT discord_guild_id, discord_channel_id FROM groups WHERE id = $1`, groupID,
+	).Scan(&guildID, &channelID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return "", "", ErrNotFound
+	}
+	return guildID, channelID, err
+}
+
+// CreateDiscordLinkCode stores a one-time link code for a group.
+func (s *GroupStore) CreateDiscordLinkCode(ctx context.Context, groupID, createdBy int64, code string, expiresAt time.Time) error {
+	_, err := s.pool.Exec(ctx, `
+		INSERT INTO discord_link_codes (code, group_id, created_by, expires_at)
+		VALUES ($1, $2, $3, $4)`, code, groupID, createdBy, expiresAt)
+	return err
+}
+
+// ConsumeDiscordLinkCode validates and deletes a link code, returning its group ID.
+func (s *GroupStore) ConsumeDiscordLinkCode(ctx context.Context, code string) (int64, error) {
+	var groupID int64
+	err := s.pool.QueryRow(ctx, `
+		DELETE FROM discord_link_codes
+		WHERE code = $1 AND expires_at > now()
+		RETURNING group_id`, code,
+	).Scan(&groupID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return 0, ErrNotFound
+	}
+	return groupID, err
+}
+
+// PeekDiscordLinkCode returns the group a valid (unexpired) link code belongs to
+// without consuming it.
+func (s *GroupStore) PeekDiscordLinkCode(ctx context.Context, code string) (int64, error) {
+	var groupID int64
+	err := s.pool.QueryRow(ctx, `
+		SELECT group_id FROM discord_link_codes
+		WHERE code = $1 AND expires_at > now()`, code,
+	).Scan(&groupID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return 0, ErrNotFound
+	}
+	return groupID, err
 }

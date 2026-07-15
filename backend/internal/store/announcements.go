@@ -33,13 +33,13 @@ func (s *AnnouncementStore) GetByID(ctx context.Context, id int64) (*models.Anno
 	var a models.Announcement
 	err := s.pool.QueryRow(ctx, `
 		SELECT a.id, a.group_id, a.creature_id, c.name, a.author_id, u.character_name,
-		       a.location, a.note, a.gold_cost, a.status, a.killed_at, a.created_at
+		       a.location, a.note, a.gold_cost, a.status, a.killed_at, a.created_at, a.discord_message_id
 		FROM announcements a
 		JOIN creatures c ON c.id = a.creature_id
 		JOIN users u ON u.id = a.author_id
 		WHERE a.id = $1`, id,
 	).Scan(&a.ID, &a.GroupID, &a.CreatureID, &a.CreatureName, &a.AuthorID, &a.AuthorName,
-		&a.Location, &a.Note, &a.GoldCost, &a.Status, &a.KilledAt, &a.CreatedAt)
+		&a.Location, &a.Note, &a.GoldCost, &a.Status, &a.KilledAt, &a.CreatedAt, &a.DiscordMessageID)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, ErrNotFound
 	}
@@ -59,7 +59,7 @@ func (s *AnnouncementStore) ListByGroup(ctx context.Context, groupID int64, limi
 	}
 	rows, err := s.pool.Query(ctx, `
 		SELECT a.id, a.group_id, a.creature_id, c.name, a.author_id, u.character_name,
-		       a.location, a.note, a.gold_cost, a.status, a.killed_at, a.created_at
+		       a.location, a.note, a.gold_cost, a.status, a.killed_at, a.created_at, a.discord_message_id
 		FROM announcements a
 		JOIN creatures c ON c.id = a.creature_id
 		JOIN users u ON u.id = a.author_id
@@ -75,7 +75,7 @@ func (s *AnnouncementStore) ListByGroup(ctx context.Context, groupID int64, limi
 	for rows.Next() {
 		var a models.Announcement
 		if err := rows.Scan(&a.ID, &a.GroupID, &a.CreatureID, &a.CreatureName, &a.AuthorID, &a.AuthorName,
-			&a.Location, &a.Note, &a.GoldCost, &a.Status, &a.KilledAt, &a.CreatedAt); err != nil {
+			&a.Location, &a.Note, &a.GoldCost, &a.Status, &a.KilledAt, &a.CreatedAt, &a.DiscordMessageID); err != nil {
 			return nil, err
 		}
 		out = append(out, a)
@@ -97,7 +97,7 @@ func (s *AnnouncementStore) hydrate(ctx context.Context, a *models.Announcement)
 	a.Claims = []models.AnnouncementClaim{}
 
 	respRows, err := s.pool.Query(ctx, `
-		SELECT r.user_id, u.character_name, r.status
+		SELECT r.user_id, COALESCE(NULLIF(u.character_name, ''), u.discord_username), r.status
 		FROM announcement_responses r
 		JOIN users u ON u.id = r.user_id
 		WHERE r.announcement_id = $1
@@ -118,7 +118,7 @@ func (s *AnnouncementStore) hydrate(ctx context.Context, a *models.Announcement)
 	}
 
 	claimRows, err := s.pool.Query(ctx, `
-		SELECT cl.user_id, u.character_name
+		SELECT cl.user_id, COALESCE(NULLIF(u.character_name, ''), u.discord_username)
 		FROM announcement_claims cl
 		JOIN users u ON u.id = cl.user_id
 		WHERE cl.announcement_id = $1
@@ -206,9 +206,13 @@ func (s *AnnouncementStore) Claim(ctx context.Context, announcementID, userID in
 		return err
 	}
 
+	// Only update the warden list for users with a real (onboarded) account.
+	// Discord-only participants (no character name) are recorded on the post but
+	// their personal list is left untouched.
 	if _, err = tx.Exec(ctx, `
 		INSERT INTO warden_kills (user_id, creature_id)
-		VALUES ($1, $2)
+		SELECT $1, $2
+		WHERE EXISTS (SELECT 1 FROM users WHERE id = $1 AND character_name <> '')
 		ON CONFLICT (user_id, creature_id) DO NOTHING`, userID, creatureID); err != nil {
 		return err
 	}
@@ -225,4 +229,11 @@ func (s *AnnouncementStore) GroupID(ctx context.Context, announcementID int64) (
 		return 0, ErrNotFound
 	}
 	return groupID, err
+}
+
+// SetDiscordMessageID records the mirrored Discord message ID for an announcement.
+func (s *AnnouncementStore) SetDiscordMessageID(ctx context.Context, announcementID int64, messageID string) error {
+	_, err := s.pool.Exec(ctx,
+		`UPDATE announcements SET discord_message_id = $2 WHERE id = $1`, announcementID, messageID)
+	return err
 }

@@ -7,12 +7,7 @@ import (
 
 	"github.com/baz/tibia-warden-web/backend/internal/models"
 	"github.com/baz/tibia-warden-web/backend/internal/store"
-)
-
-// Event type names broadcast over the group WebSocket.
-const (
-	eventAnnouncementCreated = "announcement.created"
-	eventAnnouncementUpdated = "announcement.updated"
+	"github.com/baz/tibia-warden-web/backend/internal/ws"
 )
 
 // handleListAnnouncements returns recent announcements for a group.
@@ -82,7 +77,8 @@ func (s *Server) handleCreateAnnouncement(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	s.hub.Broadcast(groupID, eventAnnouncementCreated, announcement)
+	s.hub.Broadcast(groupID, ws.EventAnnouncementCreated, announcement)
+	s.bot.PostAnnouncement(r.Context(), announcement)
 	writeJSON(w, http.StatusCreated, announcement)
 }
 
@@ -196,11 +192,13 @@ func (s *Server) authorizeAnnouncement(r *http.Request, announcementID int64) (i
 	return groupID, nil
 }
 
-// broadcastAnnouncement reloads an announcement and pushes it to the group room.
+// broadcastAnnouncement reloads an announcement and pushes it to the group room
+// and the linked Discord message.
 func (s *Server) broadcastAnnouncement(r *http.Request, groupID, announcementID int64) {
 	announcement, err := s.stores.Announcements.GetByID(r.Context(), announcementID)
 	if err != nil {
 		return
 	}
-	s.hub.Broadcast(groupID, eventAnnouncementUpdated, announcement)
+	s.hub.Broadcast(groupID, ws.EventAnnouncementUpdated, announcement)
+	s.bot.SyncAnnouncement(r.Context(), announcement)
 }

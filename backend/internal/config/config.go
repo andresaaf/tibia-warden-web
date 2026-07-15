@@ -15,6 +15,9 @@ type Config struct {
 	DiscordClientSecret string
 	DiscordRedirectURL  string
 
+	// DiscordBotToken enables the Discord announcement bot when set. Optional.
+	DiscordBotToken string
+
 	// SessionSecret is used to sign session cookies. Must be stable across restarts.
 	SessionSecret string
 
@@ -40,6 +43,7 @@ func Load() (*Config, error) {
 		DiscordClientID:     os.Getenv("DISCORD_CLIENT_ID"),
 		DiscordClientSecret: os.Getenv("DISCORD_CLIENT_SECRET"),
 		DiscordRedirectURL:  os.Getenv("DISCORD_REDIRECT_URL"),
+		DiscordBotToken:     os.Getenv("DISCORD_BOT_TOKEN"),
 		SessionSecret:       os.Getenv("SESSION_SECRET"),
 		PublicBaseURL:       getEnv("PUBLIC_BASE_URL", "http://localhost:5173"),
 		StaticDir:           os.Getenv("STATIC_DIR"),
