@@ -29,6 +29,8 @@
 	let highlightIndex = $state(0);
 
 	let showAdmin = $state(false);
+	let discordCode = $state('');
+	let discordBusy = $state(false);
 
 	let me = $derived($currentUser);
 	let isManager = $derived(group?.role === 'owner' || group?.role === 'admin');
@@ -235,6 +237,32 @@
 		navigator.clipboard?.writeText(code);
 	}
 
+	async function generateDiscordCode() {
+		discordBusy = true;
+		try {
+			const res = await api.createDiscordLinkCode(groupId);
+			discordCode = res.code;
+		} catch (err) {
+			error = err instanceof ApiError ? err.message : 'Failed to create link code.';
+		} finally {
+			discordBusy = false;
+		}
+	}
+
+	async function unlinkDiscord() {
+		if (!confirm('Disconnect this group from its Discord channel?')) return;
+		discordBusy = true;
+		try {
+			await api.unlinkDiscord(groupId);
+			discordCode = '';
+			group = await api.getGroup(groupId);
+		} catch (err) {
+			error = err instanceof ApiError ? err.message : 'Failed to unlink Discord.';
+		} finally {
+			discordBusy = false;
+		}
+	}
+
 	function comingList(a: Announcement) {
 		return a.responses.filter((r) => r.status === 'coming');
 	}
@@ -319,6 +347,39 @@
 							{/if}
 						</div>
 					{/each}
+				</div>
+
+				<div class="discord-section">
+					<div class="spread">
+						<h3>Discord</h3>
+						{#if group.discordChannelId}
+							<button class="btn btn-sm btn-danger" onclick={unlinkDiscord} disabled={discordBusy}>
+								Disconnect
+							</button>
+						{/if}
+					</div>
+					{#if group.discordChannelId}
+						<p class="muted small">
+							✅ Connected. New announcements are mirrored to your Discord channel with interactive
+							Coming / Ready / Killed buttons.
+						</p>
+					{:else}
+						<p class="muted small">
+							Mirror announcements to a Discord channel. Invite the bot to your server, then generate
+							a code below and run <code>/link &lt;code&gt;</code> in the target channel.
+						</p>
+						{#if discordCode}
+							<div class="link-code">
+								<code>/link {discordCode}</code>
+								<button class="btn btn-sm" onclick={() => copyCode(`/link ${discordCode}`)}>Copy</button>
+							</div>
+							<p class="muted small">This code expires in 15 minutes and can be used once.</p>
+						{:else}
+							<button class="btn btn-sm" onclick={generateDiscordCode} disabled={discordBusy}>
+								{discordBusy ? 'Generating…' : 'Generate link code'}
+							</button>
+						{/if}
+					{/if}
 				</div>
 			</div>
 		{/if}
@@ -484,6 +545,28 @@
 	.member {
 		padding: 0.4rem 0;
 		border-bottom: 1px solid var(--border);
+	}
+	.discord-section {
+		border-top: 1px solid var(--border);
+		padding-top: 0.75rem;
+		margin-top: 0.25rem;
+	}
+	.discord-section p {
+		margin: 0.4rem 0;
+	}
+	.link-code {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		background: var(--bg-elev-2);
+		border: 1px solid var(--border);
+		border-radius: 8px;
+		padding: 0.4rem 0.6rem;
+		width: fit-content;
+	}
+	.link-code code {
+		font-family: ui-monospace, monospace;
+		letter-spacing: 0.03em;
 	}
 	.post-form {
 		margin-bottom: 1.25rem;

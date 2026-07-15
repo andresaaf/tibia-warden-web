@@ -14,6 +14,7 @@ import (
 	"github.com/baz/tibia-warden-web/backend/internal/auth"
 	"github.com/baz/tibia-warden-web/backend/internal/config"
 	"github.com/baz/tibia-warden-web/backend/internal/database"
+	"github.com/baz/tibia-warden-web/backend/internal/discord"
 	"github.com/baz/tibia-warden-web/backend/internal/store"
 	"github.com/baz/tibia-warden-web/backend/internal/ws"
 )
@@ -49,7 +50,21 @@ func main() {
 	hub := ws.NewHub()
 	go hub.Run(ctx)
 
-	router := api.NewRouter(cfg, stores, oauth, hub)
+	bot, err := discord.New(cfg, stores, hub)
+	if err != nil {
+		slog.Error("failed to initialise discord bot", "error", err)
+		os.Exit(1)
+	}
+	if bot != nil {
+		if err := bot.Start(); err != nil {
+			slog.Error("failed to start discord bot", "error", err)
+			os.Exit(1)
+		}
+		defer bot.Stop()
+		slog.Info("discord bot enabled")
+	}
+
+	router := api.NewRouter(cfg, stores, oauth, hub, bot)
 
 	srv := &http.Server{
 		Addr:              cfg.ListenAddr,

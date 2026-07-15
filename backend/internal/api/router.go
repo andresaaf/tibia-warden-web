@@ -6,6 +6,7 @@ import (
 
 	"github.com/baz/tibia-warden-web/backend/internal/auth"
 	"github.com/baz/tibia-warden-web/backend/internal/config"
+	"github.com/baz/tibia-warden-web/backend/internal/discord"
 	"github.com/baz/tibia-warden-web/backend/internal/store"
 	"github.com/baz/tibia-warden-web/backend/internal/ws"
 	"github.com/go-chi/chi/v5"
@@ -19,11 +20,12 @@ type Server struct {
 	stores *store.Stores
 	oauth  *auth.DiscordProvider
 	hub    *ws.Hub
+	bot    *discord.Bot
 }
 
 // NewRouter wires up all routes and middleware and returns the root handler.
-func NewRouter(cfg *config.Config, stores *store.Stores, oauth *auth.DiscordProvider, hub *ws.Hub) http.Handler {
-	s := &Server{cfg: cfg, stores: stores, oauth: oauth, hub: hub}
+func NewRouter(cfg *config.Config, stores *store.Stores, oauth *auth.DiscordProvider, hub *ws.Hub, bot *discord.Bot) http.Handler {
+	s := &Server{cfg: cfg, stores: stores, oauth: oauth, hub: hub, bot: bot}
 
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
@@ -73,6 +75,8 @@ func NewRouter(cfg *config.Config, stores *store.Stores, oauth *auth.DiscordProv
 			r.Delete("/groups/{groupID}/members/{userID}", s.handleRemoveMember)
 			r.Get("/groups/{groupID}/invites", s.handleListInvites)
 			r.Post("/groups/{groupID}/invites", s.handleCreateInvite)
+			r.Post("/groups/{groupID}/discord/link-code", s.handleCreateDiscordLinkCode)
+			r.Delete("/groups/{groupID}/discord", s.handleUnlinkDiscord)
 
 			// Announcements.
 			r.Get("/groups/{groupID}/announcements", s.handleListAnnouncements)

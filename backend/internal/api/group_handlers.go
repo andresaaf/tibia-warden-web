@@ -345,3 +345,57 @@ func randomInviteCode() (string, error) {
 	}
 	return strings.ToUpper(base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString(b)), nil
 }
+
+// handleCreateDiscordLinkCode issues a short-lived code an owner/admin runs via
+// the bot's /link command in the target channel (owner/admin only).
+func (s *Server) handleCreateDiscordLinkCode(w http.ResponseWriter, r *http.Request) {
+	groupID, ok := parseID(w, r, "groupID")
+	if !ok {
+		return
+	}
+	role, err := s.requireMembership(r, groupID)
+	if err != nil {
+		writeMembershipError(w, err)
+		return
+	}
+	if role != models.RoleOwner && role != models.RoleAdmin {
+		writeError(w, http.StatusForbidden, "only owners and admins can link Discord")
+		return
+	}
+	code, err := randomInviteCode()
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to generate code")
+		return
+	}
+	expiresAt := time.Now().Add(15 * time.Minute)
+	if err := s.stores.Groups.CreateDiscordLinkCode(r.Context(), groupID, userID(r), code, expiresAt); err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to create link code")
+		return
+	}
+	writeJSON(w, http.StatusCreated, map[string]any{
+		"code":      code,
+		"expiresAt": expiresAt,
+	})
+}
+
+// handleUnlinkDiscord disconnects a group from its Discord channel (owner/admin only).
+func (s *Server) handleUnlinkDiscord(w http.ResponseWriter, r *http.Request) {
+	groupID, ok := parseID(w, r, "groupID")
+	if !ok {
+		return
+	}
+	role, err := s.requireMembership(r, groupID)
+	if err != nil {
+		writeMembershipError(w, err)
+		return
+	}
+	if role != models.RoleOwner && role != models.RoleAdmin {
+		writeError(w, http.StatusForbidden, "only owners and admins can unlink Discord")
+		return
+	}
+	if err := s.stores.Groups.ClearDiscordLink(r.Context(), groupID); err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to unlink Discord")
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]string{"status": "unlinked"})
+}

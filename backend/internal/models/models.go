@@ -64,6 +64,9 @@ type Group struct {
 	MemberCount int       `json:"memberCount"`
 	// Role is the requesting user's role in the group, when applicable.
 	Role string `json:"role,omitempty"`
+	// Discord link (populated on single-group fetches).
+	DiscordGuildID   string `json:"discordGuildId,omitempty"`
+	DiscordChannelID string `json:"discordChannelId,omitempty"`
 }
 
 type GroupMember struct {
@@ -100,6 +103,8 @@ type Announcement struct {
 	CreatedAt    time.Time              `json:"createdAt"`
 	Responses    []AnnouncementResponse `json:"responses"`
 	Claims       []AnnouncementClaim    `json:"claims"`
+	// DiscordMessageID is the mirrored Discord message, when the group is linked.
+	DiscordMessageID string `json:"-"`
 }
 
 type AnnouncementResponse struct {
