@@ -97,6 +97,7 @@ type Announcement struct {
 	GroupID      int64                  `json:"groupId"`
 	CreatureID   int64                  `json:"creatureId"`
 	CreatureName string                 `json:"creatureName"`
+	CreatureImageURL string             `json:"creatureImageUrl,omitempty"`
 	AuthorID     int64                  `json:"authorId"`
 	AuthorName   string                 `json:"authorName"`
 	Location     string                 `json:"location"`
