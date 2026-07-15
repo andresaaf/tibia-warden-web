@@ -69,6 +69,8 @@ type Group struct {
 	DiscordChannelID string `json:"discordChannelId,omitempty"`
 	DiscordRoleID    string `json:"discordRoleId,omitempty"`
 	DiscordRoleName  string `json:"discordRoleName,omitempty"`
+	// DiscordAutodeleteSeconds: -1 Never, 0 immediately on kill, else seconds after kill.
+	DiscordAutodeleteSeconds int `json:"discordAutodeleteSeconds"`
 }
 
 type GroupMember struct {

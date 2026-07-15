@@ -48,6 +48,7 @@ export interface Group {
 	discordChannelId?: string;
 	discordRoleId?: string;
 	discordRoleName?: string;
+	discordAutodeleteSeconds?: number;
 }
 
 export interface DiscordRole {

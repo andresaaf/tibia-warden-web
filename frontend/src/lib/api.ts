@@ -91,6 +91,8 @@ export const api = {
 	setDiscordRole: (id: number, roleId: string, roleName: string) =>
 		request<void>('PUT', `/api/groups/${id}/discord/role`, { roleId, roleName }),
 	clearDiscordRole: (id: number) => request<void>('DELETE', `/api/groups/${id}/discord/role`),
+	setDiscordAutodelete: (id: number, seconds: number) =>
+		request<void>('PUT', `/api/groups/${id}/discord/autodelete`, { seconds }),
 
 	// Announcements
 	announcements: (groupId: number) =>

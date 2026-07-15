@@ -527,3 +527,41 @@ func (s *Server) handleClearDiscordRole(w http.ResponseWriter, r *http.Request) 
 	}
 	writeJSON(w, http.StatusOK, map[string]string{"status": "cleared"})
 }
+
+// allowedAutodelete enumerates the valid auto-delete options in seconds.
+// -1 = never, 0 = immediately on kill, otherwise seconds after the kill.
+var allowedAutodelete = map[int]bool{-1: true, 0: true, 600: true, 3600: true, 86400: true}
+
+// handleSetDiscordAutodelete sets how long after a kill the mirrored Discord
+// message is deleted (owner/admin only).
+func (s *Server) handleSetDiscordAutodelete(w http.ResponseWriter, r *http.Request) {
+	groupID, ok := parseID(w, r, "groupID")
+	if !ok {
+		return
+	}
+	role, err := s.requireMembership(r, groupID)
+	if err != nil {
+		writeMembershipError(w, err)
+		return
+	}
+	if role != models.RoleOwner && role != models.RoleAdmin {
+		writeError(w, http.StatusForbidden, "only owners and admins can manage Discord")
+		return
+	}
+	var body struct {
+		Seconds int `json:"seconds"`
+	}
+	if err := decodeJSON(r, &body); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	if !allowedAutodelete[body.Seconds] {
+		writeError(w, http.StatusBadRequest, "invalid auto-delete option")
+		return
+	}
+	if err := s.stores.Groups.SetDiscordAutodelete(r.Context(), groupID, body.Seconds); err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to update setting")
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]int{"seconds": body.Seconds})
+}
