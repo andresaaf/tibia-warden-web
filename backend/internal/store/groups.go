@@ -223,6 +223,19 @@ func (s *GroupStore) ListInvites(ctx context.Context, groupID int64) ([]models.I
 	return out, rows.Err()
 }
 
+// DeleteInvite removes an invite code belonging to a group.
+func (s *GroupStore) DeleteInvite(ctx context.Context, groupID, inviteID int64) error {
+	tag, err := s.pool.Exec(ctx,
+		`DELETE FROM invite_codes WHERE id = $1 AND group_id = $2`, inviteID, groupID)
+	if err != nil {
+		return err
+	}
+	if tag.RowsAffected() == 0 {
+		return ErrNotFound
+	}
+	return nil
+}
+
 // RedeemInvite consumes a valid, unused, unexpired invite code and adds the user
 // as a member, all within a single transaction. Returns the group ID joined.
 func (s *GroupStore) RedeemInvite(ctx context.Context, userID int64, code string) (int64, error) {

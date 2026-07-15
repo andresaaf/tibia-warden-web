@@ -215,6 +215,14 @@
 			error = 'Failed to create invite.';
 		}
 	}
+	async function deleteInvite(inviteId: number) {
+		try {
+			await api.deleteInvite(groupId, inviteId);
+			invites = await api.invites(groupId);
+		} catch (err) {
+			error = err instanceof ApiError ? err.message : 'Failed to delete invite.';
+		}
+	}
 	async function setRole(userId: number, role: string) {
 		try {
 			await api.setRole(groupId, userId, role);
@@ -377,6 +385,7 @@
 								{:else}
 									<button class="btn btn-sm" onclick={() => copyCode(inv.code)}>Copy</button>
 								{/if}
+								<button class="btn-x" title="Delete invite" aria-label="Delete invite" onclick={() => deleteInvite(inv.id)}>×</button>
 							</div>
 						{/each}
 					</div>
@@ -633,6 +642,19 @@
 	.invite code {
 		font-family: ui-monospace, monospace;
 		letter-spacing: 0.05em;
+	}
+	.btn-x {
+		background: none;
+		border: none;
+		color: var(--danger);
+		font-size: 1.15rem;
+		line-height: 1;
+		padding: 0 0.15rem;
+		border-radius: 4px;
+	}
+	.btn-x:hover {
+		background: var(--danger);
+		color: #fff;
 	}
 	.member-list {
 		gap: 0.4rem;
