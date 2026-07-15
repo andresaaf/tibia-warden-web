@@ -82,6 +82,8 @@ export const api = {
 	invites: (id: number) => request<InviteCode[]>('GET', `/api/groups/${id}/invites`),
 	createInvite: (id: number, expiresInHours = 0) =>
 		request<InviteCode>('POST', `/api/groups/${id}/invites`, { expiresInHours }),
+	deleteInvite: (id: number, inviteId: number) =>
+		request<void>('DELETE', `/api/groups/${id}/invites/${inviteId}`),
 	createDiscordLinkCode: (id: number) =>
 		request<{ code: string; expiresAt: string }>('POST', `/api/groups/${id}/discord/link-code`),
 	unlinkDiscord: (id: number) => request<void>('DELETE', `/api/groups/${id}/discord`),

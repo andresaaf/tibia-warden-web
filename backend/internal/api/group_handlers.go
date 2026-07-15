@@ -309,6 +309,37 @@ func (s *Server) handleCreateInvite(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, invite)
 }
 
+// handleDeleteInvite removes an invite code (owner/admin only).
+func (s *Server) handleDeleteInvite(w http.ResponseWriter, r *http.Request) {
+	groupID, ok := parseID(w, r, "groupID")
+	if !ok {
+		return
+	}
+	inviteID, err := strconv.ParseInt(chiURLParam(r, "inviteID"), 10, 64)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid invite id")
+		return
+	}
+	role, err := s.requireMembership(r, groupID)
+	if err != nil {
+		writeMembershipError(w, err)
+		return
+	}
+	if role != models.RoleOwner && role != models.RoleAdmin {
+		writeError(w, http.StatusForbidden, "only owners and admins can delete invites")
+		return
+	}
+	if err := s.stores.Groups.DeleteInvite(r.Context(), groupID, inviteID); err != nil {
+		if errors.Is(err, store.ErrNotFound) {
+			writeError(w, http.StatusNotFound, "invite not found")
+			return
+		}
+		writeError(w, http.StatusInternalServerError, "failed to delete invite")
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]string{"status": "deleted"})
+}
+
 // requireMembership resolves the user's role in a group or returns ErrNotFound.
 func (s *Server) requireMembership(r *http.Request, groupID int64) (string, error) {
 	return s.stores.Groups.Role(r.Context(), groupID, userID(r))
