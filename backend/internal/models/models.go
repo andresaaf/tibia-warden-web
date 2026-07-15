@@ -90,6 +90,9 @@ type InviteCode struct {
 	UsedAt    *time.Time `json:"usedAt,omitempty"`
 	ExpiresAt *time.Time `json:"expiresAt,omitempty"`
 	CreatedAt time.Time  `json:"createdAt"`
+	// MaxUses is nil for unlimited-use codes; UseCount tracks redemptions.
+	MaxUses  *int `json:"maxUses"`
+	UseCount int  `json:"useCount"`
 }
 
 type Announcement struct {

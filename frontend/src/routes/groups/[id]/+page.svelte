@@ -28,6 +28,7 @@
 	let highlightIndex = $state(0);
 
 	let showAdmin = $state(false);
+	let inviteMaxUses = $state(1);
 	let discordCode = $state('');
 	let discordBusy = $state(false);
 	let discordRoles = $state<DiscordRole[]>([]);
@@ -214,11 +215,18 @@
 
 	async function createInvite() {
 		try {
-			await api.createInvite(groupId);
+			await api.createInvite(groupId, 0, inviteMaxUses);
 			invites = await api.invites(groupId);
 		} catch {
 			error = 'Failed to create invite.';
 		}
+	}
+
+	function inviteExhausted(inv: InviteCode): boolean {
+		return inv.maxUses !== null && inv.useCount >= inv.maxUses;
+	}
+	function inviteUsesLabel(inv: InviteCode): string {
+		return inv.maxUses === null ? `∞ · ${inv.useCount} used` : `${inv.useCount}/${inv.maxUses} used`;
 	}
 	async function deleteInvite(inviteId: number) {
 		try {
@@ -389,17 +397,24 @@
 			<div class="card stack admin">
 				<div class="spread">
 					<h3>Members</h3>
-					<button class="btn btn-sm" onclick={createInvite}>+ Create invite code</button>
+					<div class="row invite-create">
+						<select bind:value={inviteMaxUses} aria-label="Invite uses">
+							<option value={1}>Single use</option>
+							<option value={5}>5 uses</option>
+							<option value={25}>25 uses</option>
+							<option value={0}>Unlimited</option>
+						</select>
+						<button class="btn btn-sm" onclick={createInvite}>+ Create invite</button>
+					</div>
 				</div>
 
 				{#if invites.length}
 					<div class="invites">
 						{#each invites as inv (inv.id)}
-							<div class="invite" class:used={!!inv.usedBy}>
+							<div class="invite" class:used={inviteExhausted(inv)}>
 								<code>{inv.code}</code>
-								{#if inv.usedBy}
-									<span class="badge">used</span>
-								{:else}
+								<span class="badge">{inviteUsesLabel(inv)}</span>
+								{#if !inviteExhausted(inv)}
 									<button class="btn btn-sm" onclick={() => copyCode(inv.code)}>Copy</button>
 								{/if}
 								<button class="btn-x" title="Delete invite" aria-label="Delete invite" onclick={() => deleteInvite(inv.id)}>×</button>
@@ -658,6 +673,9 @@
 		display: flex;
 		flex-wrap: wrap;
 		gap: 0.5rem;
+	}
+	.invite-create select {
+		width: auto;
 	}
 	.invite {
 		display: flex;

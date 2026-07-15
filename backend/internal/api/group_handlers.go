@@ -286,6 +286,7 @@ func (s *Server) handleCreateInvite(w http.ResponseWriter, r *http.Request) {
 
 	var body struct {
 		ExpiresInHours int `json:"expiresInHours"`
+		MaxUses        int `json:"maxUses"`
 	}
 	// Body is optional; ignore decode errors on empty bodies.
 	_ = decodeJSON(r, &body)
@@ -296,12 +297,18 @@ func (s *Server) handleCreateInvite(w http.ResponseWriter, r *http.Request) {
 		expiresAt = &t
 	}
 
+	// maxUses <= 0 means unlimited (stored as NULL).
+	var maxUses *int
+	if body.MaxUses > 0 {
+		maxUses = &body.MaxUses
+	}
+
 	code, err := randomInviteCode()
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "failed to generate invite code")
 		return
 	}
-	invite, err := s.stores.Groups.CreateInvite(r.Context(), groupID, userID(r), code, expiresAt)
+	invite, err := s.stores.Groups.CreateInvite(r.Context(), groupID, userID(r), code, expiresAt, maxUses)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "failed to create invite")
 		return
