@@ -13,6 +13,7 @@ import (
 	"github.com/baz/tibia-warden-web/backend/internal/api"
 	"github.com/baz/tibia-warden-web/backend/internal/auth"
 	"github.com/baz/tibia-warden-web/backend/internal/config"
+	"github.com/baz/tibia-warden-web/backend/internal/creatures"
 	"github.com/baz/tibia-warden-web/backend/internal/database"
 	"github.com/baz/tibia-warden-web/backend/internal/discord"
 	"github.com/baz/tibia-warden-web/backend/internal/store"
@@ -45,6 +46,17 @@ func main() {
 	}
 
 	stores := store.New(pool)
+
+	if cfg.CreaturesAPIURL != "" {
+		syncCtx, cancel := context.WithTimeout(ctx, 45*time.Second)
+		count, err := creatures.Sync(syncCtx, stores.Creatures, cfg.CreaturesAPIURL)
+		cancel()
+		if err != nil {
+			slog.Warn("creature sync failed; continuing with existing data", "error", err)
+		} else {
+			slog.Info("synced creatures from api", "count", count)
+		}
+	}
 
 	oauth := auth.NewDiscordProvider(cfg)
 	hub := ws.NewHub()
