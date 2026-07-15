@@ -218,11 +218,14 @@ func (b *Bot) handleComponent(s *discordgo.Session, i *discordgo.InteractionCrea
 	}
 	b.hub.Broadcast(ann.GroupID, ws.EventAnnouncementUpdated, ann)
 
+	_, _, roleID, _ := b.stores.Groups.DiscordSettings(ctx, ann.GroupID)
 	_ = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseUpdateMessage,
 		Data: &discordgo.InteractionResponseData{
-			Embeds:     []*discordgo.MessageEmbed{buildEmbed(ann)},
-			Components: buildComponents(ann),
+			Content:         mentionContent(roleID),
+			Embeds:          []*discordgo.MessageEmbed{buildEmbed(ann)},
+			Components:      buildComponents(ann),
+			AllowedMentions: &discordgo.MessageAllowedMentions{},
 		},
 	})
 
@@ -273,17 +276,20 @@ func (b *Bot) SyncAnnouncement(ctx context.Context, ann *models.Announcement) {
 	if b == nil || b.session == nil || ann == nil || ann.DiscordMessageID == "" {
 		return
 	}
-	_, channelID, err := b.stores.Groups.DiscordChannel(ctx, ann.GroupID)
+	_, channelID, roleID, err := b.stores.Groups.DiscordSettings(ctx, ann.GroupID)
 	if err != nil || channelID == "" {
 		return
 	}
 	embeds := []*discordgo.MessageEmbed{buildEmbed(ann)}
 	components := buildComponents(ann)
+	content := mentionContent(roleID)
 	if _, err := b.session.ChannelMessageEditComplex(&discordgo.MessageEdit{
-		Channel:    channelID,
-		ID:         ann.DiscordMessageID,
-		Embeds:     &embeds,
-		Components: &components,
+		Channel:         channelID,
+		ID:              ann.DiscordMessageID,
+		Content:         &content,
+		Embeds:          &embeds,
+		Components:      &components,
+		AllowedMentions: &discordgo.MessageAllowedMentions{},
 	}); err != nil {
 		slog.Error("discord: failed to edit announcement message", "error", err)
 	}
@@ -442,6 +448,16 @@ func buildComponents(a *models.Announcement) []discordgo.MessageComponent {
 			discordgo.Button{Label: "💀 Killed", Style: discordgo.DangerButton, CustomID: "ann:" + id + ":killed"},
 		}},
 	}
+}
+
+// mentionContent returns the message content used to ping a group's role, or an
+// empty string when no role is configured. Re-sending it on edits preserves the
+// visible mention without triggering another notification.
+func mentionContent(roleID string) string {
+	if roleID == "" {
+		return ""
+	}
+	return "<@&" + roleID + ">"
 }
 
 func namesByStatus(a *models.Announcement, status string) string {
