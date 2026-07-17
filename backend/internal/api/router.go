@@ -76,6 +76,7 @@ func NewRouter(cfg *config.Config, stores *store.Stores, oauth *auth.DiscordProv
 			r.Get("/groups/{groupID}", s.handleGetGroup)
 			r.Post("/groups/{groupID}/join", s.handleJoinPublic)
 			r.Post("/groups/{groupID}/leave", s.handleLeaveGroup)
+			r.Delete("/groups/{groupID}", s.handleDeleteGroup)
 			r.Get("/groups/{groupID}/members", s.handleListMembers)
 			r.Patch("/groups/{groupID}/members/{userID}", s.handleSetMemberRole)
 			r.Delete("/groups/{groupID}/members/{userID}", s.handleRemoveMember)

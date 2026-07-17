@@ -147,6 +147,32 @@ func (s *Server) handleLeaveGroup(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{"status": "left"})
 }
 
+// handleDeleteGroup permanently deletes a group. Only the owner may do this.
+func (s *Server) handleDeleteGroup(w http.ResponseWriter, r *http.Request) {
+	groupID, ok := parseID(w, r, "groupID")
+	if !ok {
+		return
+	}
+	role, err := s.requireMembership(r, groupID)
+	if err != nil {
+		writeMembershipError(w, err)
+		return
+	}
+	if role != models.RoleOwner {
+		writeError(w, http.StatusForbidden, "only the group owner can delete the group")
+		return
+	}
+	if err := s.stores.Groups.Delete(r.Context(), groupID); err != nil {
+		if errors.Is(err, store.ErrNotFound) {
+			writeError(w, http.StatusNotFound, "group not found")
+			return
+		}
+		writeError(w, http.StatusInternalServerError, "failed to delete group")
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]string{"status": "deleted"})
+}
+
 // handleListMembers lists members of a group the user belongs to.
 func (s *Server) handleListMembers(w http.ResponseWriter, r *http.Request) {
 	groupID, ok := parseID(w, r, "groupID")
