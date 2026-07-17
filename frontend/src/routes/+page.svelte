@@ -70,8 +70,19 @@
 		}
 	}
 
+	// WS payloads come from a query that omits groupName/viewerRole (viewer-specific),
+	// so backfill them from the loaded groups list to keep labels/permissions stable.
+	function enrich(a: Announcement): Announcement {
+		const g = groups.find((x) => x.id === a.groupId);
+		return {
+			...a,
+			groupName: a.groupName || g?.name || '',
+			viewerRole: a.viewerRole || g?.role || ''
+		};
+	}
+
 	function handleEvent(event: RoomEvent) {
-		const a = event.payload;
+		const a = enrich(event.payload);
 		const idx = feed.findIndex((x) => x.id === a.id);
 		if (idx >= 0) {
 			feed[idx] = a;
