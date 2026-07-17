@@ -18,39 +18,16 @@
 
 	let primary = $derived(announcements[0]);
 	let killed = $derived(announcements.some((a) => a.status === 'killed'));
+	let sorted = $derived(
+		[...announcements].sort((a, b) => (a.groupName ?? '').localeCompare(b.groupName ?? ''))
+	);
 
-	type Person = { userId: number; characterName: string; group?: string };
-
-	// Merge responders across all sibling groups; ready beats coming per person.
-	let responders = $derived.by(() => {
-		const map = new Map<number, { p: Person; status: string }>();
-		for (const a of announcements) {
-			for (const r of a.responses) {
-				const cur = map.get(r.userId);
-				if (!cur || (r.status === 'ready' && cur.status === 'coming')) {
-					map.set(r.userId, {
-						p: { userId: r.userId, characterName: r.characterName, group: a.groupName },
-						status: r.status
-					});
-				}
-			}
-		}
-		const coming: Person[] = [];
-		const ready: Person[] = [];
-		for (const { p, status } of map.values()) (status === 'ready' ? ready : coming).push(p);
-		return { coming, ready };
-	});
-
-	let claimers = $derived.by(() => {
-		const map = new Map<number, Person>();
-		for (const a of announcements) {
-			for (const c of a.claims) {
-				if (!map.has(c.userId))
-					map.set(c.userId, { userId: c.userId, characterName: c.characterName, group: a.groupName });
-			}
-		}
-		return [...map.values()];
-	});
+	function namesByStatus(a: Announcement, status: string): string[] {
+		return a.responses.filter((r) => r.status === status).map((r) => r.characterName);
+	}
+	function claimNames(a: Announcement): string[] {
+		return a.claims.map((c) => c.characterName);
+	}
 
 	function myStatus(): string | null {
 		for (const a of announcements) {
@@ -68,10 +45,6 @@
 
 	function fail(err: unknown) {
 		onactionerror?.(err instanceof ApiError ? err.message : 'Something went wrong.');
-	}
-
-	function label(p: Person): string {
-		return p.group ? `${p.characterName} (${p.group})` : p.characterName;
 	}
 
 	async function respond(status: 'coming' | 'ready') {
@@ -126,9 +99,7 @@
 			</div>
 			{#if primary.note}<div class="muted note">{primary.note}</div>{/if}
 			<div class="muted small">
-				by {primary.authorName} · {new Date(primary.createdAt).toLocaleTimeString()} · posted to {announcements
-					.map((a) => a.groupName)
-					.join(', ')}
+				by {primary.authorName} · {new Date(primary.createdAt).toLocaleTimeString()}
 			</div>
 		</div>
 	</div>
@@ -145,13 +116,21 @@
 				<button class="btn btn-sm btn-danger" onclick={markKilled}>💀 Killed</button>
 			{/if}
 		</div>
-		<div class="responders">
-			{#if responders.coming.length}
-				<span class="muted small">Coming: {responders.coming.map(label).join(', ')}</span>
-			{/if}
-			{#if responders.ready.length}
-				<span class="muted small">Ready: {responders.ready.map(label).join(', ')}</span>
-			{/if}
+		<div class="groups">
+			{#each sorted as a (a.id)}
+				<div class="group-section">
+					<div class="group-name">{a.groupName || 'Group'}</div>
+					{#if namesByStatus(a, 'coming').length}
+						<div class="muted small">Coming: {namesByStatus(a, 'coming').join(', ')}</div>
+					{/if}
+					{#if namesByStatus(a, 'ready').length}
+						<div class="muted small">Ready: {namesByStatus(a, 'ready').join(', ')}</div>
+					{/if}
+					{#if namesByStatus(a, 'coming').length === 0 && namesByStatus(a, 'ready').length === 0}
+						<div class="muted small">No responses yet.</div>
+					{/if}
+				</div>
+			{/each}
 		</div>
 	{:else}
 		<div class="actions">
@@ -159,12 +138,17 @@
 				{hasClaimed ? '✓ On your list' : '➕ I got it — tick my list'}
 			</button>
 		</div>
-		<div class="responders">
-			{#if claimers.length}
-				<span class="muted small">Got the kill: {claimers.map(label).join(', ')}</span>
-			{:else}
-				<span class="muted small">No one has claimed the benefit yet.</span>
-			{/if}
+		<div class="groups">
+			{#each sorted as a (a.id)}
+				<div class="group-section">
+					<div class="group-name">{a.groupName || 'Group'}</div>
+					{#if claimNames(a).length}
+						<div class="muted small">Got the kill: {claimNames(a).join(', ')}</div>
+					{:else}
+						<div class="muted small">No claims yet.</div>
+					{/if}
+				</div>
+			{/each}
 		</div>
 	{/if}
 </div>
@@ -203,11 +187,22 @@
 		margin-top: 0.75rem;
 		flex-wrap: wrap;
 	}
-	.responders {
+	.groups {
 		display: flex;
 		flex-direction: column;
-		gap: 0.15rem;
-		margin-top: 0.5rem;
+		gap: 0.6rem;
+		margin-top: 0.75rem;
+	}
+	.group-section {
+		display: flex;
+		flex-direction: column;
+		gap: 0.1rem;
+		border-left: 2px solid var(--border);
+		padding-left: 0.6rem;
+	}
+	.group-name {
+		font-weight: 650;
+		color: var(--text);
 	}
 	.btn.on {
 		border-color: var(--info);
