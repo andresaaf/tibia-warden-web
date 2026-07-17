@@ -6,6 +6,7 @@
 	import { FeedRoom, type RoomEvent } from '$lib/ws';
 	import AnnouncementCard from '$lib/components/AnnouncementCard.svelte';
 	import CreatureCombobox from '$lib/components/CreatureCombobox.svelte';
+	import BroadcastCard from '$lib/components/BroadcastCard.svelte';
 	import type { Announcement, Creature, Group } from '$lib/types';
 
 	let feed = $state<Announcement[]>([]);
@@ -108,6 +109,35 @@
 	function canManage(a: Announcement): boolean {
 		return a.viewerRole === 'owner' || a.viewerRole === 'admin';
 	}
+
+	type FeedItem =
+		| { key: string; kind: 'single'; a: Announcement }
+		| { key: string; kind: 'broadcast'; group: Announcement[] };
+
+	// Collapse multi-group broadcast siblings (2+) into a single consolidated card.
+	let feedItems = $derived.by<FeedItem[]>(() => {
+		const byBroadcast = new Map<string, Announcement[]>();
+		for (const a of feed) {
+			if (a.broadcastId) {
+				const arr = byBroadcast.get(a.broadcastId) ?? [];
+				arr.push(a);
+				byBroadcast.set(a.broadcastId, arr);
+			}
+		}
+		const items: FeedItem[] = [];
+		const placed = new Set<string>();
+		for (const a of feed) {
+			const siblings = a.broadcastId ? byBroadcast.get(a.broadcastId) : undefined;
+			if (a.broadcastId && siblings && siblings.length >= 2) {
+				if (placed.has(a.broadcastId)) continue;
+				placed.add(a.broadcastId);
+				items.push({ key: `b:${a.broadcastId}`, kind: 'broadcast', group: siblings });
+			} else {
+				items.push({ key: `s:${a.id}`, kind: 'single', a });
+			}
+		}
+		return items;
+	});
 </script>
 
 {#if showLogin}
@@ -164,18 +194,30 @@
 			{:else if feed.length === 0}
 				<p class="muted">No announcements yet across your groups.</p>
 			{:else}
-				{#each feed as a (a.id)}
-					<AnnouncementCard
-						{a}
-						meId={me?.id}
-						canManage={canManage(a)}
-						showGroup={true}
-						alreadyKilled={killedIds.includes(a.creatureId)}
-						onactionerror={(m) => (error = m)}
-						onclaimed={(cid) => {
-							if (!killedIds.includes(cid)) killedIds = [...killedIds, cid];
-						}}
-					/>
+				{#each feedItems as item (item.key)}
+					{#if item.kind === 'broadcast'}
+						<BroadcastCard
+							announcements={item.group}
+							meId={me?.id}
+							alreadyKilled={killedIds.includes(item.group[0].creatureId)}
+							onactionerror={(m) => (error = m)}
+							onclaimed={(cid) => {
+								if (!killedIds.includes(cid)) killedIds = [...killedIds, cid];
+							}}
+						/>
+					{:else}
+						<AnnouncementCard
+							a={item.a}
+							meId={me?.id}
+							canManage={canManage(item.a)}
+							showGroup={true}
+							alreadyKilled={killedIds.includes(item.a.creatureId)}
+							onactionerror={(m) => (error = m)}
+							onclaimed={(cid) => {
+								if (!killedIds.includes(cid)) killedIds = [...killedIds, cid];
+							}}
+						/>
+					{/if}
 				{/each}
 			{/if}
 		</div>

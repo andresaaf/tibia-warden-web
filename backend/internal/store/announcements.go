@@ -35,13 +35,13 @@ func (s *AnnouncementStore) GetByID(ctx context.Context, id int64) (*models.Anno
 	var a models.Announcement
 	err := s.pool.QueryRow(ctx, `
 		SELECT a.id, a.group_id, a.creature_id, c.name, c.image_url, a.author_id, u.character_name,
-		       a.location, a.note, a.gold_cost, a.status, a.killed_at, a.created_at, a.discord_message_id
+		       a.location, a.note, a.gold_cost, a.status, a.killed_at, a.created_at, a.discord_message_id, a.broadcast_id
 		FROM announcements a
 		JOIN creatures c ON c.id = a.creature_id
 		JOIN users u ON u.id = a.author_id
 		WHERE a.id = $1`, id,
 	).Scan(&a.ID, &a.GroupID, &a.CreatureID, &a.CreatureName, &a.CreatureImageURL, &a.AuthorID, &a.AuthorName,
-		&a.Location, &a.Note, &a.GoldCost, &a.Status, &a.KilledAt, &a.CreatedAt, &a.DiscordMessageID)
+		&a.Location, &a.Note, &a.GoldCost, &a.Status, &a.KilledAt, &a.CreatedAt, &a.DiscordMessageID, &a.BroadcastID)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, ErrNotFound
 	}
@@ -102,7 +102,7 @@ func (s *AnnouncementStore) ListForUser(ctx context.Context, userID int64, limit
 	rows, err := s.pool.Query(ctx, `
 		SELECT a.id, a.group_id, g.name, gm.role, a.creature_id, c.name, c.image_url,
 		       a.author_id, u.character_name, a.location, a.note, a.gold_cost, a.status,
-		       a.killed_at, a.created_at, a.discord_message_id
+		       a.killed_at, a.created_at, a.discord_message_id, a.broadcast_id
 		FROM announcements a
 		JOIN groups g ON g.id = a.group_id
 		JOIN group_members gm ON gm.group_id = a.group_id AND gm.user_id = $1
@@ -120,7 +120,7 @@ func (s *AnnouncementStore) ListForUser(ctx context.Context, userID int64, limit
 		var a models.Announcement
 		if err := rows.Scan(&a.ID, &a.GroupID, &a.GroupName, &a.ViewerRole, &a.CreatureID, &a.CreatureName,
 			&a.CreatureImageURL, &a.AuthorID, &a.AuthorName, &a.Location, &a.Note, &a.GoldCost,
-			&a.Status, &a.KilledAt, &a.CreatedAt, &a.DiscordMessageID); err != nil {
+			&a.Status, &a.KilledAt, &a.CreatedAt, &a.DiscordMessageID, &a.BroadcastID); err != nil {
 			return nil, err
 		}
 		out = append(out, a)

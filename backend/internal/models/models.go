@@ -115,6 +115,8 @@ type Announcement struct {
 	DiscordMessageID string `json:"-"` // GroupName and ViewerRole are populated for the aggregated home feed.
 	GroupName        string `json:"groupName,omitempty"`
 	ViewerRole       string `json:"viewerRole,omitempty"`
+	// BroadcastID links announcements from one multi-group broadcast (home feed grouping).
+	BroadcastID *string `json:"broadcastId,omitempty"`
 }
 
 type AnnouncementResponse struct {
