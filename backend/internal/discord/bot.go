@@ -180,6 +180,7 @@ func (b *Bot) handleComponent(s *discordgo.Session, i *discordgo.InteractionCrea
 		return
 	}
 
+	var affected []int64
 	switch action {
 	case models.ResponseComing, models.ResponseReady:
 		current := ""
@@ -199,7 +200,8 @@ func (b *Bot) handleComponent(s *discordgo.Session, i *discordgo.InteractionCrea
 			b.ephemeral(s, i, "Only the person who announced it or a group admin can mark it killed.")
 			return
 		}
-		if err := b.stores.Announcements.MarkKilled(ctx, annID); err != nil {
+		affected, err = b.stores.Announcements.MarkKilledWithSiblings(ctx, annID)
+		if err != nil {
 			b.ephemeral(s, i, "This is already marked killed.")
 			return
 		}
@@ -230,7 +232,15 @@ func (b *Bot) handleComponent(s *discordgo.Session, i *discordgo.InteractionCrea
 	})
 
 	if action == "killed" {
-		b.OnAnnouncementKilled(ctx, annID)
+		for _, id := range affected {
+			if id != annID {
+				if sib, sErr := b.stores.Announcements.GetByID(ctx, id); sErr == nil {
+					b.hub.Broadcast(sib.GroupID, ws.EventAnnouncementUpdated, sib)
+					b.SyncAnnouncement(ctx, sib)
+				}
+			}
+			b.OnAnnouncementKilled(ctx, id)
+		}
 	}
 }
 
