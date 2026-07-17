@@ -236,6 +236,20 @@
 		}
 	}
 
+	async function deleteGroup() {
+		if (!group) return;
+		const ok = confirm(
+			`Delete the group "${group.name}"?\n\nThis permanently removes the group and all of its announcements for everyone. This cannot be undone.`
+		);
+		if (!ok) return;
+		try {
+			await api.deleteGroup(groupId);
+			goto('/groups');
+		} catch (err) {
+			error = err instanceof ApiError ? err.message : 'Failed to delete group.';
+		}
+	}
+
 	async function createInvite() {
 		try {
 			await api.createInvite(groupId, 0, inviteMaxUses);
@@ -559,6 +573,18 @@
 						{/if}
 					{/if}
 				</div>
+
+				{#if group.role === 'owner'}
+					<div class="danger-zone">
+						<div>
+							<strong>Delete group</strong>
+							<div class="muted small">
+								Permanently removes this group and all of its announcements for everyone.
+							</div>
+						</div>
+						<button class="btn btn-sm btn-danger" onclick={deleteGroup}>Delete group</button>
+					</div>
+				{/if}
 			</div>
 		{/if}
 
@@ -744,6 +770,16 @@
 		border-top: 1px solid var(--border);
 		padding-top: 0.75rem;
 		margin-top: 0.25rem;
+	}
+	.danger-zone {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.75rem;
+		flex-wrap: wrap;
+		border-top: 1px solid var(--danger);
+		margin-top: 0.5rem;
+		padding-top: 0.75rem;
 	}
 	.discord-section p {
 		margin: 0.4rem 0;

@@ -75,6 +75,7 @@ export const api = {
 	joinPublic: (id: number) => request<void>('POST', `/api/groups/${id}/join`),
 	redeemInvite: (code: string) => request<{ groupId: number }>('POST', '/api/groups/join', { code }),
 	leaveGroup: (id: number) => request<void>('POST', `/api/groups/${id}/leave`),
+	deleteGroup: (id: number) => request<void>('DELETE', `/api/groups/${id}`),
 	members: (id: number) => request<GroupMember[]>('GET', `/api/groups/${id}/members`),
 	setRole: (id: number, userId: number, role: string) =>
 		request<void>('PATCH', `/api/groups/${id}/members/${userId}`, { role }),

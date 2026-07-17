@@ -47,6 +47,19 @@ func (s *GroupStore) Create(ctx context.Context, ownerID int64, name, descriptio
 	return &g, nil
 }
 
+// Delete removes a group and (via ON DELETE CASCADE) its members, invites,
+// announcements, responses, claims, and link codes.
+func (s *GroupStore) Delete(ctx context.Context, groupID int64) error {
+	tag, err := s.pool.Exec(ctx, `DELETE FROM groups WHERE id = $1`, groupID)
+	if err != nil {
+		return err
+	}
+	if tag.RowsAffected() == 0 {
+		return ErrNotFound
+	}
+	return nil
+}
+
 // GetByID returns a group with member count and, if provided, the given user's role.
 func (s *GroupStore) GetByID(ctx context.Context, groupID, viewerID int64) (*models.Group, error) {
 	var g models.Group
