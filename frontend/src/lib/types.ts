@@ -111,4 +111,5 @@ export interface Announcement {
 	claims: AnnouncementClaim[];
 	groupName?: string;
 	viewerRole?: Role | '';
+	broadcastId?: string | null;
 }
