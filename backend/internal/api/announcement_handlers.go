@@ -71,7 +71,7 @@ func (s *Server) handleCreateAnnouncement(w http.ResponseWriter, r *http.Request
 
 	announcement, err := s.stores.Announcements.Create(
 		r.Context(), groupID, body.CreatureID, userID(r),
-		strings.TrimSpace(body.Location), strings.TrimSpace(body.Note), body.GoldCost)
+		strings.TrimSpace(body.Location), strings.TrimSpace(body.Note), body.GoldCost, nil)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "failed to create announcement")
 		return
@@ -147,8 +147,16 @@ func (s *Server) handleBroadcastAnnouncement(w http.ResponseWriter, r *http.Requ
 
 	note := strings.TrimSpace(body.Note)
 	created := []models.Announcement{}
+
+	// Link the fan-out so a kill on one cascades to the others.
+	var broadcastID *string
+	if len(targets) > 1 {
+		if token, tErr := randomInviteCode(); tErr == nil {
+			broadcastID = &token
+		}
+	}
 	for _, gid := range targets {
-		ann, err := s.stores.Announcements.Create(r.Context(), gid, body.CreatureID, uid, "", note, body.GoldCost)
+		ann, err := s.stores.Announcements.Create(r.Context(), gid, body.CreatureID, uid, "", note, body.GoldCost, broadcastID)
 		if err != nil {
 			continue
 		}
@@ -234,7 +242,8 @@ func (s *Server) handleMarkAnnouncementKilled(w http.ResponseWriter, r *http.Req
 		writeError(w, http.StatusForbidden, "only the person who announced it or a group admin can mark it killed")
 		return
 	}
-	if err := s.stores.Announcements.MarkKilled(r.Context(), announcementID); err != nil {
+	affected, err := s.stores.Announcements.MarkKilledWithSiblings(r.Context(), announcementID)
+	if err != nil {
 		if errors.Is(err, store.ErrNotFound) {
 			writeError(w, http.StatusBadRequest, "this is already marked killed")
 			return
@@ -242,8 +251,16 @@ func (s *Server) handleMarkAnnouncementKilled(w http.ResponseWriter, r *http.Req
 		writeError(w, http.StatusInternalServerError, "failed to mark as killed")
 		return
 	}
-	s.broadcastAnnouncement(r, ann.GroupID, announcementID)
-	s.bot.OnAnnouncementKilled(r.Context(), announcementID)
+	// Notify each affected announcement (the primary plus any broadcast siblings).
+	for _, id := range affected {
+		a, err := s.stores.Announcements.GetByID(r.Context(), id)
+		if err != nil {
+			continue
+		}
+		s.hub.Broadcast(a.GroupID, ws.EventAnnouncementUpdated, a)
+		s.bot.SyncAnnouncement(r.Context(), a)
+		s.bot.OnAnnouncementKilled(r.Context(), id)
+	}
 	writeJSON(w, http.StatusOK, map[string]string{"status": "killed"})
 }
 

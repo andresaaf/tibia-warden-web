@@ -15,13 +15,14 @@ type AnnouncementStore struct {
 }
 
 // Create inserts a new announcement and returns the fully hydrated record.
-func (s *AnnouncementStore) Create(ctx context.Context, groupID, creatureID, authorID int64, location, note string, goldCost int) (*models.Announcement, error) {
+// broadcastID links announcements from one multi-group broadcast (nil = single).
+func (s *AnnouncementStore) Create(ctx context.Context, groupID, creatureID, authorID int64, location, note string, goldCost int, broadcastID *string) (*models.Announcement, error) {
 	var id int64
 	err := s.pool.QueryRow(ctx, `
-		INSERT INTO announcements (group_id, creature_id, author_id, location, note, gold_cost)
-		VALUES ($1, $2, $3, $4, $5, $6)
+		INSERT INTO announcements (group_id, creature_id, author_id, location, note, gold_cost, broadcast_id)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
 		RETURNING id`,
-		groupID, creatureID, authorID, location, note, goldCost,
+		groupID, creatureID, authorID, location, note, goldCost, broadcastID,
 	).Scan(&id)
 	if err != nil {
 		return nil, err
@@ -200,22 +201,57 @@ func (s *AnnouncementStore) ClearResponse(ctx context.Context, announcementID, u
 	return err
 }
 
-// MarkKilled sets an announcement's status to killed if it is currently open.
-// Authorization (poster or group admin) is the caller's responsibility.
-// Returns ErrNotFound if the announcement does not exist or is already killed.
-func (s *AnnouncementStore) MarkKilled(ctx context.Context, announcementID int64) error {
-	tag, err := s.pool.Exec(ctx, `
-		UPDATE announcements
-		SET status = 'killed', killed_at = now()
-		WHERE id = $1 AND status = 'open'`,
-		announcementID)
+// MarkKilledWithSiblings marks an announcement killed (if open) and cascades the
+// kill to any sibling announcements from the same multi-group broadcast. It
+// returns the IDs of all announcements that changed (primary first). Returns
+// ErrNotFound if the primary does not exist or is already killed.
+func (s *AnnouncementStore) MarkKilledWithSiblings(ctx context.Context, announcementID int64) ([]int64, error) {
+	tx, err := s.pool.Begin(ctx)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	if tag.RowsAffected() == 0 {
-		return ErrNotFound
+	defer tx.Rollback(ctx)
+
+	var broadcastID *string
+	err = tx.QueryRow(ctx, `
+		UPDATE announcements SET status = 'killed', killed_at = now()
+		WHERE id = $1 AND status = 'open'
+		RETURNING broadcast_id`, announcementID,
+	).Scan(&broadcastID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, ErrNotFound
 	}
-	return nil
+	if err != nil {
+		return nil, err
+	}
+
+	affected := []int64{announcementID}
+	if broadcastID != nil && *broadcastID != "" {
+		rows, err := tx.Query(ctx, `
+			UPDATE announcements SET status = 'killed', killed_at = now()
+			WHERE broadcast_id = $1 AND status = 'open' AND id <> $2
+			RETURNING id`, *broadcastID, announcementID)
+		if err != nil {
+			return nil, err
+		}
+		defer rows.Close()
+		for rows.Next() {
+			var id int64
+			if err := rows.Scan(&id); err != nil {
+				return nil, err
+			}
+			affected = append(affected, id)
+		}
+		if err := rows.Err(); err != nil {
+			return nil, err
+		}
+		rows.Close()
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return nil, err
+	}
+	return affected, nil
 }
 
 // Claim records that a user obtained the Echo Warden benefit for a killed
