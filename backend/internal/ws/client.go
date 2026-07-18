@@ -39,6 +39,13 @@ func (h *Hub) Serve(ctx context.Context, conn *websocket.Conn, groupIDs []int64,
 	_ = conn.Close(websocket.StatusNormalClosure, "")
 }
 
+// drop force-closes an overloaded client's connection. Closing unblocks the
+// read/write loops, which unwind and unregister the client through the normal
+// path; it is safe to call concurrently with those loops and more than once.
+func (c *Client) drop() {
+	_ = c.conn.Close(websocket.StatusPolicyViolation, "client too slow")
+}
+
 // readLoop drains inbound messages (used only for connection liveness) and
 // cancels the context when the peer disconnects.
 func (c *Client) readLoop(ctx context.Context, cancel context.CancelFunc) {

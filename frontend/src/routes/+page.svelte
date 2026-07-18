@@ -61,12 +61,25 @@
 			groups = g;
 			creatures = c;
 			killedIds = k;
-			room = new FeedRoom(handleEvent);
+			room = new FeedRoom(handleEvent, refresh);
 			room.connect();
 		} catch {
 			error = 'Failed to load your dashboard.';
 		} finally {
 			loading = false;
+		}
+	}
+
+	// Re-fetch a fresh snapshot whenever the socket (re)connects, reconciling any
+	// live events missed during the gap before the first subscription or while a
+	// dropped connection was reconnecting. Runs quietly without a loading state.
+	async function refresh() {
+		try {
+			const [f, k] = await Promise.all([api.feed(), api.killedCreatures()]);
+			feed = f;
+			killedIds = k;
+		} catch {
+			// Keep the current view; the next event or reconnect will reconcile.
 		}
 	}
 
