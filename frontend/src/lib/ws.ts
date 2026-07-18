@@ -16,7 +16,11 @@ class LiveRoom {
 
 	constructor(
 		private path: string,
-		private onEvent: (event: RoomEvent) => void
+		private onEvent: (event: RoomEvent) => void,
+		// Called every time the socket (re)connects. Consumers use this to
+		// re-fetch a fresh snapshot and reconcile any events missed while the
+		// socket was down (or during the gap before the first subscription).
+		private onOpen?: () => void
 	) {}
 
 	connect() {
@@ -32,6 +36,7 @@ class LiveRoom {
 
 		ws.onopen = () => {
 			this.retry = 0;
+			this.onOpen?.();
 		};
 		ws.onmessage = (ev) => {
 			try {
@@ -66,14 +71,14 @@ class LiveRoom {
 
 /** Live updates for a single group room. */
 export class GroupRoom extends LiveRoom {
-	constructor(groupId: number, onEvent: (event: RoomEvent) => void) {
-		super(`/api/groups/${groupId}/ws`, onEvent);
+	constructor(groupId: number, onEvent: (event: RoomEvent) => void, onOpen?: () => void) {
+		super(`/api/groups/${groupId}/ws`, onEvent, onOpen);
 	}
 }
 
 /** Live updates across all of the user's groups (home feed). */
 export class FeedRoom extends LiveRoom {
-	constructor(onEvent: (event: RoomEvent) => void) {
-		super('/api/feed/ws', onEvent);
+	constructor(onEvent: (event: RoomEvent) => void, onOpen?: () => void) {
+		super('/api/feed/ws', onEvent, onOpen);
 	}
 }

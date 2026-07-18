@@ -91,8 +91,25 @@
 	}
 
 	function connectRoom() {
-		room = new GroupRoom(groupId, handleEvent);
+		room = new GroupRoom(groupId, handleEvent, refresh);
 		room.connect();
+	}
+
+	// Re-fetch a fresh snapshot whenever the socket (re)connects, reconciling any
+	// live events missed during the gap before the first subscription or while a
+	// dropped connection was reconnecting. Leaves the loading state untouched so
+	// this runs invisibly in the background.
+	async function refresh() {
+		try {
+			const [ann, killed] = await Promise.all([
+				api.announcements(groupId),
+				api.killedCreatures()
+			]);
+			announcements = ann;
+			killedIds = killed;
+		} catch {
+			// Keep the current view; the next event or reconnect will reconcile.
+		}
 	}
 
 	function handleEvent(event: RoomEvent) {

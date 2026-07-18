@@ -68,15 +68,23 @@ func (h *Hub) Run(ctx context.Context) {
 			close(c.send)
 			h.mu.Unlock()
 		case b := <-h.broadcast:
+			var slow []*Client
 			h.mu.RLock()
 			for c := range h.rooms[b.groupID] {
 				select {
 				case c.send <- b.data:
 				default:
-					// Drop clients that cannot keep up; they will be cleaned up on write failure.
+					// The client's buffer is full. Rather than silently dropping the
+					// event (which would leave its cards permanently stale, since the
+					// UI reconciles only on a fresh connection), disconnect it so it
+					// reconnects and re-fetches a current snapshot.
+					slow = append(slow, c)
 				}
 			}
 			h.mu.RUnlock()
+			for _, c := range slow {
+				c.drop()
+			}
 		}
 	}
 }
