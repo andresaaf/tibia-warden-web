@@ -138,12 +138,11 @@
 	.player {
 		font-weight: 550;
 	}
-	.num {
+	/* Two classes (0,2,0) so this beats the base `.scores td`/`.scores th`
+	   (0,1,1) rule and right-aligns both header and body numeric cells. */
+	.scores .num {
 		text-align: right;
 		font-variant-numeric: tabular-nums;
-	}
-	th.num {
-		text-align: right;
 	}
 	.charm {
 		color: var(--accent);
