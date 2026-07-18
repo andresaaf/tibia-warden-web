@@ -24,9 +24,9 @@ and coordinate live reveal announcements within groups.
 ## Project layout
 
 ```
-backend/    Go API, WebSocket hub, embedded migrations, seeder
+backend/    Go API, WebSocket hub, embedded migrations, TibiaWiki creature sync, seeder
 frontend/   SvelteKit SPA
-data/        creature data files (creatures.sample.json provided)
+data/        sample creature data for optional manual seeding (creatures.sample.json)
 Dockerfile   multi-stage build (frontend + backend -> one image)
 docker-compose.yml
 .env.example
@@ -51,24 +51,24 @@ docker-compose.yml
    (routed through the Vite proxy so the session cookie stays same-origin) and add
    that URL to your Discord app's redirects.
 
-2. Start Postgres (any local instance) and point `DATABASE_URL` at it.
-
-3. Seed the creature list (migrations run automatically):
+2. Start Postgres (any local instance) and point `DATABASE_URL` at it, e.g.:
 
    ```sh
-   cd backend
    $env:DATABASE_URL="postgres://tww:tww@localhost:5432/tibia_warden?sslmode=disable"
-   go run ./cmd/seed -file ../data/creatures.sample.json
    ```
 
-4. Run the backend (loads env vars from your shell):
+3. Run the backend (loads env vars from your shell):
 
    ```sh
    cd backend
    go run ./cmd/server
    ```
 
-5. Run the frontend:
+   Migrations run automatically on startup, and the creature list is synced from
+   the TibiaWiki API on each start — no manual seeding required (see
+   [Creature data](#creature-data)).
+
+4. Run the frontend:
 
    ```sh
    cd frontend
@@ -79,15 +79,27 @@ docker-compose.yml
    Open http://localhost:5173. The Vite dev server proxies `/api` (including the
    WebSocket) to the Go backend on `:8080`.
 
-## Seeding your own creature data
+## Creature data
 
-Provide a JSON array or a CSV with a header row:
+By default the creature list is **synced automatically from the TibiaWiki API**
+on every server start. The source is configured via `CREATURES_API_URL`
+(default `https://tibiawiki.dev/api/creatures?expand=true`); the sync imports
+creatures that have a bestiary difficulty and a Common/Uncommon occurrence, sets
+their images, and safely prunes ones that no longer qualify (keeping any with
+kill history or announcements). Restart the server to pick up game updates.
+
+### Seeding a custom list instead (optional)
+
+To manage the list yourself instead of the API sync, set `CREATURES_API_URL=`
+(empty) to disable the sync, then load creatures with the seeder from a JSON
+array or a CSV with a header row:
 
 - **JSON:** `[{ "name": "Dragon", "difficulty": "Medium", "imageUrl": "" }, ...]`
 - **CSV:** columns `name,difficulty` (optional `imageUrl`/`image`).
 
 Valid difficulties: `Harmless, Trivial, Easy, Medium, Hard, Challenging`
-(case-insensitive). Re-running the seeder upserts by creature name.
+(case-insensitive). Re-running the seeder upserts by creature name. A small
+`data/creatures.sample.json` is included as a starting point.
 
 ```sh
 go run ./cmd/seed -file ../data/creatures.json
@@ -116,9 +128,11 @@ On your Linux server:
 
    Caddy obtains the certificate on first start and proxies HTTPS to the app
    (REST, SPA, and WebSocket). The app itself is not exposed on the host.
-   Migrations run automatically on startup.
+   Migrations run automatically on startup, and the creature list is synced from
+   the TibiaWiki API — no seeding step required.
 
-3. Seed creatures inside the running container:
+   To manage creatures manually instead (see [Creature data](#creature-data)),
+   disable the sync with `CREATURES_API_URL=` and seed inside the container:
 
    ```sh
    docker compose exec app /app/seed -file /app/data/creatures.json
