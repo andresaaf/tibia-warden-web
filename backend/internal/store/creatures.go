@@ -106,6 +106,60 @@ func (s *CreatureStore) KilledIDs(ctx context.Context, userID int64) ([]int64, e
 	return ids, rows.Err()
 }
 
+// Highscores returns the statistics leaderboard: every user who has killed or
+// announced at least one Warden, with their total kills, the Charm Points those
+// kills are worth (weighted by each creature's Bestiary difficulty), and how
+// many Wardens they've announced. A single multi-group broadcast counts as one
+// announced Warden (its sibling rows share a broadcast_id). Ordering is a
+// sensible default; the client re-sorts on demand.
+func (s *CreatureStore) Highscores(ctx context.Context) ([]models.HighscoreEntry, error) {
+	rows, err := s.pool.Query(ctx, `
+		SELECT u.id,
+		       COALESCE(NULLIF(u.character_name, ''), u.discord_username) AS name,
+		       COALESCE(k.kills, 0)::int         AS kills,
+		       COALESCE(k.charm_points, 0)::int  AS charm_points,
+		       COALESCE(a.announced, 0)::int     AS announced
+		FROM users u
+		LEFT JOIN (
+			SELECT wk.user_id,
+			       COUNT(*) AS kills,
+			       SUM(CASE c.difficulty
+			             WHEN 'Harmless'    THEN 1
+			             WHEN 'Trivial'     THEN 2
+			             WHEN 'Easy'        THEN 5
+			             WHEN 'Medium'      THEN 10
+			             WHEN 'Hard'        THEN 15
+			             WHEN 'Challenging' THEN 30
+			             ELSE 0 END) AS charm_points
+			FROM warden_kills wk
+			JOIN creatures c ON c.id = wk.creature_id
+			GROUP BY wk.user_id
+		) k ON k.user_id = u.id
+		LEFT JOIN (
+			SELECT author_id,
+			       COUNT(DISTINCT COALESCE(broadcast_id, 'id:' || id)) AS announced
+			FROM announcements
+			GROUP BY author_id
+		) a ON a.author_id = u.id
+		WHERE COALESCE(k.kills, 0) > 0 OR COALESCE(a.announced, 0) > 0
+		ORDER BY kills DESC, charm_points DESC, announced DESC, name ASC
+		LIMIT 200`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var out []models.HighscoreEntry
+	for rows.Next() {
+		var e models.HighscoreEntry
+		if err := rows.Scan(&e.UserID, &e.CharacterName, &e.Kills, &e.CharmPoints, &e.Announced); err != nil {
+			return nil, err
+		}
+		out = append(out, e)
+	}
+	return out, rows.Err()
+}
+
 // PruneExcept deletes creatures whose name is not in keepNames, but only when
 // they have no kill history and are not referenced by any announcement. Returns
 // the number of creatures deleted.

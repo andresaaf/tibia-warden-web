@@ -4,6 +4,7 @@ import type {
 	DiscordRole,
 	Group,
 	GroupMember,
+	HighscoreEntry,
 	InviteCode,
 	ResponseStatus,
 	User
@@ -60,6 +61,9 @@ export const api = {
 	markKilled: (creatureId: number) => request<void>('PUT', `/api/wardens/${creatureId}`),
 	unmarkKilled: (creatureId: number) => request<void>('DELETE', `/api/wardens/${creatureId}`),
 	killedCreatures: () => request<number[]>('GET', '/api/wardens'),
+
+	// Statistics
+	highscores: () => request<HighscoreEntry[]>('GET', '/api/highscores'),
 
 	// Groups
 	listGroups: (scope: 'public' | 'mine', search = '') => {
