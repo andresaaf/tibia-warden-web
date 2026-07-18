@@ -19,7 +19,8 @@
 	const navItems = [
 		{ href: '/', label: 'Home' },
 		{ href: '/groups', label: 'Groups' },
-		{ href: '/wardens', label: 'Warden List' }
+		{ href: '/wardens', label: 'Warden List' },
+		{ href: '/statistics', label: 'Statistics' }
 	];
 
 	function isActive(pathname: string, href: string): boolean {

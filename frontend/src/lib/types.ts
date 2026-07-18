@@ -93,6 +93,14 @@ export interface AnnouncementClaim {
 	characterName: string;
 }
 
+export interface HighscoreEntry {
+	userId: number;
+	characterName: string;
+	kills: number;
+	charmPoints: number;
+	announced: number;
+}
+
 export interface Announcement {
 	id: number;
 	groupId: number;

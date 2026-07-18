@@ -69,6 +69,9 @@ func NewRouter(cfg *config.Config, stores *store.Stores, oauth *auth.DiscordProv
 			r.Put("/wardens/{creatureID}", s.handleMarkKilled)
 			r.Delete("/wardens/{creatureID}", s.handleUnmarkKilled)
 
+			// Statistics leaderboard (global across all users).
+			r.Get("/highscores", s.handleListHighscores)
+
 			// Groups.
 			r.Get("/groups", s.handleListGroups)
 			r.Post("/groups", s.handleCreateGroup)
