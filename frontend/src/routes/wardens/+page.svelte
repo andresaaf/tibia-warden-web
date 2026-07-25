@@ -5,9 +5,13 @@
 	import { currentUser, authLoading } from '$lib/stores';
 	import { DIFFICULTIES, type Creature, type Difficulty } from '$lib/types';
 
+	type StatusFilter = 'all' | 'remaining' | 'found';
+
 	let creatures = $state<Creature[]>([]);
+	let displayed = $state<Creature[]>([]);
 	let search = $state('');
 	let activeDifficulties = $state<Set<Difficulty>>(new Set());
+	let statusFilter = $state<StatusFilter>('all');
 	let loading = $state(true);
 	let error = $state('');
 	let debounce: ReturnType<typeof setTimeout>;
@@ -25,11 +29,25 @@
 		error = '';
 		try {
 			creatures = await api.creatures(search.trim(), [...activeDifficulties]);
+			applyStatusFilter();
 		} catch {
 			error = 'Failed to load the warden list.';
 		} finally {
 			loading = false;
 		}
+	}
+
+	/** Snapshot the status filter over the loaded set. Called on load and when the
+	 * status filter changes — not on every kill toggle, so items stay put until refilter. */
+	function applyStatusFilter() {
+		displayed = creatures.filter((c) =>
+			statusFilter === 'all' ? true : statusFilter === 'remaining' ? !c.killed : c.killed
+		);
+	}
+
+	function setStatusFilter(next: StatusFilter) {
+		statusFilter = next;
+		applyStatusFilter();
 	}
 
 	function onSearchInput() {
@@ -48,17 +66,17 @@
 	async function toggleKilled(creature: Creature) {
 		const previous = creature.killed;
 		creature.killed = !previous;
-		creatures = [...creatures];
+		displayed = [...displayed];
 		try {
 			if (creature.killed) await api.markKilled(creature.id);
 			else await api.unmarkKilled(creature.id);
 		} catch {
 			creature.killed = previous;
-			creatures = [...creatures];
+			displayed = [...displayed];
 		}
 	}
 
-	let killedCount = $derived(creatures.filter((c) => c.killed).length);
+	let killedCount = $derived(displayed.filter((c) => c.killed).length);
 </script>
 
 <div class="container stack">
@@ -66,7 +84,7 @@
 		<div>
 			<h1>Warden List</h1>
 			<p class="muted">
-				{killedCount} of {creatures.length} shown creatures marked
+				{killedCount} of {displayed.length} shown creatures marked
 			</p>
 		</div>
 	</div>
@@ -78,17 +96,45 @@
 			bind:value={search}
 			oninput={onSearchInput}
 		/>
-		<div class="chips">
-			{#each DIFFICULTIES as d}
+		<div class="filters">
+			<div class="chips">
+				{#each DIFFICULTIES as d}
+					<button
+						class="chip"
+						class:active={activeDifficulties.has(d)}
+						data-diff={d}
+						onclick={() => toggleDifficulty(d)}
+					>
+						{d}
+					</button>
+				{/each}
+			</div>
+			<div class="segmented" role="group" aria-label="Filter by status">
 				<button
-					class="chip"
-					class:active={activeDifficulties.has(d)}
-					data-diff={d}
-					onclick={() => toggleDifficulty(d)}
+					class="segment"
+					class:active={statusFilter === 'all'}
+					aria-pressed={statusFilter === 'all'}
+					onclick={() => setStatusFilter('all')}
 				>
-					{d}
+					All
 				</button>
-			{/each}
+				<button
+					class="segment"
+					class:active={statusFilter === 'remaining'}
+					aria-pressed={statusFilter === 'remaining'}
+					onclick={() => setStatusFilter('remaining')}
+				>
+					Remaining
+				</button>
+				<button
+					class="segment"
+					class:active={statusFilter === 'found'}
+					aria-pressed={statusFilter === 'found'}
+					onclick={() => setStatusFilter('found')}
+				>
+					Found
+				</button>
+			</div>
 		</div>
 	</div>
 
@@ -96,11 +142,11 @@
 		<p class="error">{error}</p>
 	{:else if loading}
 		<p class="muted">Loading…</p>
-	{:else if creatures.length === 0}
+	{:else if displayed.length === 0}
 		<p class="muted">No creatures match your filters.</p>
 	{:else}
 		<div class="grid">
-			{#each creatures as creature (creature.id)}
+			{#each displayed as creature (creature.id)}
 				<button
 					class="creature"
 					class:killed={creature.killed}
@@ -125,10 +171,39 @@
 </div>
 
 <style>
+	.filters {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.6rem;
+	}
 	.chips {
 		display: flex;
 		flex-wrap: wrap;
 		gap: 0.4rem;
+	}
+	.segmented {
+		display: inline-flex;
+		flex: none;
+		background: var(--bg-elev-2);
+		border: 1px solid var(--border);
+		border-radius: 999px;
+		padding: 2px;
+	}
+	.segment {
+		border: none;
+		background: transparent;
+		color: var(--text-dim);
+		border-radius: 999px;
+		padding: 0.3rem 0.8rem;
+		font-weight: 550;
+		font-size: 0.85rem;
+	}
+	.segment.active {
+		color: var(--text);
+		background: color-mix(in srgb, var(--accent) 22%, var(--bg-elev-2));
+		box-shadow: inset 0 0 0 1px var(--accent);
 	}
 	.chip {
 		background: var(--bg-elev-2);
