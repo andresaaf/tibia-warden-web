@@ -190,9 +190,9 @@ func (b *Bot) handleComponent(s *discordgo.Session, i *discordgo.InteractionCrea
 			}
 		}
 		if current == action {
-			_ = b.stores.Announcements.ClearResponse(ctx, annID, u.ID)
+			affected, _ = b.stores.Announcements.ClearResponse(ctx, annID, u.ID)
 		} else {
-			_ = b.stores.Announcements.SetResponse(ctx, annID, u.ID, action)
+			affected, _ = b.stores.Announcements.SetResponse(ctx, annID, u.ID, action)
 		}
 	case "killed":
 		role, _ := b.stores.Groups.Role(ctx, ann.GroupID, u.ID)
@@ -231,14 +231,17 @@ func (b *Bot) handleComponent(s *discordgo.Session, i *discordgo.InteractionCrea
 		},
 	})
 
-	if action == "killed" {
-		for _, id := range affected {
-			if id != annID {
-				if sib, sErr := b.stores.Announcements.GetByID(ctx, id); sErr == nil {
-					b.hub.Broadcast(sib.GroupID, ws.EventAnnouncementUpdated, sib)
-					b.SyncAnnouncement(ctx, sib)
-				}
+	// Propagate to any affected broadcast siblings (kills, and responses that
+	// cascade to groups where the user had already reacted). The primary was
+	// already pushed above via the interaction update and hub broadcast.
+	for _, id := range affected {
+		if id != annID {
+			if sib, sErr := b.stores.Announcements.GetByID(ctx, id); sErr == nil {
+				b.hub.Broadcast(sib.GroupID, ws.EventAnnouncementUpdated, sib)
+				b.SyncAnnouncement(ctx, sib)
 			}
+		}
+		if action == "killed" {
 			b.OnAnnouncementKilled(ctx, id)
 		}
 	}

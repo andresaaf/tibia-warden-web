@@ -182,23 +182,111 @@ func (s *AnnouncementStore) hydrate(ctx context.Context, a *models.Announcement)
 	return claimRows.Err()
 }
 
-// SetResponse records or updates a user's coming/ready response.
-func (s *AnnouncementStore) SetResponse(ctx context.Context, announcementID, userID int64, status string) error {
-	_, err := s.pool.Exec(ctx, `
+// SetResponse records or updates a user's coming/ready response and propagates
+// the same status to sibling announcements from the same multi-group broadcast
+// where the user has already responded, so one person's state stays in sync
+// across groups. It returns the IDs of all announcements that changed (primary
+// first). Siblings the user never reacted to are left untouched.
+func (s *AnnouncementStore) SetResponse(ctx context.Context, announcementID, userID int64, status string) ([]int64, error) {
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback(ctx)
+
+	if _, err := tx.Exec(ctx, `
 		INSERT INTO announcement_responses (announcement_id, user_id, status, updated_at)
 		VALUES ($1, $2, $3, now())
 		ON CONFLICT (announcement_id, user_id) DO UPDATE
 			SET status = EXCLUDED.status, updated_at = now()`,
-		announcementID, userID, status)
-	return err
+		announcementID, userID, status); err != nil {
+		return nil, err
+	}
+
+	affected, err := propagateToSiblings(ctx, tx, announcementID, `
+		UPDATE announcement_responses r
+		SET status = $3, updated_at = now()
+		FROM announcements a
+		WHERE r.announcement_id = a.id
+		  AND a.broadcast_id = $1
+		  AND a.id <> $2
+		  AND r.user_id = $4
+		RETURNING r.announcement_id`, status, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return nil, err
+	}
+	return affected, nil
 }
 
-// ClearResponse removes a user's response from an announcement.
-func (s *AnnouncementStore) ClearResponse(ctx context.Context, announcementID, userID int64) error {
-	_, err := s.pool.Exec(ctx, `
+// ClearResponse removes a user's response from an announcement and, for a
+// multi-group broadcast, from any sibling announcements where they had also
+// responded. Returns the IDs of all announcements that changed (primary first).
+func (s *AnnouncementStore) ClearResponse(ctx context.Context, announcementID, userID int64) ([]int64, error) {
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback(ctx)
+
+	if _, err := tx.Exec(ctx, `
 		DELETE FROM announcement_responses WHERE announcement_id = $1 AND user_id = $2`,
-		announcementID, userID)
-	return err
+		announcementID, userID); err != nil {
+		return nil, err
+	}
+
+	affected, err := propagateToSiblings(ctx, tx, announcementID, `
+		DELETE FROM announcement_responses r
+		USING announcements a
+		WHERE r.announcement_id = a.id
+		  AND a.broadcast_id = $1
+		  AND a.id <> $2
+		  AND r.user_id = $3
+		RETURNING r.announcement_id`, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return nil, err
+	}
+	return affected, nil
+}
+
+// propagateToSiblings runs a response mutation against the broadcast siblings of
+// announcementID and returns [announcementID, ...changed sibling IDs]. The query
+// receives the broadcast id as $1 and the primary announcement id as $2, with any
+// caller-supplied values following as $3, $4, …; it must RETURN the affected
+// announcement_id. When the primary is not part of a broadcast, only the primary
+// id is returned.
+func propagateToSiblings(ctx context.Context, tx pgx.Tx, announcementID int64, query string, args ...any) ([]int64, error) {
+	var broadcastID *string
+	if err := tx.QueryRow(ctx,
+		`SELECT broadcast_id FROM announcements WHERE id = $1`, announcementID).Scan(&broadcastID); err != nil {
+		return nil, err
+	}
+
+	affected := []int64{announcementID}
+	if broadcastID == nil || *broadcastID == "" {
+		return affected, nil
+	}
+
+	rows, err := tx.Query(ctx, query, append([]any{*broadcastID, announcementID}, args...)...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var id int64
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		affected = append(affected, id)
+	}
+	return affected, rows.Err()
 }
 
 // MarkKilledWithSiblings marks an announcement killed (if open) and cascades the

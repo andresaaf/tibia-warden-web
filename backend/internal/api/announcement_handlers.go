@@ -185,16 +185,18 @@ func (s *Server) handleSetResponse(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	groupID, err := s.authorizeAnnouncement(r, announcementID)
-	if err != nil {
+	if _, err := s.authorizeAnnouncement(r, announcementID); err != nil {
 		writeMembershipError(w, err)
 		return
 	}
-	if err := s.stores.Announcements.SetResponse(r.Context(), announcementID, userID(r), body.Status); err != nil {
+	affected, err := s.stores.Announcements.SetResponse(r.Context(), announcementID, userID(r), body.Status)
+	if err != nil {
 		writeError(w, http.StatusInternalServerError, "failed to save response")
 		return
 	}
-	s.broadcastAnnouncement(r, groupID, announcementID)
+	for _, id := range affected {
+		s.broadcastAnnouncement(r, id)
+	}
 	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 }
 
@@ -204,16 +206,18 @@ func (s *Server) handleClearResponse(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	groupID, err := s.authorizeAnnouncement(r, announcementID)
-	if err != nil {
+	if _, err := s.authorizeAnnouncement(r, announcementID); err != nil {
 		writeMembershipError(w, err)
 		return
 	}
-	if err := s.stores.Announcements.ClearResponse(r.Context(), announcementID, userID(r)); err != nil {
+	affected, err := s.stores.Announcements.ClearResponse(r.Context(), announcementID, userID(r))
+	if err != nil {
 		writeError(w, http.StatusInternalServerError, "failed to clear response")
 		return
 	}
-	s.broadcastAnnouncement(r, groupID, announcementID)
+	for _, id := range affected {
+		s.broadcastAnnouncement(r, id)
+	}
 	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 }
 
@@ -271,8 +275,7 @@ func (s *Server) handleClaimAnnouncement(w http.ResponseWriter, r *http.Request)
 	if !ok {
 		return
 	}
-	groupID, err := s.authorizeAnnouncement(r, announcementID)
-	if err != nil {
+	if _, err := s.authorizeAnnouncement(r, announcementID); err != nil {
 		writeMembershipError(w, err)
 		return
 	}
@@ -284,7 +287,7 @@ func (s *Server) handleClaimAnnouncement(w http.ResponseWriter, r *http.Request)
 		writeError(w, http.StatusInternalServerError, "failed to claim")
 		return
 	}
-	s.broadcastAnnouncement(r, groupID, announcementID)
+	s.broadcastAnnouncement(r, announcementID)
 	writeJSON(w, http.StatusOK, map[string]string{"status": "claimed"})
 }
 
@@ -301,13 +304,13 @@ func (s *Server) authorizeAnnouncement(r *http.Request, announcementID int64) (i
 	return groupID, nil
 }
 
-// broadcastAnnouncement reloads an announcement and pushes it to the group room
+// broadcastAnnouncement reloads an announcement and pushes it to its group room
 // and the linked Discord message.
-func (s *Server) broadcastAnnouncement(r *http.Request, groupID, announcementID int64) {
+func (s *Server) broadcastAnnouncement(r *http.Request, announcementID int64) {
 	announcement, err := s.stores.Announcements.GetByID(r.Context(), announcementID)
 	if err != nil {
 		return
 	}
-	s.hub.Broadcast(groupID, ws.EventAnnouncementUpdated, announcement)
+	s.hub.Broadcast(announcement.GroupID, ws.EventAnnouncementUpdated, announcement)
 	s.bot.SyncAnnouncement(r.Context(), announcement)
 }
