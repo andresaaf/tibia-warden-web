@@ -181,7 +181,22 @@ func (s *GroupStore) Members(ctx context.Context, groupID int64) ([]models.Group
 			(
 				SELECT COUNT(DISTINCT a.id) FROM announcements a
 				WHERE a.group_id = $1 AND a.author_id = gm.user_id
-			) AS announced
+			) AS announced,
+			(
+				SELECT COALESCE(SUM(cw.points), 0) FROM announcements a
+				JOIN creatures cr ON cr.id = a.creature_id
+				LEFT JOIN charm_weights cw ON cw.difficulty = cr.difficulty
+				WHERE a.group_id = $1 AND a.status = 'killed' AND (
+					EXISTS (SELECT 1 FROM announcement_claims c WHERE c.announcement_id = a.id AND c.user_id = gm.user_id)
+					OR EXISTS (SELECT 1 FROM announcement_responses r WHERE r.announcement_id = a.id AND r.user_id = gm.user_id AND r.status = 'ready')
+				)
+			) AS attended_charm,
+			(
+				SELECT COALESCE(SUM(cw.points), 0) FROM announcements a
+				JOIN creatures cr ON cr.id = a.creature_id
+				LEFT JOIN charm_weights cw ON cw.difficulty = cr.difficulty
+				WHERE a.group_id = $1 AND a.author_id = gm.user_id
+			) AS announced_charm
 		FROM group_members gm
 		JOIN users u ON u.id = gm.user_id
 		WHERE gm.group_id = $1
@@ -196,7 +211,8 @@ func (s *GroupStore) Members(ctx context.Context, groupID int64) ([]models.Group
 	var out []models.GroupMember
 	for rows.Next() {
 		var m models.GroupMember
-		if err := rows.Scan(&m.UserID, &m.CharacterName, &m.DiscordName, &m.Role, &m.JoinedAt, &m.Attended, &m.Announced); err != nil {
+		if err := rows.Scan(&m.UserID, &m.CharacterName, &m.DiscordName, &m.Role, &m.JoinedAt,
+			&m.Attended, &m.Announced, &m.AttendedCharm, &m.AnnouncedCharm); err != nil {
 			return nil, err
 		}
 		out = append(out, m)

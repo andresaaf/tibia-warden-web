@@ -123,16 +123,10 @@ func (s *CreatureStore) Highscores(ctx context.Context) ([]models.HighscoreEntry
 		LEFT JOIN (
 			SELECT wk.user_id,
 			       COUNT(*) AS kills,
-			       SUM(CASE c.difficulty
-			             WHEN 'Harmless'    THEN 1
-			             WHEN 'Trivial'     THEN 2
-			             WHEN 'Easy'        THEN 5
-			             WHEN 'Medium'      THEN 10
-			             WHEN 'Hard'        THEN 15
-			             WHEN 'Challenging' THEN 30
-			             ELSE 0 END) AS charm_points
+			       SUM(COALESCE(cw.points, 0)) AS charm_points
 			FROM warden_kills wk
 			JOIN creatures c ON c.id = wk.creature_id
+			LEFT JOIN charm_weights cw ON cw.difficulty = c.difficulty
 			GROUP BY wk.user_id
 		) k ON k.user_id = u.id
 		LEFT JOIN (

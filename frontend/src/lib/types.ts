@@ -68,6 +68,9 @@ export interface GroupMember {
 	attended: number;
 	/** Announcements in this group the member authored themselves. */
 	announced: number;
+	/** Charm-weighted equivalents of attended/announced (sum of each Warden's charm value). */
+	attendedCharm: number;
+	announcedCharm: number;
 }
 
 export interface InviteCode {
@@ -111,6 +114,9 @@ export interface Announcement {
 	creatureId: number;
 	creatureName: string;
 	creatureImageUrl?: string;
+	difficulty: Difficulty;
+	/** Difficulty-weighted charm value of this Warden. */
+	charmPoints: number;
 	authorId: number;
 	authorName: string;
 	location: string;

@@ -95,6 +95,10 @@ type GroupMember struct {
 	// member authored themselves. The frontend renders Attended/Announced.
 	Attended  int `json:"attended"`
 	Announced int `json:"announced"`
+	// Charm-weighted equivalents of Attended/Announced (sum of each Warden's
+	// charm value) for the roster's Count/Charm toggle.
+	AttendedCharm  int `json:"attendedCharm"`
+	AnnouncedCharm int `json:"announcedCharm"`
 }
 
 type InviteCode struct {
@@ -117,6 +121,10 @@ type Announcement struct {
 	CreatureID       int64                  `json:"creatureId"`
 	CreatureName     string                 `json:"creatureName"`
 	CreatureImageURL string                 `json:"creatureImageUrl,omitempty"`
+	Difficulty       string                 `json:"difficulty"`
+	// CharmPoints is the difficulty-weighted charm value of this Warden, derived
+	// from charm_weights. Surfaced for display and future pay-per-charm pricing.
+	CharmPoints int `json:"charmPoints"`
 	AuthorID         int64                  `json:"authorId"`
 	AuthorName       string                 `json:"authorName"`
 	Location         string                 `json:"location"`

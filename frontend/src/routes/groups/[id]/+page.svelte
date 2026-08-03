@@ -30,6 +30,7 @@
 
 	let activeTab = $state<'feed' | 'members' | 'settings'>('feed');
 	let memberQuery = $state('');
+	let rosterMode = $state<'count' | 'charm'>('count');
 	let inviteMaxUses = $state(1);
 	let discordCode = $state('');
 	let discordBusy = $state(false);
@@ -300,11 +301,18 @@
 		return members.filter((m) => (m.characterName || m.discordName || '').toLowerCase().includes(q));
 	});
 
-	// Share ratio = killed announcements the member attended (claimed or reacted
-	// 'ready') over how many they announced themselves, within this group.
-	// Undefined when they've announced nothing.
+	// Roster metrics, scoped to this group. In 'count' mode Attended/Announced are
+	// counts of Wardens; in 'charm' mode they are charm-weighted sums. Share is
+	// attended ÷ announced either way, and '—' when nothing was announced.
+	function attended(m: GroupMember): number {
+		return rosterMode === 'charm' ? m.attendedCharm : m.attended;
+	}
+	function announced(m: GroupMember): number {
+		return rosterMode === 'charm' ? m.announcedCharm : m.announced;
+	}
 	function shareLabel(m: GroupMember): string {
-		return m.announced ? `${(m.attended / m.announced).toFixed(1)}×` : '—';
+		const ann = announced(m);
+		return ann ? `${(attended(m) / ann).toFixed(1)}×` : '—';
 	}
 
 	async function setRole(userId: number, role: string) {
@@ -509,19 +517,39 @@
 					</div>
 				{/if}
 
-				<input
-					class="member-search"
-					type="text"
-					placeholder="Search members…"
-					bind:value={memberQuery}
-					aria-label="Search members"
-				/>
+				<div class="roster-controls">
+					<input
+						class="member-search"
+						type="text"
+						placeholder="Search members…"
+						bind:value={memberQuery}
+						aria-label="Search members"
+					/>
+					<div class="mode-toggle" role="group" aria-label="Roster metric">
+						<button
+							class="mode-btn"
+							class:active={rosterMode === 'count'}
+							onclick={() => (rosterMode = 'count')}
+						>
+							Count
+						</button>
+						<button
+							class="mode-btn"
+							class:active={rosterMode === 'charm'}
+							onclick={() => (rosterMode = 'charm')}
+						>
+							Charm
+						</button>
+					</div>
+				</div>
 
 				<div class="roster" class:manager={isManager}>
 					<div class="roster-head">
-						<span>Member</span>
-						<span class="num" title="Warden kills they attended (claimed or reacted Ready) in this group">Attended</span>
-						<span class="num" title="Announcements they posted in this group">Announced</span>
+						<span
+							>Member{#if rosterMode === 'charm'}<span class="mode-hint"> · charm points</span>{/if}</span
+						>
+						<span class="num" title={rosterMode === 'charm' ? 'Charm points of Wardens they attended (claimed or reacted Ready) in this group' : 'Warden kills they attended (claimed or reacted Ready) in this group'}>Attended</span>
+						<span class="num" title={rosterMode === 'charm' ? 'Charm points of Wardens they announced in this group' : 'Announcements they posted in this group'}>Announced</span>
 						<span class="num" title="Attended ÷ announced, in this group">Share</span>
 						{#if isManager}<span class="actions-col"></span>{/if}
 					</div>
@@ -531,9 +559,9 @@
 								<strong>{m.characterName || m.discordName}</strong>
 								{#if m.role !== 'member'}<span class="badge">{m.role}</span>{/if}
 							</div>
-							<span class="num">{m.attended}</span>
-							<span class="num">{m.announced}</span>
-							<span class="num share" class:none={!m.announced}>{shareLabel(m)}</span>
+							<span class="num">{attended(m)}</span>
+							<span class="num">{announced(m)}</span>
+							<span class="num share" class:none={!announced(m)}>{shareLabel(m)}</span>
 							{#if isManager}
 								<div class="member-actions">
 									{#if m.role !== 'owner'}
@@ -733,6 +761,8 @@
 						<div>
 							<div class="row" style="gap: 0.5rem">
 								<strong class="creature-name">{a.creatureName}</strong>
+								<span class="badge diff" data-diff={a.difficulty}>{a.difficulty}</span>
+								<span class="badge charm" title="Charm points for this Warden">★ {a.charmPoints}</span>
 								{#if killedIds.includes(a.creatureId)}
 									<span class="badge mine" title="You've already killed this Echo Warden">✓ In your list</span>
 								{/if}
@@ -879,8 +909,45 @@
 		background: var(--danger);
 		color: #fff;
 	}
-	.member-search {
+	.roster-controls {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
 		margin-top: 0.25rem;
+	}
+	.member-search {
+		flex: 1;
+		min-width: 0;
+	}
+	.mode-toggle {
+		display: flex;
+		flex: none;
+		border: 1px solid var(--border);
+		border-radius: 8px;
+		overflow: hidden;
+	}
+	.mode-btn {
+		background: var(--bg-elev-2);
+		border: none;
+		color: var(--text-dim);
+		padding: 0.4rem 0.7rem;
+		font-size: 0.82rem;
+		font-weight: 600;
+	}
+	.mode-btn.active {
+		background: var(--accent);
+		color: #1a1205;
+	}
+	.mode-hint {
+		font-weight: 400;
+		text-transform: none;
+		letter-spacing: 0;
+		color: var(--accent);
+	}
+	.charm {
+		color: var(--accent);
+		border-color: var(--accent);
+		white-space: nowrap;
 	}
 	.roster {
 		display: flex;

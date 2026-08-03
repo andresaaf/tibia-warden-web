@@ -72,6 +72,8 @@
 		<div class="head-text">
 			<div class="row" style="gap: 0.5rem; flex-wrap: wrap">
 				<strong class="creature-name">{a.creatureName}</strong>
+				<span class="badge diff" data-diff={a.difficulty}>{a.difficulty}</span>
+				<span class="badge charm" title="Charm points for this Warden">★ {a.charmPoints}</span>
 				{#if a.status === 'killed'}
 					<span class="badge status-killed">Killed</span>
 				{:else}
@@ -176,6 +178,35 @@
 		border-color: var(--success);
 		color: var(--success);
 		background: color-mix(in srgb, var(--success) 15%, var(--bg-elev-2));
+	}
+	.charm {
+		color: var(--accent);
+		border-color: var(--accent);
+		white-space: nowrap;
+	}
+	.diff[data-diff='Harmless'] {
+		color: var(--diff-harmless);
+		border-color: var(--diff-harmless);
+	}
+	.diff[data-diff='Trivial'] {
+		color: var(--diff-trivial);
+		border-color: var(--diff-trivial);
+	}
+	.diff[data-diff='Easy'] {
+		color: var(--diff-easy);
+		border-color: var(--diff-easy);
+	}
+	.diff[data-diff='Medium'] {
+		color: var(--diff-medium);
+		border-color: var(--diff-medium);
+	}
+	.diff[data-diff='Hard'] {
+		color: var(--diff-hard);
+		border-color: var(--diff-hard);
+	}
+	.diff[data-diff='Challenging'] {
+		color: var(--diff-challenging);
+		border-color: var(--diff-challenging);
 	}
 	.status-open {
 		color: var(--accent);

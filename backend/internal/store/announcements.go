@@ -34,13 +34,16 @@ func (s *AnnouncementStore) Create(ctx context.Context, groupID, creatureID, aut
 func (s *AnnouncementStore) GetByID(ctx context.Context, id int64) (*models.Announcement, error) {
 	var a models.Announcement
 	err := s.pool.QueryRow(ctx, `
-		SELECT a.id, a.group_id, a.creature_id, c.name, c.image_url, a.author_id, u.character_name,
+		SELECT a.id, a.group_id, a.creature_id, c.name, c.image_url, c.difficulty, COALESCE(cw.points, 0),
+		       a.author_id, u.character_name,
 		       a.location, a.note, a.gold_cost, a.status, a.killed_at, a.created_at, a.discord_message_id, a.broadcast_id
 		FROM announcements a
 		JOIN creatures c ON c.id = a.creature_id
+		LEFT JOIN charm_weights cw ON cw.difficulty = c.difficulty
 		JOIN users u ON u.id = a.author_id
 		WHERE a.id = $1`, id,
-	).Scan(&a.ID, &a.GroupID, &a.CreatureID, &a.CreatureName, &a.CreatureImageURL, &a.AuthorID, &a.AuthorName,
+	).Scan(&a.ID, &a.GroupID, &a.CreatureID, &a.CreatureName, &a.CreatureImageURL, &a.Difficulty, &a.CharmPoints,
+		&a.AuthorID, &a.AuthorName,
 		&a.Location, &a.Note, &a.GoldCost, &a.Status, &a.KilledAt, &a.CreatedAt, &a.DiscordMessageID, &a.BroadcastID)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, ErrNotFound
@@ -60,10 +63,12 @@ func (s *AnnouncementStore) ListByGroup(ctx context.Context, groupID int64, limi
 		limit = 50
 	}
 	rows, err := s.pool.Query(ctx, `
-		SELECT a.id, a.group_id, a.creature_id, c.name, c.image_url, a.author_id, u.character_name,
+		SELECT a.id, a.group_id, a.creature_id, c.name, c.image_url, c.difficulty, COALESCE(cw.points, 0),
+		       a.author_id, u.character_name,
 		       a.location, a.note, a.gold_cost, a.status, a.killed_at, a.created_at, a.discord_message_id
 		FROM announcements a
 		JOIN creatures c ON c.id = a.creature_id
+		LEFT JOIN charm_weights cw ON cw.difficulty = c.difficulty
 		JOIN users u ON u.id = a.author_id
 		WHERE a.group_id = $1
 		ORDER BY a.created_at DESC
@@ -76,7 +81,8 @@ func (s *AnnouncementStore) ListByGroup(ctx context.Context, groupID int64, limi
 	var out []models.Announcement
 	for rows.Next() {
 		var a models.Announcement
-		if err := rows.Scan(&a.ID, &a.GroupID, &a.CreatureID, &a.CreatureName, &a.CreatureImageURL, &a.AuthorID, &a.AuthorName,
+		if err := rows.Scan(&a.ID, &a.GroupID, &a.CreatureID, &a.CreatureName, &a.CreatureImageURL, &a.Difficulty, &a.CharmPoints,
+			&a.AuthorID, &a.AuthorName,
 			&a.Location, &a.Note, &a.GoldCost, &a.Status, &a.KilledAt, &a.CreatedAt, &a.DiscordMessageID); err != nil {
 			return nil, err
 		}
@@ -100,13 +106,14 @@ func (s *AnnouncementStore) ListForUser(ctx context.Context, userID int64, limit
 		limit = 50
 	}
 	rows, err := s.pool.Query(ctx, `
-		SELECT a.id, a.group_id, g.name, gm.role, a.creature_id, c.name, c.image_url,
+		SELECT a.id, a.group_id, g.name, gm.role, a.creature_id, c.name, c.image_url, c.difficulty, COALESCE(cw.points, 0),
 		       a.author_id, u.character_name, a.location, a.note, a.gold_cost, a.status,
 		       a.killed_at, a.created_at, a.discord_message_id, a.broadcast_id
 		FROM announcements a
 		JOIN groups g ON g.id = a.group_id
 		JOIN group_members gm ON gm.group_id = a.group_id AND gm.user_id = $1
 		JOIN creatures c ON c.id = a.creature_id
+		LEFT JOIN charm_weights cw ON cw.difficulty = c.difficulty
 		JOIN users u ON u.id = a.author_id
 		ORDER BY a.created_at DESC
 		LIMIT $2`, userID, limit)
@@ -119,7 +126,7 @@ func (s *AnnouncementStore) ListForUser(ctx context.Context, userID int64, limit
 	for rows.Next() {
 		var a models.Announcement
 		if err := rows.Scan(&a.ID, &a.GroupID, &a.GroupName, &a.ViewerRole, &a.CreatureID, &a.CreatureName,
-			&a.CreatureImageURL, &a.AuthorID, &a.AuthorName, &a.Location, &a.Note, &a.GoldCost,
+			&a.CreatureImageURL, &a.Difficulty, &a.CharmPoints, &a.AuthorID, &a.AuthorName, &a.Location, &a.Note, &a.GoldCost,
 			&a.Status, &a.KilledAt, &a.CreatedAt, &a.DiscordMessageID, &a.BroadcastID); err != nil {
 			return nil, err
 		}
