@@ -887,6 +887,9 @@
 		flex-direction: column;
 		max-height: 60vh;
 		overflow-y: auto;
+		/* Reserve the scrollbar's width so it never overlaps the action buttons. */
+		scrollbar-gutter: stable;
+		padding-right: 0.35rem;
 	}
 	/* Shared column grid: name | attended | announced | share (+ actions for managers). */
 	.roster-head,
