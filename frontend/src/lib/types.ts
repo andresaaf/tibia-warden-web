@@ -64,6 +64,10 @@ export interface GroupMember {
 	discordName: string;
 	role: Role;
 	joinedAt: string;
+	/** Killed announcements in this group the member claimed or reacted 'ready' to. */
+	attended: number;
+	/** Announcements in this group the member authored themselves. */
+	announced: number;
 }
 
 export interface InviteCode {

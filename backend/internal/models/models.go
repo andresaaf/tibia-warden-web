@@ -90,6 +90,11 @@ type GroupMember struct {
 	DiscordName   string    `json:"discordName"`
 	Role          string    `json:"role"`
 	JoinedAt      time.Time `json:"joinedAt"`
+	// Share ratio inputs, scoped to this group: Attended = killed announcements
+	// the member claimed or reacted 'ready' to; Announced = announcements the
+	// member authored themselves. The frontend renders Attended/Announced.
+	Attended  int `json:"attended"`
+	Announced int `json:"announced"`
 }
 
 type InviteCode struct {

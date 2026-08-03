@@ -170,7 +170,18 @@ func (s *GroupStore) MemberGroupIDs(ctx context.Context, userID int64) ([]int64,
 // Members lists the members of a group with their display names.
 func (s *GroupStore) Members(ctx context.Context, groupID int64) ([]models.GroupMember, error) {
 	rows, err := s.pool.Query(ctx, `
-		SELECT gm.user_id, u.character_name, u.discord_username, gm.role, gm.joined_at
+		SELECT gm.user_id, u.character_name, u.discord_username, gm.role, gm.joined_at,
+			(
+				SELECT COUNT(DISTINCT a.id) FROM announcements a
+				WHERE a.group_id = $1 AND a.status = 'killed' AND (
+					EXISTS (SELECT 1 FROM announcement_claims c WHERE c.announcement_id = a.id AND c.user_id = gm.user_id)
+					OR EXISTS (SELECT 1 FROM announcement_responses r WHERE r.announcement_id = a.id AND r.user_id = gm.user_id AND r.status = 'ready')
+				)
+			) AS attended,
+			(
+				SELECT COUNT(DISTINCT a.id) FROM announcements a
+				WHERE a.group_id = $1 AND a.author_id = gm.user_id
+			) AS announced
 		FROM group_members gm
 		JOIN users u ON u.id = gm.user_id
 		WHERE gm.group_id = $1
@@ -185,7 +196,7 @@ func (s *GroupStore) Members(ctx context.Context, groupID int64) ([]models.Group
 	var out []models.GroupMember
 	for rows.Next() {
 		var m models.GroupMember
-		if err := rows.Scan(&m.UserID, &m.CharacterName, &m.DiscordName, &m.Role, &m.JoinedAt); err != nil {
+		if err := rows.Scan(&m.UserID, &m.CharacterName, &m.DiscordName, &m.Role, &m.JoinedAt, &m.Attended, &m.Announced); err != nil {
 			return nil, err
 		}
 		out = append(out, m)

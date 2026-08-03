@@ -28,7 +28,8 @@
 	let showCreatureList = $state(false);
 	let highlightIndex = $state(0);
 
-	let showAdmin = $state(false);
+	let activeTab = $state<'feed' | 'members' | 'settings'>('feed');
+	let memberQuery = $state('');
 	let inviteMaxUses = $state(1);
 	let discordCode = $state('');
 	let discordBusy = $state(false);
@@ -59,14 +60,16 @@
 		error = '';
 		try {
 			group = await api.getGroup(groupId);
-			const [ann, crt, killed] = await Promise.all([
+			const [ann, crt, killed, mem] = await Promise.all([
 				api.announcements(groupId),
 				api.creatures('', []),
-				api.killedCreatures()
+				api.killedCreatures(),
+				api.members(groupId)
 			]);
 			announcements = ann;
 			creatures = crt;
 			killedIds = killed;
+			members = mem;
 			if (isManager) await loadAdminData();
 			connectRoom();
 		} catch (err) {
@@ -82,9 +85,10 @@
 		}
 	}
 
+	// Invites are manager-only; the roster itself is loaded for everyone in init().
 	async function loadAdminData() {
 		try {
-			[members, invites] = await Promise.all([api.members(groupId), api.invites(groupId)]);
+			invites = await api.invites(groupId);
 		} catch {
 			// non-fatal
 		}
@@ -290,6 +294,19 @@
 			error = err instanceof ApiError ? err.message : 'Failed to delete invite.';
 		}
 	}
+	let filteredMembers = $derived.by(() => {
+		const q = memberQuery.trim().toLowerCase();
+		if (!q) return members;
+		return members.filter((m) => (m.characterName || m.discordName || '').toLowerCase().includes(q));
+	});
+
+	// Share ratio = killed announcements the member attended (claimed or reacted
+	// 'ready') over how many they announced themselves. Undefined with none announced.
+	function ratioLabel(m: GroupMember): string {
+		if (!m.announced) return '—';
+		return `${m.attended} / ${m.announced} · ${(m.attended / m.announced).toFixed(1)}×`;
+	}
+
 	async function setRole(userId: number, role: string) {
 		try {
 			await api.setRole(groupId, userId, role);
@@ -434,35 +451,50 @@
 				{#if group.description}<p class="muted">{group.description}</p>{/if}
 			</div>
 			<div class="row">
-				{#if isManager}
-					<button class="btn btn-sm" onclick={() => (showAdmin = !showAdmin)}>
-						{showAdmin ? 'Hide' : 'Manage'}
-					</button>
-				{/if}
 				{#if group.role !== 'owner'}
 					<button class="btn btn-sm btn-danger" onclick={leave}>Leave</button>
 				{/if}
 			</div>
 		</div>
 
+		<div class="tabs" role="tablist">
+			<button class="tab" class:active={activeTab === 'feed'} onclick={() => (activeTab = 'feed')}>
+				Feed
+			</button>
+			<button class="tab" class:active={activeTab === 'members'} onclick={() => (activeTab = 'members')}>
+				Members <span class="tab-count">{members.length}</span>
+			</button>
+			{#if isManager}
+				<button
+					class="tab"
+					class:active={activeTab === 'settings'}
+					onclick={() => (activeTab = 'settings')}
+				>
+					Settings
+				</button>
+			{/if}
+		</div>
+
 		{#if error}<p class="error">{error}</p>{/if}
 
-		{#if showAdmin && isManager}
-			<div class="card stack admin">
+		{#if activeTab === 'members'}
+			<div class="card stack">
 				<div class="spread">
 					<h3>Members</h3>
-					<div class="row invite-create">
-						<select bind:value={inviteMaxUses} aria-label="Invite uses">
-							<option value={1}>Single use</option>
-							<option value={5}>5 uses</option>
-							<option value={25}>25 uses</option>
-							<option value={0}>Unlimited</option>
-						</select>
-						<button class="btn btn-sm" onclick={createInvite}>+ Create invite</button>
-					</div>
+					{#if isManager}
+						<div class="row invite-create">
+							<select bind:value={inviteMaxUses} aria-label="Invite uses">
+								<option value={1}>Single use</option>
+								<option value={5}>5 uses</option>
+								<option value={25}>25 uses</option>
+								<option value={0}>Unlimited</option>
+							</select>
+							<button class="btn btn-sm" onclick={createInvite}>+ Create invite</button>
+						</div>
+					{/if}
 				</div>
 
-				{#if invites.length}
+				{#if isManager && invites.length}
 					<div class="invites">
 						{#each invites as inv (inv.id)}
 							<div class="invite" class:used={inviteExhausted(inv)}>
@@ -477,33 +509,53 @@
 					</div>
 				{/if}
 
+				<input
+					class="member-search"
+					type="text"
+					placeholder="Search members…"
+					bind:value={memberQuery}
+					aria-label="Search members"
+				/>
+
 				<div class="stack member-list">
-					{#each members as m (m.userId)}
+					{#each filteredMembers as m (m.userId)}
 						<div class="spread member">
-							<div>
+							<div class="member-name">
 								<strong>{m.characterName || m.discordName}</strong>
 								<span class="badge">{m.role}</span>
 							</div>
-							{#if m.role !== 'owner'}
-								<div class="row">
-									{#if group.role === 'owner'}
-										{#if m.role === 'admin'}
-											<button class="btn btn-sm" onclick={() => setRole(m.userId, 'member')}>
-												Demote
-											</button>
-										{:else}
-											<button class="btn btn-sm" onclick={() => setRole(m.userId, 'admin')}>
-												Make admin
-											</button>
+							<div class="member-meta">
+								<span class="ratio" title="Warden kills attended (claimed or reacted Ready) ÷ announcements they posted">
+									{ratioLabel(m)}
+								</span>
+								{#if isManager && m.role !== 'owner'}
+									<div class="row">
+										{#if group.role === 'owner'}
+											{#if m.role === 'admin'}
+												<button class="btn btn-sm" onclick={() => setRole(m.userId, 'member')}>
+													Demote
+												</button>
+											{:else}
+												<button class="btn btn-sm" onclick={() => setRole(m.userId, 'admin')}>
+													Make admin
+												</button>
+											{/if}
 										{/if}
-									{/if}
-									<button class="btn btn-sm btn-danger" onclick={() => kick(m.userId)}>Kick</button>
-								</div>
-							{/if}
+										<button class="btn btn-sm btn-danger" onclick={() => kick(m.userId)}>Kick</button>
+									</div>
+								{/if}
+							</div>
 						</div>
 					{/each}
+					{#if filteredMembers.length === 0}
+						<p class="muted small">No members match “{memberQuery}”.</p>
+					{/if}
 				</div>
+			</div>
+		{/if}
 
+		{#if activeTab === 'settings' && isManager}
+			<div class="card stack settings">
 				<div class="discord-section">
 					<div class="spread">
 						<h3>Discord</h3>
@@ -591,6 +643,24 @@
 					{/if}
 				</div>
 
+				<div class="access-section">
+					<h3>Access mode</h3>
+					<p class="muted small">
+						How members join your hunts. <span class="badge">Coming soon</span>
+					</p>
+					<div class="access-opts">
+						<label class="access-opt">
+							<input type="radio" name="access-mode" checked disabled /> Free to attend
+						</label>
+						<label class="access-opt">
+							<input type="radio" name="access-mode" disabled /> Pay to attend
+						</label>
+						<label class="access-opt">
+							<input type="radio" name="access-mode" disabled /> Pay for monthly access
+						</label>
+					</div>
+				</div>
+
 				{#if group.role === 'owner'}
 					<div class="danger-zone">
 						<div>
@@ -605,6 +675,7 @@
 			</div>
 		{/if}
 
+		{#if activeTab === 'feed'}
 		<form class="card stack post-form" onsubmit={postAnnouncement}>
 			<h3>Announce an Echo Warden</h3>
 			<div class="combobox">
@@ -722,6 +793,7 @@
 				</div>
 			{/each}
 		</div>
+		{/if}
 	{/if}
 </div>
 
@@ -735,8 +807,32 @@
 		margin-bottom: 0.3rem;
 		font-size: 0.85rem;
 	}
-	.admin {
+	.tabs {
+		display: flex;
+		gap: 0.3rem;
+		border-bottom: 1px solid var(--border);
 		margin-bottom: 1rem;
+	}
+	.tab {
+		background: none;
+		border: none;
+		color: var(--text-dim);
+		padding: 0.6rem 0.9rem;
+		font-weight: 600;
+		border-bottom: 2px solid transparent;
+		margin-bottom: -1px;
+	}
+	.tab.active {
+		color: var(--accent);
+		border-bottom-color: var(--accent);
+	}
+	.tab-count {
+		font-size: 0.78rem;
+		color: var(--text-dim);
+		background: var(--bg-elev-2);
+		border-radius: 999px;
+		padding: 0.05rem 0.4rem;
+		margin-left: 0.15rem;
 	}
 	.invites {
 		display: flex;
@@ -776,12 +872,65 @@
 		background: var(--danger);
 		color: #fff;
 	}
+	.member-search {
+		margin-top: 0.25rem;
+	}
 	.member-list {
-		gap: 0.4rem;
+		gap: 0;
+		max-height: 60vh;
+		overflow-y: auto;
+		padding-right: 0.25rem;
 	}
 	.member {
+		align-items: center;
 		padding: 0.4rem 0;
 		border-bottom: 1px solid var(--border);
+	}
+	.member:last-child {
+		border-bottom: none;
+	}
+	.member-name {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		min-width: 0;
+	}
+	.member-meta {
+		display: flex;
+		align-items: center;
+		gap: 0.6rem;
+		flex: none;
+	}
+	.ratio {
+		font-variant-numeric: tabular-nums;
+		color: var(--text-dim);
+		font-size: 0.85rem;
+		white-space: nowrap;
+	}
+	.access-section {
+		border-top: 1px solid var(--border);
+		padding-top: 0.75rem;
+		margin-top: 0.25rem;
+	}
+	.access-opts {
+		display: flex;
+		flex-direction: column;
+		gap: 0.35rem;
+		margin-top: 0.5rem;
+	}
+	.access-opt {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		color: var(--text-dim);
+	}
+	.access-opt input {
+		width: auto;
+	}
+	.settings > .discord-section:first-child {
+		border-top: none;
+		margin-top: 0;
+		padding-top: 0;
 	}
 	.discord-section {
 		border-top: 1px solid var(--border);
