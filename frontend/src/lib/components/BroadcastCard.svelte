@@ -243,8 +243,8 @@
 		border-color: var(--diff-challenging);
 	}
 	.status-open {
-		color: var(--accent);
-		border-color: var(--accent);
+		color: var(--success);
+		border-color: var(--success);
 	}
 	.status-killed {
 		color: var(--danger);

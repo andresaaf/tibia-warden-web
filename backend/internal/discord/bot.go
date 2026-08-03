@@ -224,7 +224,7 @@ func (b *Bot) handleComponent(s *discordgo.Session, i *discordgo.InteractionCrea
 	_ = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseUpdateMessage,
 		Data: &discordgo.InteractionResponseData{
-			Content:         mentionContent(roleID),
+			Content:         messageContent(roleID, ann),
 			Embeds:          []*discordgo.MessageEmbed{buildEmbed(ann)},
 			Components:      buildComponents(ann),
 			AllowedMentions: &discordgo.MessageAllowedMentions{},
@@ -258,19 +258,19 @@ func (b *Bot) PostAnnouncement(ctx context.Context, ann *models.Announcement) {
 		return
 	}
 	send := &discordgo.MessageSend{
+		Content:    messageContent(roleID, ann),
 		Embeds:     []*discordgo.MessageEmbed{buildEmbed(ann)},
 		Components: buildComponents(ann),
 	}
 	if roleID != "" {
-		send.Content = "<@&" + roleID + ">"
 		send.AllowedMentions = &discordgo.MessageAllowedMentions{Roles: []string{roleID}}
 	}
 	msg, err := b.session.ChannelMessageSendComplex(channelID, send)
 	if err != nil && roleID != "" {
 		// The mention may be rejected (e.g. missing permission); retry without it
-		// so the announcement is still mirrored.
+		// so the announcement is still mirrored (creature name is kept).
 		slog.Warn("discord: post with role mention failed, retrying without", "error", err)
-		send.Content = ""
+		send.Content = messageContent("", ann)
 		send.AllowedMentions = nil
 		msg, err = b.session.ChannelMessageSendComplex(channelID, send)
 	}
@@ -295,7 +295,7 @@ func (b *Bot) SyncAnnouncement(ctx context.Context, ann *models.Announcement) {
 	}
 	embeds := []*discordgo.MessageEmbed{buildEmbed(ann)}
 	components := buildComponents(ann)
-	content := mentionContent(roleID)
+	content := messageContent(roleID, ann)
 	if _, err := b.session.ChannelMessageEditComplex(&discordgo.MessageEdit{
 		Channel:         channelID,
 		ID:              ann.DiscordMessageID,
@@ -463,14 +463,15 @@ func buildComponents(a *models.Announcement) []discordgo.MessageComponent {
 	}
 }
 
-// mentionContent returns the message content used to ping a group's role, or an
-// empty string when no role is configured. Re-sending it on edits preserves the
-// visible mention without triggering another notification.
-func mentionContent(roleID string) string {
+// messageContent builds the Discord message text: the group's role ping (when
+// configured) followed by the Warden's creature name, so the monster is named in
+// the message itself and not only inside the embed. Re-sending it on edits
+// preserves the visible mention without triggering another notification.
+func messageContent(roleID string, a *models.Announcement) string {
 	if roleID == "" {
-		return ""
+		return a.CreatureName
 	}
-	return "<@&" + roleID + ">"
+	return "<@&" + roleID + "> " + a.CreatureName
 }
 
 func namesByStatus(a *models.Announcement, status string) string {

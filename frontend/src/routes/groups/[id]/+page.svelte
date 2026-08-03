@@ -1253,8 +1253,8 @@
 		background: color-mix(in srgb, var(--success) 15%, var(--bg-elev-2));
 	}
 	.status-open {
-		color: var(--accent);
-		border-color: var(--accent);
+		color: var(--success);
+		border-color: var(--success);
 	}
 	.status-killed {
 		color: var(--danger);
