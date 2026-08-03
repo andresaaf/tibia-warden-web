@@ -87,13 +87,12 @@
 		<div class="head-text">
 			<div class="row" style="gap: 0.5rem; flex-wrap: wrap">
 				<strong class="creature-name">{primary.creatureName}</strong>
-				<span class="badge diff" data-diff={primary.difficulty}>{primary.difficulty}</span>
-				<span class="badge charm" title="Charm points for this Warden">★ {primary.charmPoints}</span>
 				{#if killed}
 					<span class="badge status-killed">Killed</span>
 				{:else}
 					<span class="badge status-open">Open</span>
 				{/if}
+				<span class="badge diff" data-diff={primary.difficulty} title="Difficulty · charm points">{primary.difficulty} ★ {primary.charmPoints}</span>
 				<span class="badge group-badge">{announcements.length} groups</span>
 				{#if alreadyKilled}
 					<span class="badge mine" title="You've already killed this Echo Warden">✓ In your list</span>
@@ -216,9 +215,7 @@
 		color: var(--success);
 		background: color-mix(in srgb, var(--success) 15%, var(--bg-elev-2));
 	}
-	.charm {
-		color: var(--accent);
-		border-color: var(--accent);
+	.diff {
 		white-space: nowrap;
 	}
 	.diff[data-diff='Harmless'] {

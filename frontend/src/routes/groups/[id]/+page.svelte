@@ -761,15 +761,14 @@
 						<div>
 							<div class="row" style="gap: 0.5rem">
 								<strong class="creature-name">{a.creatureName}</strong>
-								<span class="badge diff" data-diff={a.difficulty}>{a.difficulty}</span>
-								<span class="badge charm" title="Charm points for this Warden">★ {a.charmPoints}</span>
-								{#if killedIds.includes(a.creatureId)}
-									<span class="badge mine" title="You've already killed this Echo Warden">✓ In your list</span>
-								{/if}
 								{#if a.status === 'killed'}
 									<span class="badge status-killed">Killed</span>
 								{:else}
 									<span class="badge status-open">Open</span>
+								{/if}
+								<span class="badge diff" data-diff={a.difficulty} title="Difficulty · charm points">{a.difficulty} ★ {a.charmPoints}</span>
+								{#if killedIds.includes(a.creatureId)}
+									<span class="badge mine" title="You've already killed this Echo Warden">✓ In your list</span>
 								{/if}
 							</div>
 							{#if a.location}<div class="loc">📍 {a.location}</div>{/if}
@@ -943,11 +942,6 @@
 		text-transform: none;
 		letter-spacing: 0;
 		color: var(--accent);
-	}
-	.charm {
-		color: var(--accent);
-		border-color: var(--accent);
-		white-space: nowrap;
 	}
 	.roster {
 		display: flex;

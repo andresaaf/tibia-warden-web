@@ -72,13 +72,12 @@
 		<div class="head-text">
 			<div class="row" style="gap: 0.5rem; flex-wrap: wrap">
 				<strong class="creature-name">{a.creatureName}</strong>
-				<span class="badge diff" data-diff={a.difficulty}>{a.difficulty}</span>
-				<span class="badge charm" title="Charm points for this Warden">★ {a.charmPoints}</span>
 				{#if a.status === 'killed'}
 					<span class="badge status-killed">Killed</span>
 				{:else}
 					<span class="badge status-open">Open</span>
 				{/if}
+				<span class="badge diff" data-diff={a.difficulty} title="Difficulty · charm points">{a.difficulty} ★ {a.charmPoints}</span>
 				{#if showGroup && a.groupName}
 					<a class="badge group-badge" href={`/groups/${a.groupId}`}>{a.groupName}</a>
 				{/if}
@@ -179,9 +178,7 @@
 		color: var(--success);
 		background: color-mix(in srgb, var(--success) 15%, var(--bg-elev-2));
 	}
-	.charm {
-		color: var(--accent);
-		border-color: var(--accent);
+	.diff {
 		white-space: nowrap;
 	}
 	.diff[data-diff='Harmless'] {
