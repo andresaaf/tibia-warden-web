@@ -301,10 +301,10 @@
 	});
 
 	// Share ratio = killed announcements the member attended (claimed or reacted
-	// 'ready') over how many they announced themselves. Undefined with none announced.
-	function ratioLabel(m: GroupMember): string {
-		if (!m.announced) return '—';
-		return `${m.attended} / ${m.announced} · ${(m.attended / m.announced).toFixed(1)}×`;
+	// 'ready') over how many they announced themselves, within this group.
+	// Undefined when they've announced nothing.
+	function shareLabel(m: GroupMember): string {
+		return m.announced ? `${(m.attended / m.announced).toFixed(1)}×` : '—';
 	}
 
 	async function setRole(userId: number, role: string) {
@@ -517,19 +517,26 @@
 					aria-label="Search members"
 				/>
 
-				<div class="stack member-list">
+				<div class="roster" class:manager={isManager}>
+					<div class="roster-head">
+						<span>Member</span>
+						<span class="num" title="Warden kills they attended (claimed or reacted Ready) in this group">Attended</span>
+						<span class="num" title="Announcements they posted in this group">Announced</span>
+						<span class="num" title="Attended ÷ announced, in this group">Share</span>
+						{#if isManager}<span class="actions-col"></span>{/if}
+					</div>
 					{#each filteredMembers as m (m.userId)}
-						<div class="spread member">
+						<div class="member">
 							<div class="member-name">
 								<strong>{m.characterName || m.discordName}</strong>
-								<span class="badge">{m.role}</span>
+								{#if m.role !== 'member'}<span class="badge">{m.role}</span>{/if}
 							</div>
-							<div class="member-meta">
-								<span class="ratio" title="Warden kills attended (claimed or reacted Ready) ÷ announcements they posted">
-									{ratioLabel(m)}
-								</span>
-								{#if isManager && m.role !== 'owner'}
-									<div class="row">
+							<span class="num">{m.attended}</span>
+							<span class="num">{m.announced}</span>
+							<span class="num share" class:none={!m.announced}>{shareLabel(m)}</span>
+							{#if isManager}
+								<div class="member-actions">
+									{#if m.role !== 'owner'}
 										{#if group.role === 'owner'}
 											{#if m.role === 'admin'}
 												<button class="btn btn-sm" onclick={() => setRole(m.userId, 'member')}>
@@ -542,13 +549,13 @@
 											{/if}
 										{/if}
 										<button class="btn btn-sm btn-danger" onclick={() => kick(m.userId)}>Kick</button>
-									</div>
-								{/if}
-							</div>
+									{/if}
+								</div>
+							{/if}
 						</div>
 					{/each}
 					{#if filteredMembers.length === 0}
-						<p class="muted small">No members match “{memberQuery}”.</p>
+						<p class="muted small roster-empty">No members match “{memberQuery}”.</p>
 					{/if}
 				</div>
 			</div>
@@ -875,15 +882,41 @@
 	.member-search {
 		margin-top: 0.25rem;
 	}
-	.member-list {
-		gap: 0;
+	.roster {
+		display: flex;
+		flex-direction: column;
 		max-height: 60vh;
 		overflow-y: auto;
-		padding-right: 0.25rem;
+	}
+	/* Shared column grid: name | attended | announced | share (+ actions for managers). */
+	.roster-head,
+	.member {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) 5rem 5.5rem 4rem;
+		gap: 0.6rem;
+		align-items: center;
+	}
+	/* Fixed actions track so every row shares identical columns — otherwise a row
+	   with buttons sizes its 'auto' column differently and the numbers misalign. */
+	.roster.manager .roster-head,
+	.roster.manager .member {
+		grid-template-columns: minmax(0, 1fr) 5rem 5.5rem 4rem 11.5rem;
+	}
+	.roster-head {
+		position: sticky;
+		top: 0;
+		z-index: 1;
+		background: var(--bg-elev);
+		border-bottom: 1px solid var(--border);
+		padding: 0.15rem 0 0.4rem;
+		font-size: 0.7rem;
+		font-weight: 700;
+		letter-spacing: 0.04em;
+		text-transform: uppercase;
+		color: var(--text-dim);
 	}
 	.member {
-		align-items: center;
-		padding: 0.4rem 0;
+		padding: 0.45rem 0;
 		border-bottom: 1px solid var(--border);
 	}
 	.member:last-child {
@@ -895,17 +928,53 @@
 		gap: 0.5rem;
 		min-width: 0;
 	}
-	.member-meta {
-		display: flex;
-		align-items: center;
-		gap: 0.6rem;
-		flex: none;
-	}
-	.ratio {
-		font-variant-numeric: tabular-nums;
-		color: var(--text-dim);
-		font-size: 0.85rem;
+	.member-name strong {
+		overflow: hidden;
+		text-overflow: ellipsis;
 		white-space: nowrap;
+	}
+	.num {
+		text-align: right;
+		font-variant-numeric: tabular-nums;
+		white-space: nowrap;
+	}
+	.member .num {
+		color: var(--text-dim);
+		font-size: 0.9rem;
+	}
+	.member .share {
+		color: var(--text);
+		font-weight: 600;
+	}
+	.member .share.none {
+		color: var(--text-dim);
+		font-weight: 400;
+	}
+	.member-actions {
+		display: flex;
+		gap: 0.4rem;
+		justify-content: flex-end;
+	}
+	.roster-empty {
+		padding: 0.6rem 0;
+	}
+	@media (max-width: 560px) {
+		.roster-head,
+		.member,
+		.roster.manager .roster-head,
+		.roster.manager .member {
+			grid-template-columns: minmax(0, 1fr) 2.6rem 2.6rem 3.2rem;
+			gap: 0.4rem;
+		}
+		/* On phones the numbers stay aligned; manager actions wrap to a full row. */
+		.roster.manager .member-actions {
+			grid-column: 1 / -1;
+			justify-content: flex-start;
+			margin-top: 0.1rem;
+		}
+		.roster.manager .roster-head .actions-col {
+			display: none;
+		}
 	}
 	.access-section {
 		border-top: 1px solid var(--border);
