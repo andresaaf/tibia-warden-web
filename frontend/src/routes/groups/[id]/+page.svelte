@@ -101,21 +101,46 @@
 		}
 	}
 
-	// Roster is visible to everyone but not needed for the Feed tab, so it loads in
-	// the background. Non-fatal. Metrics are scoped to the selected period.
+	// Per-period roster cache so re-visiting a period is instant. The roster is a
+	// per-visit snapshot (not live-updated by WS events), so caching for the
+	// session matches the existing freshness model; it's cleared on role/member
+	// changes via invalidateRoster().
+	let membersCache = new Map<RosterPeriod, GroupMember[]>();
+	let rosterReqId = 0;
+
+	// Load the roster for the current period. Serves cached data instantly;
+	// otherwise fetches (keeping the previous rows visible + a loading indicator).
+	// Non-fatal. Bumping rosterReqId cancels any in-flight fetch from a prior
+	// period so a late response can't clobber the current view.
 	async function loadRoster() {
+		const period = rosterPeriod;
+		const id = ++rosterReqId;
+		const cached = membersCache.get(period);
+		if (cached) {
+			members = cached;
+			membersLoading = false;
+			return;
+		}
 		membersLoading = true;
 		try {
-			members = await api.members(groupId, rosterPeriod);
+			const data = await api.members(groupId, period);
+			membersCache.set(period, data);
+			if (id === rosterReqId) members = data;
 		} catch {
 			// non-fatal
 		} finally {
-			membersLoading = false;
+			if (id === rosterReqId) membersLoading = false;
 		}
 	}
 
-	// Switch the roster metric period (re-fetches, since the window is applied
-	// server-side).
+	// Drop cached rosters when the roster itself changes (role change / kick), so
+	// the next load re-fetches fresh data for every period.
+	function invalidateRoster() {
+		membersCache = new Map();
+	}
+
+	// Switch the roster metric period. Cached periods swap in instantly; the rest
+	// fetch with a loading indicator.
 	function selectPeriod(p: RosterPeriod) {
 		if (p === rosterPeriod) return;
 		rosterPeriod = p;
@@ -386,7 +411,8 @@
 	async function setRole(userId: number, role: string) {
 		try {
 			await api.setRole(groupId, userId, role);
-			members = await api.members(groupId, rosterPeriod);
+			invalidateRoster();
+			await loadRoster();
 		} catch (err) {
 			error = err instanceof ApiError ? err.message : 'Failed to update role.';
 		}
@@ -395,7 +421,8 @@
 		if (!confirm('Remove this member?')) return;
 		try {
 			await api.removeMember(groupId, userId);
-			members = await api.members(groupId, rosterPeriod);
+			invalidateRoster();
+			await loadRoster();
 		} catch (err) {
 			error = err instanceof ApiError ? err.message : 'Failed to remove member.';
 		}
@@ -632,9 +659,12 @@
 							Charm
 						</button>
 					</div>
+					{#if membersLoading}
+						<span class="roster-spinner" role="status" aria-label="Loading members"></span>
+					{/if}
 				</div>
 
-				<div class="roster" class:manager={isManager}>
+				<div class="roster" class:manager={isManager} class:loading={membersLoading}>
 					<div class="roster-head">
 						<span>
 							<button class="sort" class:active={rosterSort === 'member'} onclick={() => (rosterSort = 'member')}>
@@ -1029,6 +1059,26 @@
 		align-items: center;
 		gap: 0.5rem;
 		margin-top: 0.25rem;
+	}
+	.roster-spinner {
+		width: 1rem;
+		height: 1rem;
+		border: 2px solid var(--border);
+		border-top-color: var(--accent);
+		border-radius: 50%;
+		animation: roster-spin 0.6s linear infinite;
+		flex: none;
+	}
+	@keyframes roster-spin {
+		to {
+			transform: rotate(360deg);
+		}
+	}
+	/* Dim the roster while a period is loading; keep the previous rows visible so
+	   switching feels like an update rather than a blank flash. */
+	.roster.loading {
+		opacity: 0.55;
+		transition: opacity 0.12s ease;
 	}
 	.member-search {
 		flex: 1;
