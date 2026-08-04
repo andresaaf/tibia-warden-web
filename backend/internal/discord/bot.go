@@ -334,9 +334,44 @@ func (b *Bot) OnAnnouncementKilled(ctx context.Context, announcementID int64) {
 		time.Now().Add(time.Duration(seconds)*time.Second))
 }
 
+// reconcileOrphanedKills applies the auto-delete policy to mirrored messages of
+// announcements that were marked killed while the bot could not act on them —
+// e.g. the process restarted between the kill and its (immediate or scheduled)
+// removal, so no discord_delete_at was ever persisted and the sweeper would
+// never see them. It runs once at startup. The delay is measured from the actual
+// kill time, so an already-overdue message is swept on the next tick.
+func (b *Bot) reconcileOrphanedKills(ctx context.Context) {
+	if b == nil || b.session == nil {
+		return
+	}
+	orphans, err := b.stores.Announcements.KilledAwaitingDiscordCleanup(ctx)
+	if err != nil {
+		slog.Error("discord: failed to query orphaned killed announcements", "error", err)
+		return
+	}
+	for _, o := range orphans {
+		seconds, err := b.stores.Groups.DiscordAutodelete(ctx, o.GroupID)
+		if err != nil || seconds < 0 {
+			continue // never
+		}
+		if seconds == 0 {
+			_, channelID, _, err := b.stores.Groups.DiscordSettings(ctx, o.GroupID)
+			if err == nil && channelID != "" {
+				_ = b.session.ChannelMessageDelete(channelID, o.MessageID)
+			}
+			_ = b.stores.Announcements.ClearDiscordMessage(ctx, o.AnnouncementID)
+			continue
+		}
+		_ = b.stores.Announcements.ScheduleDiscordDelete(ctx, o.AnnouncementID,
+			o.KilledAt.Add(time.Duration(seconds)*time.Second))
+	}
+}
+
 // runSweeper periodically deletes mirrored messages whose scheduled delete time
-// has passed. Restart-safe because the schedule is persisted in the database.
+// has passed. Restart-safe because the schedule is persisted in the database. A
+// one-time reconcile first re-schedules any kills orphaned across a restart.
 func (b *Bot) runSweeper(ctx context.Context) {
+	b.reconcileOrphanedKills(ctx)
 	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()
 	for {

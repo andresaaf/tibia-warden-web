@@ -434,6 +434,47 @@ type DueDiscordDelete struct {
 	MessageID      string
 }
 
+// KilledDiscordMessage is a killed announcement whose mirrored Discord message
+// still needs the group's auto-delete policy applied.
+type KilledDiscordMessage struct {
+	AnnouncementID int64
+	GroupID        int64
+	MessageID      string
+	KilledAt       time.Time
+}
+
+// KilledAwaitingDiscordCleanup returns killed announcements that still have a
+// mirrored Discord message but no scheduled deletion, limited to groups whose
+// policy is not "never" (discord_autodelete_seconds >= 0). This happens when the
+// bot could not apply the auto-delete policy at kill time — e.g. the process
+// restarted between the kill and the (immediate or scheduled) removal — leaving
+// the message orphaned, since the sweeper only handles rows already carrying a
+// discord_delete_at. Used for startup reconciliation.
+func (s *AnnouncementStore) KilledAwaitingDiscordCleanup(ctx context.Context) ([]KilledDiscordMessage, error) {
+	rows, err := s.pool.Query(ctx, `
+		SELECT a.id, a.group_id, a.discord_message_id, a.killed_at
+		FROM announcements a
+		JOIN groups g ON g.id = a.group_id
+		WHERE a.status = 'killed'
+		  AND a.discord_message_id <> ''
+		  AND a.discord_delete_at IS NULL
+		  AND g.discord_autodelete_seconds >= 0
+		LIMIT 100`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []KilledDiscordMessage
+	for rows.Next() {
+		var m KilledDiscordMessage
+		if err := rows.Scan(&m.AnnouncementID, &m.GroupID, &m.MessageID, &m.KilledAt); err != nil {
+			return nil, err
+		}
+		out = append(out, m)
+	}
+	return out, rows.Err()
+}
+
 // DueDiscordDeletes returns mirrored messages whose scheduled delete time has passed.
 func (s *AnnouncementStore) DueDiscordDeletes(ctx context.Context) ([]DueDiscordDelete, error) {
 	rows, err := s.pool.Query(ctx, `
