@@ -548,7 +548,7 @@
 						<span
 							>Member{#if rosterMode === 'charm'}<span class="mode-hint"> · charm points</span>{/if}</span
 						>
-						<span class="num" title={rosterMode === 'charm' ? 'Charm points of Wardens they attended (claimed or reacted Ready) in this group' : 'Warden kills they attended (claimed or reacted Ready) in this group'}>Attended</span>
+						<span class="num" title={rosterMode === 'charm' ? "Charm points of other members' Wardens they attended (claimed or reacted Ready) in this group" : "Other members' Wardens they attended (claimed or reacted Ready) in this group — their own announcements don't count"}>Attended</span>
 						<span class="num" title={rosterMode === 'charm' ? 'Charm points of Wardens they announced in this group' : 'Announcements they posted in this group'}>Announced</span>
 						<span class="num" title="Attended ÷ announced, in this group">Share</span>
 						{#if isManager}<span class="actions-col"></span>{/if}

@@ -173,7 +173,7 @@ func (s *GroupStore) Members(ctx context.Context, groupID int64) ([]models.Group
 		SELECT gm.user_id, u.character_name, u.discord_username, gm.role, gm.joined_at,
 			(
 				SELECT COUNT(DISTINCT a.id) FROM announcements a
-				WHERE a.group_id = $1 AND a.status = 'killed' AND (
+				WHERE a.group_id = $1 AND a.status = 'killed' AND a.author_id <> gm.user_id AND (
 					EXISTS (SELECT 1 FROM announcement_claims c WHERE c.announcement_id = a.id AND c.user_id = gm.user_id)
 					OR EXISTS (SELECT 1 FROM announcement_responses r WHERE r.announcement_id = a.id AND r.user_id = gm.user_id AND r.status = 'ready')
 				)
@@ -186,7 +186,7 @@ func (s *GroupStore) Members(ctx context.Context, groupID int64) ([]models.Group
 				SELECT COALESCE(SUM(cw.points), 0) FROM announcements a
 				JOIN creatures cr ON cr.id = a.creature_id
 				LEFT JOIN charm_weights cw ON cw.difficulty = cr.difficulty
-				WHERE a.group_id = $1 AND a.status = 'killed' AND (
+				WHERE a.group_id = $1 AND a.status = 'killed' AND a.author_id <> gm.user_id AND (
 					EXISTS (SELECT 1 FROM announcement_claims c WHERE c.announcement_id = a.id AND c.user_id = gm.user_id)
 					OR EXISTS (SELECT 1 FROM announcement_responses r WHERE r.announcement_id = a.id AND r.user_id = gm.user_id AND r.status = 'ready')
 				)
