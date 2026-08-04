@@ -34,7 +34,7 @@ export interface Creature {
 
 export type Visibility = 'public' | 'private';
 export type Role = 'owner' | 'admin' | 'member';
-export type ScoreWindow = 'forever' | 'month' | 'week';
+export type RosterPeriod = 'lifetime' | 'current_month' | 'previous_month';
 
 export interface Group {
 	id: number;
@@ -50,7 +50,6 @@ export interface Group {
 	discordRoleId?: string;
 	discordRoleName?: string;
 	discordAutodeleteSeconds?: number;
-	scoreWindow?: ScoreWindow;
 }
 
 export interface DiscordRole {

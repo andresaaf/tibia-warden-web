@@ -7,7 +7,7 @@ import type {
 	HighscoreEntry,
 	InviteCode,
 	ResponseStatus,
-	ScoreWindow,
+	RosterPeriod,
 	User
 } from './types';
 
@@ -81,7 +81,8 @@ export const api = {
 	redeemInvite: (code: string) => request<{ groupId: number }>('POST', '/api/groups/join', { code }),
 	leaveGroup: (id: number) => request<void>('POST', `/api/groups/${id}/leave`),
 	deleteGroup: (id: number) => request<void>('DELETE', `/api/groups/${id}`),
-	members: (id: number) => request<GroupMember[]>('GET', `/api/groups/${id}/members`),
+	members: (id: number, period: RosterPeriod = 'lifetime') =>
+		request<GroupMember[]>('GET', `/api/groups/${id}/members?period=${period}`),
 	setRole: (id: number, userId: number, role: string) =>
 		request<void>('PATCH', `/api/groups/${id}/members/${userId}`, { role }),
 	removeMember: (id: number, userId: number) =>
@@ -100,8 +101,6 @@ export const api = {
 	clearDiscordRole: (id: number) => request<void>('DELETE', `/api/groups/${id}/discord/role`),
 	setDiscordAutodelete: (id: number, seconds: number) =>
 		request<void>('PUT', `/api/groups/${id}/discord/autodelete`, { seconds }),
-	setScoreWindow: (id: number, window: ScoreWindow) =>
-		request<void>('PUT', `/api/groups/${id}/score-window`, { window }),
 
 	// Announcements
 	announcements: (groupId: number) =>

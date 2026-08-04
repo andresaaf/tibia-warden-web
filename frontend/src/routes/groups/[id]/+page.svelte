@@ -13,7 +13,7 @@
 		Group,
 		GroupMember,
 		InviteCode,
-		ScoreWindow
+		RosterPeriod
 	} from '$lib/types';
 
 	let groupId = $derived(Number($page.params.id));
@@ -41,6 +41,7 @@
 	let activeTab = $state<'feed' | 'members' | 'settings'>('feed');
 	let memberQuery = $state('');
 	let rosterMode = $state<'count' | 'charm'>('count');
+	let rosterPeriod = $state<RosterPeriod>('current_month');
 	type RosterSort = 'member' | 'attended' | 'announced' | 'share' | 'score';
 	let rosterSort = $state<RosterSort>('member');
 	let inviteMaxUses = $state(1);
@@ -49,15 +50,9 @@
 	let discordRoles = $state<DiscordRole[]>([]);
 	let showRoles = $state(false);
 	let autodelete = $state(-1);
-	let scoreWindow = $state<ScoreWindow>('forever');
-	let scoreBusy = $state(false);
 
 	$effect(() => {
 		autodelete = group?.discordAutodeleteSeconds ?? -1;
-	});
-
-	$effect(() => {
-		scoreWindow = group?.scoreWindow ?? 'forever';
 	});
 
 	let me = $derived($currentUser);
@@ -107,16 +102,24 @@
 	}
 
 	// Roster is visible to everyone but not needed for the Feed tab, so it loads in
-	// the background. Non-fatal.
+	// the background. Non-fatal. Metrics are scoped to the selected period.
 	async function loadRoster() {
 		membersLoading = true;
 		try {
-			members = await api.members(groupId);
+			members = await api.members(groupId, rosterPeriod);
 		} catch {
 			// non-fatal
 		} finally {
 			membersLoading = false;
 		}
+	}
+
+	// Switch the roster metric period (re-fetches, since the window is applied
+	// server-side).
+	function selectPeriod(p: RosterPeriod) {
+		if (p === rosterPeriod) return;
+		rosterPeriod = p;
+		loadRoster();
 	}
 
 	// Invites are manager-only and only used by the Settings tab; loaded lazily.
@@ -383,7 +386,7 @@
 	async function setRole(userId: number, role: string) {
 		try {
 			await api.setRole(groupId, userId, role);
-			members = await api.members(groupId);
+			members = await api.members(groupId, rosterPeriod);
 		} catch (err) {
 			error = err instanceof ApiError ? err.message : 'Failed to update role.';
 		}
@@ -392,7 +395,7 @@
 		if (!confirm('Remove this member?')) return;
 		try {
 			await api.removeMember(groupId, userId);
-			members = await api.members(groupId);
+			members = await api.members(groupId, rosterPeriod);
 		} catch (err) {
 			error = err instanceof ApiError ? err.message : 'Failed to remove member.';
 		}
@@ -500,19 +503,6 @@
 		}
 	}
 
-	async function setScoreWindow(window: ScoreWindow) {
-		scoreBusy = true;
-		try {
-			await api.setScoreWindow(groupId, window);
-			group = await api.getGroup(groupId);
-			await loadRoster();
-		} catch (err) {
-			error = err instanceof ApiError ? err.message : 'Failed to update setting.';
-		} finally {
-			scoreBusy = false;
-		}
-	}
-
 	function comingList(a: Announcement) {
 		return a.responses.filter((r) => r.status === 'coming');
 	}
@@ -603,6 +593,29 @@
 						bind:value={memberQuery}
 						aria-label="Search members"
 					/>
+					<div class="mode-toggle" role="group" aria-label="Time period">
+						<button
+							class="mode-btn"
+							class:active={rosterPeriod === 'previous_month'}
+							onclick={() => selectPeriod('previous_month')}
+						>
+							Prev month
+						</button>
+						<button
+							class="mode-btn"
+							class:active={rosterPeriod === 'current_month'}
+							onclick={() => selectPeriod('current_month')}
+						>
+							This month
+						</button>
+						<button
+							class="mode-btn"
+							class:active={rosterPeriod === 'lifetime'}
+							onclick={() => selectPeriod('lifetime')}
+						>
+							Lifetime
+						</button>
+					</div>
 					<div class="mode-toggle" role="group" aria-label="Roster metric">
 						<button
 							class="mode-btn"
@@ -643,7 +656,7 @@
 								Share{rosterSort === 'share' ? ' ▼' : ''}
 							</button>
 						</span>
-						<span class="num" title="Charm points given away: each Warden's charm × the members who turned up for it (within the group's Score window)">
+						<span class="num" title="Charm points given away: each Warden's charm × the members who turned up for it (in the selected period)">
 							<button class="sort" class:active={rosterSort === 'score'} onclick={() => (rosterSort = 'score')}>
 								Score{rosterSort === 'score' ? ' ▼' : ''}
 							</button>
@@ -778,28 +791,6 @@
 							</button>
 						{/if}
 					{/if}
-				</div>
-
-				<div class="access-section">
-					<h3>Roster Score</h3>
-					<p class="muted small">
-						How far back the Members roster Score counts each announcer's charm points given away.
-					</p>
-					<div class="role-config">
-						<span class="muted small">Count Score from</span>
-						<select
-							bind:value={scoreWindow}
-							onchange={() => setScoreWindow(scoreWindow)}
-							disabled={scoreBusy}
-						>
-							<option value="forever">All time</option>
-							<option value="month">This month</option>
-							<option value="week">This week</option>
-						</select>
-					</div>
-					<p class="muted small">
-						Attended, Announced and Share are always all-time — only Score uses this window.
-					</p>
 				</div>
 
 				<div class="access-section">
@@ -1034,6 +1025,7 @@
 	}
 	.roster-controls {
 		display: flex;
+		flex-wrap: wrap;
 		align-items: center;
 		gap: 0.5rem;
 		margin-top: 0.25rem;
