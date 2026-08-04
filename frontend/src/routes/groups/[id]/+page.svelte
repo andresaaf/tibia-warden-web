@@ -16,6 +16,7 @@
 	let members = $state<GroupMember[]>([]);
 	let invites = $state<InviteCode[]>([]);
 	let loading = $state(true);
+	let membersLoading = $state(false);
 	let error = $state('');
 	let room: GroupRoom | null = null;
 
@@ -61,17 +62,20 @@
 		error = '';
 		try {
 			group = await api.getGroup(groupId);
-			const [ann, crt, killed, mem] = await Promise.all([
+			// The roster and invites feed their own tabs — start them now but don't
+			// block the feed on them, so the default Feed tab paints as soon as its
+			// own data is ready. They populate in the background/in parallel.
+			loadRoster();
+			if (isManager) loadAdminData();
+			const [ann, crt, killed] = await Promise.all([
 				api.announcements(groupId),
 				api.creatures('', []),
-				api.killedCreatures(),
-				api.members(groupId)
+				api.killedCreatures()
 			]);
 			announcements = ann;
 			creatures = crt;
 			killedIds = killed;
-			members = mem;
-			if (isManager) await loadAdminData();
+			loading = false;
 			connectRoom();
 		} catch (err) {
 			if (err instanceof ApiError && err.status === 403) {
@@ -81,12 +85,24 @@
 			} else {
 				error = 'Failed to load the group.';
 			}
-		} finally {
 			loading = false;
 		}
 	}
 
-	// Invites are manager-only; the roster itself is loaded for everyone in init().
+	// Roster is visible to everyone but not needed for the Feed tab, so it loads in
+	// the background. Non-fatal.
+	async function loadRoster() {
+		membersLoading = true;
+		try {
+			members = await api.members(groupId);
+		} catch {
+			// non-fatal
+		} finally {
+			membersLoading = false;
+		}
+	}
+
+	// Invites are manager-only and only used by the Settings tab; loaded lazily.
 	async function loadAdminData() {
 		try {
 			invites = await api.invites(groupId);
@@ -470,7 +486,7 @@
 				Feed
 			</button>
 			<button class="tab" class:active={activeTab === 'members'} onclick={() => (activeTab = 'members')}>
-				Members <span class="tab-count">{members.length}</span>
+				Members <span class="tab-count">{membersLoading && !members.length ? '…' : members.length}</span>
 			</button>
 			{#if isManager}
 				<button
@@ -583,7 +599,11 @@
 						</div>
 					{/each}
 					{#if filteredMembers.length === 0}
-						<p class="muted small roster-empty">No members match “{memberQuery}”.</p>
+						{#if membersLoading}
+							<p class="muted small roster-empty">Loading members…</p>
+						{:else}
+							<p class="muted small roster-empty">No members match “{memberQuery}”.</p>
+						{/if}
 					{/if}
 				</div>
 			</div>
