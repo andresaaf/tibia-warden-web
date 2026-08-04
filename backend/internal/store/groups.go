@@ -67,13 +67,13 @@ func (s *GroupStore) GetByID(ctx context.Context, groupID, viewerID int64) (*mod
 	err := s.pool.QueryRow(ctx, `
 		SELECT g.id, g.name, g.description, g.visibility, g.owner_id, g.created_at,
 		       g.discord_guild_id, g.discord_channel_id, g.discord_role_id, g.discord_role_name,
-		       g.discord_autodelete_seconds,
+		       g.discord_autodelete_seconds, g.score_window,
 		       (SELECT COUNT(*) FROM group_members m WHERE m.group_id = g.id) AS member_count,
 		       (SELECT m.role FROM group_members m WHERE m.group_id = g.id AND m.user_id = $2) AS role
 		FROM groups g WHERE g.id = $1`, groupID, viewerID,
 	).Scan(&g.ID, &g.Name, &g.Description, &g.Visibility, &g.OwnerID, &g.CreatedAt,
 		&g.DiscordGuildID, &g.DiscordChannelID, &g.DiscordRoleID, &g.DiscordRoleName,
-		&g.DiscordAutodeleteSeconds, &g.MemberCount, &role)
+		&g.DiscordAutodeleteSeconds, &g.ScoreWindow, &g.MemberCount, &role)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, ErrNotFound
 	}
@@ -196,9 +196,31 @@ func (s *GroupStore) Members(ctx context.Context, groupID int64) ([]models.Group
 				JOIN creatures cr ON cr.id = a.creature_id
 				LEFT JOIN charm_weights cw ON cw.difficulty = cr.difficulty
 				WHERE a.group_id = $1 AND a.author_id = gm.user_id
-			) AS announced_charm
+			) AS announced_charm,
+			(
+				SELECT COALESCE(SUM(COALESCE(cw.points, 0) * att.n), 0)
+				FROM announcements a
+				JOIN creatures cr ON cr.id = a.creature_id
+				LEFT JOIN charm_weights cw ON cw.difficulty = cr.difficulty
+				JOIN LATERAL (
+					SELECT COUNT(*) AS n FROM (
+						SELECT c.user_id FROM announcement_claims c
+						WHERE c.announcement_id = a.id AND c.user_id <> a.author_id
+						UNION
+						SELECT r.user_id FROM announcement_responses r
+						WHERE r.announcement_id = a.id AND r.status = 'ready' AND r.user_id <> a.author_id
+					) u
+				) att ON true
+				WHERE a.group_id = $1 AND a.status = 'killed' AND a.author_id = gm.user_id
+				  AND a.killed_at >= CASE g.score_window
+						WHEN 'month' THEN date_trunc('month', now())
+						WHEN 'week'  THEN date_trunc('week', now())
+						ELSE '-infinity'::timestamptz
+					  END
+			) AS score
 		FROM group_members gm
 		JOIN users u ON u.id = gm.user_id
+		JOIN groups g ON g.id = gm.group_id
 		WHERE gm.group_id = $1
 		ORDER BY
 			CASE gm.role WHEN 'owner' THEN 0 WHEN 'admin' THEN 1 ELSE 2 END,
@@ -212,7 +234,7 @@ func (s *GroupStore) Members(ctx context.Context, groupID int64) ([]models.Group
 	for rows.Next() {
 		var m models.GroupMember
 		if err := rows.Scan(&m.UserID, &m.CharacterName, &m.DiscordName, &m.Role, &m.JoinedAt,
-			&m.Attended, &m.Announced, &m.AttendedCharm, &m.AnnouncedCharm); err != nil {
+			&m.Attended, &m.Announced, &m.AttendedCharm, &m.AnnouncedCharm, &m.Score); err != nil {
 			return nil, err
 		}
 		out = append(out, m)
@@ -426,6 +448,20 @@ func (s *GroupStore) ClearDiscordRole(ctx context.Context, groupID int64) error 
 	_, err := s.pool.Exec(ctx,
 		`UPDATE groups SET discord_role_id = '', discord_role_name = '' WHERE id = $1`, groupID)
 	return err
+}
+
+// SetScoreWindow sets how far back a group's roster Score counts
+// ("forever"/"month"/"week").
+func (s *GroupStore) SetScoreWindow(ctx context.Context, groupID int64, window string) error {
+	tag, err := s.pool.Exec(ctx,
+		`UPDATE groups SET score_window = $2 WHERE id = $1`, groupID, window)
+	if err != nil {
+		return err
+	}
+	if tag.RowsAffected() == 0 {
+		return ErrNotFound
+	}
+	return nil
 }
 
 // SetDiscordAutodelete sets the auto-delete policy (seconds) for a group's

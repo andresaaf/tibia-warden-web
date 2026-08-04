@@ -598,3 +598,44 @@ func (s *Server) handleSetDiscordAutodelete(w http.ResponseWriter, r *http.Reque
 	}
 	writeJSON(w, http.StatusOK, map[string]int{"seconds": body.Seconds})
 }
+
+// allowedScoreWindow enumerates the valid roster Score window options.
+var allowedScoreWindow = map[string]bool{
+	models.ScoreWindowForever: true,
+	models.ScoreWindowMonth:   true,
+	models.ScoreWindowWeek:    true,
+}
+
+// handleSetScoreWindow sets how far back the group's roster Score counts
+// (owner/admin only).
+func (s *Server) handleSetScoreWindow(w http.ResponseWriter, r *http.Request) {
+	groupID, ok := parseID(w, r, "groupID")
+	if !ok {
+		return
+	}
+	role, err := s.requireMembership(r, groupID)
+	if err != nil {
+		writeMembershipError(w, err)
+		return
+	}
+	if role != models.RoleOwner && role != models.RoleAdmin {
+		writeError(w, http.StatusForbidden, "only owners and admins can change the Score window")
+		return
+	}
+	var body struct {
+		Window string `json:"window"`
+	}
+	if err := decodeJSON(r, &body); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	if !allowedScoreWindow[body.Window] {
+		writeError(w, http.StatusBadRequest, "invalid Score window option")
+		return
+	}
+	if err := s.stores.Groups.SetScoreWindow(r.Context(), groupID, body.Window); err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to update setting")
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]string{"window": body.Window})
+}

@@ -34,6 +34,7 @@ export interface Creature {
 
 export type Visibility = 'public' | 'private';
 export type Role = 'owner' | 'admin' | 'member';
+export type ScoreWindow = 'forever' | 'month' | 'week';
 
 export interface Group {
 	id: number;
@@ -49,6 +50,7 @@ export interface Group {
 	discordRoleId?: string;
 	discordRoleName?: string;
 	discordAutodeleteSeconds?: number;
+	scoreWindow?: ScoreWindow;
 }
 
 export interface DiscordRole {
@@ -71,6 +73,9 @@ export interface GroupMember {
 	/** Charm-weighted equivalents of attended/announced (sum of each Warden's charm value). */
 	attendedCharm: number;
 	announcedCharm: number;
+	/** Charm value "given away" as an announcer (within the group's score window):
+	 *  sum over their killed announcements of (Warden charm × others who claimed / reacted Ready). */
+	score: number;
 }
 
 export interface InviteCode {

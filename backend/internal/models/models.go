@@ -37,6 +37,13 @@ const (
 	ResponseReady  = "ready"
 )
 
+// Roster Score window values: how far back a group's roster Score counts.
+const (
+	ScoreWindowForever = "forever"
+	ScoreWindowMonth   = "month"
+	ScoreWindowWeek    = "week"
+)
+
 type User struct {
 	ID              int64     `json:"id"`
 	DiscordID       string    `json:"discordId"`
@@ -82,6 +89,8 @@ type Group struct {
 	DiscordRoleName  string `json:"discordRoleName,omitempty"`
 	// DiscordAutodeleteSeconds: -1 Never, 0 immediately on kill, else seconds after kill.
 	DiscordAutodeleteSeconds int `json:"discordAutodeleteSeconds"`
+	// ScoreWindow: how far back the roster Score counts ("forever"/"month"/"week").
+	ScoreWindow string `json:"scoreWindow"`
 }
 
 type GroupMember struct {
@@ -99,6 +108,11 @@ type GroupMember struct {
 	// charm value) for the roster's Count/Charm toggle.
 	AttendedCharm  int `json:"attendedCharm"`
 	AnnouncedCharm int `json:"announcedCharm"`
+	// Score is the charm value this member has "given away" as an announcer,
+	// within the group's configured Score window: for each killed announcement
+	// they authored, the creature's charm weight times the number of other
+	// members who claimed it or reacted Ready.
+	Score int `json:"score"`
 }
 
 type InviteCode struct {

@@ -7,6 +7,7 @@ import type {
 	HighscoreEntry,
 	InviteCode,
 	ResponseStatus,
+	ScoreWindow,
 	User
 } from './types';
 
@@ -99,6 +100,8 @@ export const api = {
 	clearDiscordRole: (id: number) => request<void>('DELETE', `/api/groups/${id}/discord/role`),
 	setDiscordAutodelete: (id: number, seconds: number) =>
 		request<void>('PUT', `/api/groups/${id}/discord/autodelete`, { seconds }),
+	setScoreWindow: (id: number, window: ScoreWindow) =>
+		request<void>('PUT', `/api/groups/${id}/score-window`, { window }),
 
 	// Announcements
 	announcements: (groupId: number) =>

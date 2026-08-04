@@ -92,6 +92,7 @@ func NewRouter(cfg *config.Config, stores *store.Stores, oauth *auth.DiscordProv
 			r.Put("/groups/{groupID}/discord/role", s.handleSetDiscordRole)
 			r.Delete("/groups/{groupID}/discord/role", s.handleClearDiscordRole)
 			r.Put("/groups/{groupID}/discord/autodelete", s.handleSetDiscordAutodelete)
+			r.Put("/groups/{groupID}/score-window", s.handleSetScoreWindow)
 
 			// Announcements.
 			r.Get("/groups/{groupID}/announcements", s.handleListAnnouncements)

@@ -5,7 +5,16 @@
 	import { api, ApiError } from '$lib/api';
 	import { currentUser, authLoading } from '$lib/stores';
 	import { GroupRoom, type RoomEvent } from '$lib/ws';
-	import type { Announcement, Creature, DiscordRole, Group, GroupMember, InviteCode } from '$lib/types';
+	import { formatK } from '$lib/format';
+	import type {
+		Announcement,
+		Creature,
+		DiscordRole,
+		Group,
+		GroupMember,
+		InviteCode,
+		ScoreWindow
+	} from '$lib/types';
 
 	let groupId = $derived(Number($page.params.id));
 
@@ -38,9 +47,15 @@
 	let discordRoles = $state<DiscordRole[]>([]);
 	let showRoles = $state(false);
 	let autodelete = $state(-1);
+	let scoreWindow = $state<ScoreWindow>('forever');
+	let scoreBusy = $state(false);
 
 	$effect(() => {
 		autodelete = group?.discordAutodeleteSeconds ?? -1;
+	});
+
+	$effect(() => {
+		scoreWindow = group?.scoreWindow ?? 'forever';
 	});
 
 	let me = $derived($currentUser);
@@ -451,6 +466,19 @@
 		}
 	}
 
+	async function setScoreWindow(window: ScoreWindow) {
+		scoreBusy = true;
+		try {
+			await api.setScoreWindow(groupId, window);
+			group = await api.getGroup(groupId);
+			await loadRoster();
+		} catch (err) {
+			error = err instanceof ApiError ? err.message : 'Failed to update setting.';
+		} finally {
+			scoreBusy = false;
+		}
+	}
+
 	function comingList(a: Announcement) {
 		return a.responses.filter((r) => r.status === 'coming');
 	}
@@ -567,6 +595,7 @@
 						<span class="num" title={rosterMode === 'charm' ? "Charm points of other members' Wardens they attended (claimed or reacted Ready) in this group" : "Other members' Wardens they attended (claimed or reacted Ready) in this group — their own announcements don't count"}>Attended</span>
 						<span class="num" title={rosterMode === 'charm' ? 'Charm points of Wardens they announced in this group' : 'Announcements they posted in this group'}>Announced</span>
 						<span class="num" title="Attended ÷ announced, in this group">Share</span>
+						<span class="num" title="Charm points given away: each Warden's charm × the members who turned up for it (within the group's Score window)">Score</span>
 						{#if isManager}<span class="actions-col"></span>{/if}
 					</div>
 					{#each filteredMembers as m (m.userId)}
@@ -578,6 +607,7 @@
 							<span class="num">{attended(m)}</span>
 							<span class="num">{announced(m)}</span>
 							<span class="num share" class:none={!announced(m)}>{shareLabel(m)}</span>
+							<span class="num charm">{formatK(m.score)}</span>
 							{#if isManager}
 								<div class="member-actions">
 									{#if m.role !== 'owner'}
@@ -696,6 +726,28 @@
 							</button>
 						{/if}
 					{/if}
+				</div>
+
+				<div class="access-section">
+					<h3>Roster Score</h3>
+					<p class="muted small">
+						How far back the Members roster Score counts each announcer's charm points given away.
+					</p>
+					<div class="role-config">
+						<span class="muted small">Count Score from</span>
+						<select
+							bind:value={scoreWindow}
+							onchange={() => setScoreWindow(scoreWindow)}
+							disabled={scoreBusy}
+						>
+							<option value="forever">All time</option>
+							<option value="month">This month</option>
+							<option value="week">This week</option>
+						</select>
+					</div>
+					<p class="muted small">
+						Attended, Announced and Share are always all-time — only Score uses this window.
+					</p>
 				</div>
 
 				<div class="access-section">
@@ -972,11 +1024,11 @@
 		scrollbar-gutter: stable;
 		padding-right: 0.35rem;
 	}
-	/* Shared column grid: name | attended | announced | share (+ actions for managers). */
+	/* Shared column grid: name | attended | announced | share | score (+ actions for managers). */
 	.roster-head,
 	.member {
 		display: grid;
-		grid-template-columns: minmax(0, 1fr) 5rem 5.5rem 4rem;
+		grid-template-columns: minmax(0, 1fr) 5rem 5.5rem 4rem 4.5rem;
 		gap: 0.6rem;
 		align-items: center;
 	}
@@ -984,7 +1036,7 @@
 	   with buttons sizes its 'auto' column differently and the numbers misalign. */
 	.roster.manager .roster-head,
 	.roster.manager .member {
-		grid-template-columns: minmax(0, 1fr) 5rem 5.5rem 4rem 11.5rem;
+		grid-template-columns: minmax(0, 1fr) 5rem 5.5rem 4rem 4.5rem 11.5rem;
 	}
 	.roster-head {
 		position: sticky;
@@ -1034,6 +1086,10 @@
 		color: var(--text-dim);
 		font-weight: 400;
 	}
+	.member .num.charm {
+		color: var(--accent);
+		font-weight: 600;
+	}
 	.member-actions {
 		display: flex;
 		gap: 0.4rem;
@@ -1047,7 +1103,7 @@
 		.member,
 		.roster.manager .roster-head,
 		.roster.manager .member {
-			grid-template-columns: minmax(0, 1fr) 2.6rem 2.6rem 3.2rem;
+			grid-template-columns: minmax(0, 1fr) 2.6rem 2.6rem 3.2rem 3rem;
 			gap: 0.4rem;
 		}
 		/* On phones the numbers stay aligned; manager actions wrap to a full row. */
