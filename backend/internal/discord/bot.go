@@ -323,11 +323,7 @@ func (b *Bot) OnAnnouncementKilled(ctx context.Context, announcementID int64) {
 		return // never
 	}
 	if seconds == 0 {
-		_, channelID, _, err := b.stores.Groups.DiscordSettings(ctx, ann.GroupID)
-		if err == nil && channelID != "" {
-			_ = b.session.ChannelMessageDelete(channelID, ann.DiscordMessageID)
-		}
-		_ = b.stores.Announcements.ClearDiscordMessage(ctx, announcementID)
+		b.deleteMirrored(ctx, announcementID, ann.GroupID, ann.DiscordMessageID)
 		return
 	}
 	_ = b.stores.Announcements.ScheduleDiscordDelete(ctx, announcementID,
@@ -355,11 +351,7 @@ func (b *Bot) reconcileOrphanedKills(ctx context.Context) {
 			continue // never
 		}
 		if seconds == 0 {
-			_, channelID, _, err := b.stores.Groups.DiscordSettings(ctx, o.GroupID)
-			if err == nil && channelID != "" {
-				_ = b.session.ChannelMessageDelete(channelID, o.MessageID)
-			}
-			_ = b.stores.Announcements.ClearDiscordMessage(ctx, o.AnnouncementID)
+			b.deleteMirrored(ctx, o.AnnouncementID, o.GroupID, o.MessageID)
 			continue
 		}
 		_ = b.stores.Announcements.ScheduleDiscordDelete(ctx, o.AnnouncementID,
@@ -391,14 +383,43 @@ func (b *Bot) sweep(ctx context.Context) {
 		return
 	}
 	for _, d := range due {
-		_, channelID, _, err := b.stores.Groups.DiscordSettings(ctx, d.GroupID)
-		if err == nil && channelID != "" {
-			if err := b.session.ChannelMessageDelete(channelID, d.MessageID); err != nil {
-				slog.Error("discord: failed to delete mirrored message", "error", err)
-			}
-		}
-		_ = b.stores.Announcements.ClearDiscordMessage(ctx, d.AnnouncementID)
+		b.deleteMirrored(ctx, d.AnnouncementID, d.GroupID, d.MessageID)
 	}
+}
+
+// deleteMirrored removes a mirrored Discord message and then forgets its ID. The
+// pointer is only cleared once we know the message is gone — a successful delete
+// or a Discord "Unknown Message" (already deleted). Any other failure (a rate
+// limit, a network blip, a transient settings-lookup error) leaves the pointer
+// intact and pushes the scheduled delete a few minutes out so the sweeper
+// retries, instead of orphaning the message in the channel forever.
+func (b *Bot) deleteMirrored(ctx context.Context, announcementID, groupID int64, messageID string) {
+	_, channelID, _, err := b.stores.Groups.DiscordSettings(ctx, groupID)
+	if err != nil {
+		_ = b.stores.Announcements.ScheduleDiscordDelete(ctx, announcementID, time.Now().Add(5*time.Minute))
+		return
+	}
+	if channelID == "" {
+		// The channel is no longer linked; there is nothing left to delete.
+		_ = b.stores.Announcements.ClearDiscordMessage(ctx, announcementID)
+		return
+	}
+	if err := b.session.ChannelMessageDelete(channelID, messageID); err != nil && !isUnknownMessage(err) {
+		slog.Error("discord: failed to delete mirrored message, will retry", "error", err)
+		_ = b.stores.Announcements.ScheduleDiscordDelete(ctx, announcementID, time.Now().Add(5*time.Minute))
+		return
+	}
+	_ = b.stores.Announcements.ClearDiscordMessage(ctx, announcementID)
+}
+
+// isUnknownMessage reports whether a Discord API error means the message no
+// longer exists (already deleted), which we treat the same as a success.
+func isUnknownMessage(err error) bool {
+	var rest *discordgo.RESTError
+	if errors.As(err, &rest) && rest.Message != nil {
+		return rest.Message.Code == discordgo.ErrCodeUnknownMessage
+	}
+	return false
 }
 
 // GuildRoles returns the assignable roles of a guild, most-prominent first,
