@@ -41,6 +41,8 @@
 	let activeTab = $state<'feed' | 'members' | 'settings'>('feed');
 	let memberQuery = $state('');
 	let rosterMode = $state<'count' | 'charm'>('count');
+	type RosterSort = 'member' | 'attended' | 'announced' | 'share' | 'score';
+	let rosterSort = $state<RosterSort>('member');
 	let inviteMaxUses = $state(1);
 	let discordCode = $state('');
 	let discordBusy = $state(false);
@@ -345,6 +347,38 @@
 		const ann = announced(m);
 		return ann ? `${(attended(m) / ann).toFixed(1)}×` : '—';
 	}
+	function shareValue(m: GroupMember): number {
+		const ann = announced(m);
+		return ann ? attended(m) / ann : -1;
+	}
+	function roleRank(m: GroupMember): number {
+		return m.role === 'owner' ? 0 : m.role === 'admin' ? 1 : 2;
+	}
+	function memberName(m: GroupMember): string {
+		return (m.characterName || m.discordName || '').toLowerCase();
+	}
+
+	// Sorted view of the filtered roster. 'member' groups by role (owner, then
+	// admins, then members) and then name; the numeric columns sort by value
+	// descending, tie-broken by name. Metric accessors follow the Count/Charm
+	// toggle, so re-sorting stays consistent with what's displayed.
+	let sortedMembers = $derived.by(() => {
+		const rows = [...filteredMembers];
+		if (rosterSort === 'member') {
+			return rows.sort(
+				(a, b) => roleRank(a) - roleRank(b) || memberName(a).localeCompare(memberName(b))
+			);
+		}
+		const value =
+			rosterSort === 'attended'
+				? attended
+				: rosterSort === 'announced'
+					? announced
+					: rosterSort === 'score'
+						? (m: GroupMember) => m.score
+						: shareValue;
+		return rows.sort((a, b) => value(b) - value(a) || memberName(a).localeCompare(memberName(b)));
+	});
 
 	async function setRole(userId: number, role: string) {
 		try {
@@ -589,16 +623,34 @@
 
 				<div class="roster" class:manager={isManager}>
 					<div class="roster-head">
-						<span
-							>Member{#if rosterMode === 'charm'}<span class="mode-hint"> · charm points</span>{/if}</span
-						>
-						<span class="num" title={rosterMode === 'charm' ? "Charm points of other members' Wardens they attended (claimed or reacted Ready) in this group" : "Other members' Wardens they attended (claimed or reacted Ready) in this group — their own announcements don't count"}>Attended</span>
-						<span class="num" title={rosterMode === 'charm' ? 'Charm points of Wardens they announced in this group' : 'Announcements they posted in this group'}>Announced</span>
-						<span class="num" title="Attended ÷ announced, in this group">Share</span>
-						<span class="num" title="Charm points given away: each Warden's charm × the members who turned up for it (within the group's Score window)">Score</span>
+						<span>
+							<button class="sort" class:active={rosterSort === 'member'} onclick={() => (rosterSort = 'member')}>
+								Member{rosterSort === 'member' ? ' ▼' : ''}
+							</button>{#if rosterMode === 'charm'}<span class="mode-hint"> · charm points</span>{/if}
+						</span>
+						<span class="num" title={rosterMode === 'charm' ? "Charm points of other members' Wardens they attended (claimed or reacted Ready) in this group" : "Other members' Wardens they attended (claimed or reacted Ready) in this group — their own announcements don't count"}>
+							<button class="sort" class:active={rosterSort === 'attended'} onclick={() => (rosterSort = 'attended')}>
+								Attended{rosterSort === 'attended' ? ' ▼' : ''}
+							</button>
+						</span>
+						<span class="num" title={rosterMode === 'charm' ? 'Charm points of Wardens they announced in this group' : 'Announcements they posted in this group'}>
+							<button class="sort" class:active={rosterSort === 'announced'} onclick={() => (rosterSort = 'announced')}>
+								Announced{rosterSort === 'announced' ? ' ▼' : ''}
+							</button>
+						</span>
+						<span class="num" title="Attended ÷ announced, in this group">
+							<button class="sort" class:active={rosterSort === 'share'} onclick={() => (rosterSort = 'share')}>
+								Share{rosterSort === 'share' ? ' ▼' : ''}
+							</button>
+						</span>
+						<span class="num" title="Charm points given away: each Warden's charm × the members who turned up for it (within the group's Score window)">
+							<button class="sort" class:active={rosterSort === 'score'} onclick={() => (rosterSort = 'score')}>
+								Score{rosterSort === 'score' ? ' ▼' : ''}
+							</button>
+						</span>
 						{#if isManager}<span class="actions-col"></span>{/if}
 					</div>
-					{#each filteredMembers as m (m.userId)}
+					{#each sortedMembers as m (m.userId)}
 						<div class="member">
 							<div class="member-name">
 								<strong>{m.characterName || m.discordName}</strong>
@@ -607,7 +659,7 @@
 							<span class="num">{attended(m)}</span>
 							<span class="num">{announced(m)}</span>
 							<span class="num share" class:none={!announced(m)}>{shareLabel(m)}</span>
-							<span class="num charm">{formatK(m.score)}</span>
+							<span class="num charm" title={`${m.score.toLocaleString()} charm points given away`}>{formatK(m.score)}</span>
 							{#if isManager}
 								<div class="member-actions">
 									{#if m.role !== 'owner'}
@@ -1050,6 +1102,24 @@
 		letter-spacing: 0.04em;
 		text-transform: uppercase;
 		color: var(--text-dim);
+	}
+	/* Sortable column headers: buttons styled to blend into the header row. */
+	.roster-head .sort {
+		background: none;
+		border: none;
+		padding: 0;
+		color: inherit;
+		font: inherit;
+		letter-spacing: inherit;
+		text-transform: inherit;
+		cursor: pointer;
+		white-space: nowrap;
+	}
+	.roster-head .sort:hover {
+		color: var(--text);
+	}
+	.roster-head .sort.active {
+		color: var(--accent);
 	}
 	.member {
 		padding: 0.45rem 0;
