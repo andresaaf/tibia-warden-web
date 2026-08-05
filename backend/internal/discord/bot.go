@@ -164,19 +164,33 @@ func (b *Bot) handleComponent(s *discordgo.Session, i *discordgo.InteractionCrea
 		return
 	}
 
+	// Acknowledge the interaction immediately. Discord discards the interaction
+	// token ~3s after the click, but the database work below (a kill can run
+	// several sequential queries) may take longer. Deferring first, then editing
+	// the message once the work is done, keeps us inside that window — otherwise
+	// the response is rejected as an "Unknown interaction", the mirrored message
+	// is never repainted to the killed/claim state, and the post lingers in its
+	// stale "open" form until auto-delete silently removes it.
+	if err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseDeferredMessageUpdate,
+	}); err != nil {
+		slog.Error("discord: failed to acknowledge interaction", "error", err)
+		return
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	user := i.Member.User
 	u, err := b.stores.Users.UpsertByDiscord(ctx, user.ID, user.Username, user.AvatarURL(""))
 	if err != nil {
-		b.ephemeral(s, i, "Something went wrong. Please try again.")
+		b.followupError(s, i, "Something went wrong. Please try again.")
 		return
 	}
 
 	ann, err := b.stores.Announcements.GetByID(ctx, annID)
 	if err != nil {
-		b.ephemeral(s, i, "That announcement no longer exists.")
+		b.followupError(s, i, "That announcement no longer exists.")
 		return
 	}
 
@@ -197,17 +211,17 @@ func (b *Bot) handleComponent(s *discordgo.Session, i *discordgo.InteractionCrea
 	case "killed":
 		role, _ := b.stores.Groups.Role(ctx, ann.GroupID, u.ID)
 		if u.ID != ann.AuthorID && role != models.RoleOwner && role != models.RoleAdmin {
-			b.ephemeral(s, i, "Only the person who announced it or a group admin can mark it killed.")
+			b.followupError(s, i, "Only the person who announced it or a group admin can mark it killed.")
 			return
 		}
 		affected, err = b.stores.Announcements.MarkKilledWithSiblings(ctx, annID)
 		if err != nil {
-			b.ephemeral(s, i, "This is already marked killed.")
+			b.followupError(s, i, "This is already marked killed.")
 			return
 		}
 	case "claim":
 		if err := b.stores.Announcements.Claim(ctx, annID, u.ID); err != nil {
-			b.ephemeral(s, i, "This can only be claimed after it's marked killed.")
+			b.followupError(s, i, "This can only be claimed after it's marked killed.")
 			return
 		}
 	default:
@@ -220,20 +234,23 @@ func (b *Bot) handleComponent(s *discordgo.Session, i *discordgo.InteractionCrea
 	}
 	b.hub.Broadcast(ann.GroupID, ws.EventAnnouncementUpdated, ann)
 
+	// Repaint the clicked message via the deferred interaction's webhook.
 	_, _, roleID, _ := b.stores.Groups.DiscordSettings(ctx, ann.GroupID)
-	_ = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseUpdateMessage,
-		Data: &discordgo.InteractionResponseData{
-			Content:         messageContent(roleID, ann),
-			Embeds:          []*discordgo.MessageEmbed{buildEmbed(ann)},
-			Components:      buildComponents(ann),
-			AllowedMentions: &discordgo.MessageAllowedMentions{},
-		},
-	})
+	content := messageContent(roleID, ann)
+	embeds := []*discordgo.MessageEmbed{buildEmbed(ann)}
+	components := buildComponents(ann)
+	if _, err := s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+		Content:         &content,
+		Embeds:          &embeds,
+		Components:      &components,
+		AllowedMentions: &discordgo.MessageAllowedMentions{},
+	}); err != nil {
+		slog.Error("discord: failed to update message after interaction", "error", err)
+	}
 
 	// Propagate to any affected broadcast siblings (kills, and responses that
 	// cascade to groups where the user had already reacted). The primary was
-	// already pushed above via the interaction update and hub broadcast.
+	// already pushed above via the interaction edit and hub broadcast.
 	for _, id := range affected {
 		if id != annID {
 			if sib, sErr := b.stores.Announcements.GetByID(ctx, id); sErr == nil {
@@ -457,6 +474,19 @@ func (b *Bot) ephemeral(s *discordgo.Session, i *discordgo.InteractionCreate, ms
 			Flags:   discordgo.MessageFlagsEphemeral,
 		},
 	})
+}
+
+// followupError sends an ephemeral error to the clicking user after the
+// interaction has already been acknowledged (deferred). Use this instead of
+// ephemeral once handleComponent has deferred, since the interaction can no
+// longer take a fresh response — only followups.
+func (b *Bot) followupError(s *discordgo.Session, i *discordgo.InteractionCreate, msg string) {
+	if _, err := s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
+		Content: msg,
+		Flags:   discordgo.MessageFlagsEphemeral,
+	}); err != nil {
+		slog.Error("discord: failed to send followup message", "error", err)
+	}
 }
 
 func buildEmbed(a *models.Announcement) *discordgo.MessageEmbed {
