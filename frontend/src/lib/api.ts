@@ -132,5 +132,9 @@ export const api = {
 			`/api/admin/users${search ? `?search=${encodeURIComponent(search)}` : ''}`
 		),
 	adminBan: (userId: number) => request<void>('POST', `/api/admin/users/${userId}/ban`),
-	adminUnban: (userId: number) => request<void>('POST', `/api/admin/users/${userId}/unban`)
+	adminUnban: (userId: number) => request<void>('POST', `/api/admin/users/${userId}/unban`),
+	adminPromote: (userId: number) => request<void>('POST', `/api/admin/users/${userId}/promote`),
+	adminDemote: (userId: number) => request<void>('POST', `/api/admin/users/${userId}/demote`),
+	adminRename: (userId: number, characterName: string) =>
+		request<User>('PATCH', `/api/admin/users/${userId}`, { characterName })
 };

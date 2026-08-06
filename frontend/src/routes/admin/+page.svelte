@@ -10,6 +10,8 @@
 	let search = $state('');
 	let busyId = $state<number | null>(null);
 	let loaded = $state(false);
+	let editingId = $state<number | null>(null);
+	let editName = $state('');
 
 	// Client-side guard (server enforces admin on every /api/admin call too).
 	$effect(() => {
@@ -66,6 +68,63 @@
 		}
 	}
 
+	async function promote(u: User) {
+		if (!confirm(`Make ${u.characterName || u.discordUsername} a site admin?`)) return;
+		await setAdmin(u, true);
+	}
+
+	async function demote(u: User) {
+		if (!confirm(`Remove admin access from ${u.characterName || u.discordUsername}?`)) return;
+		await setAdmin(u, false);
+	}
+
+	async function setAdmin(u: User, isAdmin: boolean) {
+		busyId = u.id;
+		error = '';
+		try {
+			if (isAdmin) await api.adminPromote(u.id);
+			else await api.adminDemote(u.id);
+			u.isAdmin = isAdmin;
+			users = [...users];
+		} catch (err) {
+			error = err instanceof ApiError ? err.message : 'Action failed.';
+		} finally {
+			busyId = null;
+		}
+	}
+
+	function startRename(u: User) {
+		editingId = u.id;
+		editName = u.characterName;
+		error = '';
+	}
+
+	function cancelRename() {
+		editingId = null;
+		editName = '';
+	}
+
+	async function saveRename(u: User) {
+		const name = editName.trim();
+		if (!name) {
+			error = 'Character name cannot be empty.';
+			return;
+		}
+		busyId = u.id;
+		error = '';
+		try {
+			const updated = await api.adminRename(u.id, name);
+			u.characterName = updated.characterName;
+			users = [...users];
+			editingId = null;
+			editName = '';
+		} catch (err) {
+			error = err instanceof ApiError ? err.message : 'Rename failed.';
+		} finally {
+			busyId = null;
+		}
+	}
+
 	function fmtDate(iso: string): string {
 		return new Date(iso).toLocaleDateString();
 	}
@@ -110,11 +169,27 @@
 							<td>
 								<div class="user-cell">
 									{#if u.discordAvatar}<img class="avatar" src={u.discordAvatar} alt="" />{/if}
-									<div>
-										<strong>{u.characterName || u.discordUsername}</strong>
-										{#if u.characterName}<div class="muted small">{u.discordUsername}</div>{/if}
-										{#if u.isAdmin}<span class="badge admin">admin</span>{/if}
-									</div>
+									{#if editingId === u.id}
+										<form class="rename" onsubmit={(e) => { e.preventDefault(); saveRename(u); }}>
+											<!-- svelte-ignore a11y_autofocus -->
+											<input
+												type="text"
+												bind:value={editName}
+												maxlength="60"
+												placeholder="Character name"
+												autocomplete="off"
+												autofocus
+											/>
+											<button class="btn btn-sm btn-primary" type="submit" disabled={busyId === u.id}>Save</button>
+											<button class="btn btn-sm" type="button" onclick={cancelRename}>Cancel</button>
+										</form>
+									{:else}
+										<div>
+											<strong>{u.characterName || u.discordUsername}</strong>
+											{#if u.characterName}<div class="muted small">{u.discordUsername}</div>{/if}
+											{#if u.isAdmin}<span class="badge admin">admin</span>{/if}
+										</div>
+									{/if}
 								</div>
 							</td>
 							<td class="mono muted small">{u.discordId}</td>
@@ -123,17 +198,33 @@
 								{#if u.banned}<span class="badge danger">banned</span>{:else}<span class="muted small">active</span>{/if}
 							</td>
 							<td class="actions-col">
-								{#if u.isAdmin || u.id === $currentUser?.id}
-									<span class="muted small">—</span>
-								{:else if u.banned}
-									<button class="btn btn-sm" disabled={busyId === u.id} onclick={() => unban(u)}>
-										Unban
+								<div class="row-actions">
+									<button
+										class="btn btn-sm"
+										disabled={busyId === u.id || editingId === u.id}
+										onclick={() => startRename(u)}
+									>
+										Rename
 									</button>
-								{:else}
-									<button class="btn btn-sm btn-danger" disabled={busyId === u.id} onclick={() => ban(u)}>
-										Ban
-									</button>
-								{/if}
+									{#if u.id === $currentUser?.id}
+										<!-- no self-targeted admin/ban actions -->
+									{:else if u.isAdmin}
+										<button class="btn btn-sm" disabled={busyId === u.id} onclick={() => demote(u)}>
+											Remove admin
+										</button>
+									{:else if u.banned}
+										<button class="btn btn-sm" disabled={busyId === u.id} onclick={() => unban(u)}>
+											Unban
+										</button>
+									{:else}
+										<button class="btn btn-sm" disabled={busyId === u.id} onclick={() => promote(u)}>
+											Make admin
+										</button>
+										<button class="btn btn-sm btn-danger" disabled={busyId === u.id} onclick={() => ban(u)}>
+											Ban
+										</button>
+									{/if}
+								</div>
 							</td>
 						</tr>
 					{/each}
@@ -206,6 +297,20 @@
 	.actions-col {
 		text-align: right;
 		white-space: nowrap;
+	}
+	.row-actions {
+		display: flex;
+		gap: 0.4rem;
+		justify-content: flex-end;
+	}
+	.rename {
+		display: flex;
+		align-items: center;
+		gap: 0.4rem;
+		flex-wrap: wrap;
+	}
+	.rename input {
+		width: 12rem;
 	}
 	.badge {
 		display: inline-block;

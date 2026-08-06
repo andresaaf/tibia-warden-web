@@ -89,6 +89,18 @@ func (s *UserStore) SetBanned(ctx context.Context, id int64, banned bool) error 
 	return nil
 }
 
+// SetAdmin grants or revokes a user's site-wide admin flag.
+func (s *UserStore) SetAdmin(ctx context.Context, id int64, isAdmin bool) error {
+	ct, err := s.pool.Exec(ctx, `UPDATE users SET is_admin = $2 WHERE id = $1`, id, isAdmin)
+	if err != nil {
+		return err
+	}
+	if ct.RowsAffected() == 0 {
+		return ErrNotFound
+	}
+	return nil
+}
+
 // SetCharacterName updates a user's Tibia character name.
 func (s *UserStore) SetCharacterName(ctx context.Context, id int64, name string) (*models.User, error) {
 	var u models.User

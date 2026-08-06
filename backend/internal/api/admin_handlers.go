@@ -64,6 +64,86 @@ func (s *Server) handleAdminUnbanUser(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{"status": "unbanned"})
 }
 
+// handleAdminPromote grants a user site-wide admin access. A banned user must
+// be unbanned first (a banned admin is a contradictory state).
+func (s *Server) handleAdminPromote(w http.ResponseWriter, r *http.Request) {
+	targetID, ok := parseID(w, r, "userID")
+	if !ok {
+		return
+	}
+	target, err := s.stores.Users.GetByID(r.Context(), targetID)
+	if err != nil {
+		if errors.Is(err, store.ErrNotFound) {
+			writeError(w, http.StatusNotFound, "user not found")
+			return
+		}
+		writeError(w, http.StatusInternalServerError, "failed to load user")
+		return
+	}
+	if target.Banned {
+		writeError(w, http.StatusBadRequest, "unban the user before promoting")
+		return
+	}
+	if err := s.stores.Users.SetAdmin(r.Context(), targetID, true); err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to promote user")
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]string{"status": "promoted"})
+}
+
+// handleAdminDemote revokes a user's admin access. Admins cannot demote
+// themselves, to avoid locking the last admin out of the panel.
+func (s *Server) handleAdminDemote(w http.ResponseWriter, r *http.Request) {
+	targetID, ok := parseID(w, r, "userID")
+	if !ok {
+		return
+	}
+	if targetID == userID(r) {
+		writeError(w, http.StatusBadRequest, "you cannot remove your own admin access")
+		return
+	}
+	if err := s.stores.Users.SetAdmin(r.Context(), targetID, false); err != nil {
+		if errors.Is(err, store.ErrNotFound) {
+			writeError(w, http.StatusNotFound, "user not found")
+			return
+		}
+		writeError(w, http.StatusInternalServerError, "failed to demote user")
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]string{"status": "demoted"})
+}
+
+// handleAdminSetCharacterName lets an admin rename a user's Tibia character
+// (e.g. to clear an offensive name). Mirrors the self-service validation.
+func (s *Server) handleAdminSetCharacterName(w http.ResponseWriter, r *http.Request) {
+	targetID, ok := parseID(w, r, "userID")
+	if !ok {
+		return
+	}
+	var body struct {
+		CharacterName string `json:"characterName"`
+	}
+	if err := decodeJSON(r, &body); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	name := strings.TrimSpace(body.CharacterName)
+	if name == "" || len(name) > 60 {
+		writeError(w, http.StatusBadRequest, "character name must be between 1 and 60 characters")
+		return
+	}
+	user, err := s.stores.Users.SetCharacterName(r.Context(), targetID, name)
+	if err != nil {
+		if errors.Is(err, store.ErrNotFound) {
+			writeError(w, http.StatusNotFound, "user not found")
+			return
+		}
+		writeError(w, http.StatusInternalServerError, "failed to update character name")
+		return
+	}
+	writeJSON(w, http.StatusOK, user)
+}
+
 // adminBanTarget parses the target user ID and enforces the ban guardrails:
 // an admin cannot ban themselves or another admin.
 func (s *Server) adminBanTarget(w http.ResponseWriter, r *http.Request) (int64, bool) {
