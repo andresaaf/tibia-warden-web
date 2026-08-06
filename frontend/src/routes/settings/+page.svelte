@@ -80,6 +80,12 @@
 					</button>
 				</div>
 			</form>
+
+			{#if $currentUser.isAdmin}
+				<div class="admin-row">
+					<a class="btn" href="/admin">Admin panel</a>
+				</div>
+			{/if}
 		</div>
 	{/if}
 </div>
@@ -112,5 +118,9 @@
 	.success {
 		color: var(--success);
 		margin: 0;
+	}
+	.admin-row {
+		padding-top: 0.75rem;
+		border-top: 1px solid var(--border);
 	}
 </style>

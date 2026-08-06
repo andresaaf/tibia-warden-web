@@ -123,5 +123,14 @@ export const api = {
 	markAnnouncementKilled: (announcementId: number) =>
 		request<void>('POST', `/api/announcements/${announcementId}/killed`),
 	claimAnnouncement: (announcementId: number) =>
-		request<void>('POST', `/api/announcements/${announcementId}/claim`)
+		request<void>('POST', `/api/announcements/${announcementId}/claim`),
+
+	// Admin
+	adminUsers: (search = '') =>
+		request<User[]>(
+			'GET',
+			`/api/admin/users${search ? `?search=${encodeURIComponent(search)}` : ''}`
+		),
+	adminBan: (userId: number) => request<void>('POST', `/api/admin/users/${userId}/ban`),
+	adminUnban: (userId: number) => request<void>('POST', `/api/admin/users/${userId}/unban`)
 };

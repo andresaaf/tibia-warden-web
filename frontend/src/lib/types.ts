@@ -21,6 +21,8 @@ export interface User {
 	discordUsername: string;
 	discordAvatar: string;
 	characterName: string;
+	isAdmin: boolean;
+	banned: boolean;
 	createdAt: string;
 }
 

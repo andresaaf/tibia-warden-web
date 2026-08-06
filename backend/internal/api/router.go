@@ -103,6 +103,14 @@ func NewRouter(cfg *config.Config, stores *store.Stores, oauth *auth.DiscordProv
 
 			// WebSocket (auth via cookie).
 			r.Get("/groups/{groupID}/ws", s.handleWebSocket)
+
+			// Admin (site-wide moderation).
+			r.Route("/admin", func(r chi.Router) {
+				r.Use(s.requireAdmin)
+				r.Get("/users", s.handleAdminListUsers)
+				r.Post("/users/{userID}/ban", s.handleAdminBanUser)
+				r.Post("/users/{userID}/unban", s.handleAdminUnbanUser)
+			})
 		})
 	})
 

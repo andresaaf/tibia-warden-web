@@ -22,7 +22,7 @@ func (s *Server) requireAuth(next http.Handler) http.Handler {
 			writeError(w, http.StatusUnauthorized, "authentication required")
 			return
 		}
-		userID, err := s.stores.Sessions.UserIDByToken(r.Context(), token)
+		userID, banned, err := s.stores.Sessions.AuthByToken(r.Context(), token)
 		if err != nil {
 			if errors.Is(err, store.ErrNotFound) {
 				writeError(w, http.StatusUnauthorized, "invalid or expired session")
@@ -31,8 +31,29 @@ func (s *Server) requireAuth(next http.Handler) http.Handler {
 			writeError(w, http.StatusInternalServerError, "failed to verify session")
 			return
 		}
+		if banned {
+			writeError(w, http.StatusForbidden, "account banned")
+			return
+		}
 		ctx := context.WithValue(r.Context(), userIDKey, userID)
 		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+// requireAdmin gates admin-only routes. It must run after requireAuth, which
+// populates the user ID in the request context.
+func (s *Server) requireAdmin(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		user, err := s.stores.Users.GetByID(r.Context(), userID(r))
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "failed to verify admin access")
+			return
+		}
+		if !user.IsAdmin {
+			writeError(w, http.StatusForbidden, "admin only")
+			return
+		}
+		next.ServeHTTP(w, r.WithContext(r.Context()))
 	})
 }
 

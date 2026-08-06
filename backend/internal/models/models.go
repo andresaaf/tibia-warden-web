@@ -43,6 +43,8 @@ type User struct {
 	DiscordUsername string    `json:"discordUsername"`
 	DiscordAvatar   string    `json:"discordAvatar"`
 	CharacterName   string    `json:"characterName"`
+	IsAdmin         bool      `json:"isAdmin"`
+	Banned          bool      `json:"banned"`
 	CreatedAt       time.Time `json:"createdAt"`
 }
 
