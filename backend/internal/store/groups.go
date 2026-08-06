@@ -173,57 +173,7 @@ func (s *GroupStore) MemberGroupIDs(ctx context.Context, userID int64) ([]int64,
 // Announced counts announcements created in it.
 func (s *GroupStore) Members(ctx context.Context, groupID int64, period string) ([]models.GroupMember, error) {
 	rows, err := s.pool.Query(ctx, `
-		SELECT gm.user_id, u.character_name, u.discord_username, gm.role, gm.joined_at,
-			(
-				SELECT COUNT(DISTINCT a.id) FROM announcements a
-				WHERE a.group_id = $1 AND a.status = 'killed' AND a.author_id <> gm.user_id
-				  AND a.killed_at >= win.lo AND a.killed_at < win.hi AND (
-					EXISTS (SELECT 1 FROM announcement_claims c WHERE c.announcement_id = a.id AND c.user_id = gm.user_id)
-					OR EXISTS (SELECT 1 FROM announcement_responses r WHERE r.announcement_id = a.id AND r.user_id = gm.user_id AND r.status = 'ready')
-				)
-			) AS attended,
-			(
-				SELECT COUNT(DISTINCT a.id) FROM announcements a
-				WHERE a.group_id = $1 AND a.author_id = gm.user_id
-				  AND a.created_at >= win.lo AND a.created_at < win.hi
-			) AS announced,
-			(
-				SELECT COALESCE(SUM(cw.points), 0) FROM announcements a
-				JOIN creatures cr ON cr.id = a.creature_id
-				LEFT JOIN charm_weights cw ON cw.difficulty = cr.difficulty
-				WHERE a.group_id = $1 AND a.status = 'killed' AND a.author_id <> gm.user_id
-				  AND a.killed_at >= win.lo AND a.killed_at < win.hi AND (
-					EXISTS (SELECT 1 FROM announcement_claims c WHERE c.announcement_id = a.id AND c.user_id = gm.user_id)
-					OR EXISTS (SELECT 1 FROM announcement_responses r WHERE r.announcement_id = a.id AND r.user_id = gm.user_id AND r.status = 'ready')
-				)
-			) AS attended_charm,
-			(
-				SELECT COALESCE(SUM(cw.points), 0) FROM announcements a
-				JOIN creatures cr ON cr.id = a.creature_id
-				LEFT JOIN charm_weights cw ON cw.difficulty = cr.difficulty
-				WHERE a.group_id = $1 AND a.author_id = gm.user_id
-				  AND a.created_at >= win.lo AND a.created_at < win.hi
-			) AS announced_charm,
-			(
-				SELECT COALESCE(SUM(COALESCE(cw.points, 0) * att.n), 0)
-				FROM announcements a
-				JOIN creatures cr ON cr.id = a.creature_id
-				LEFT JOIN charm_weights cw ON cw.difficulty = cr.difficulty
-				JOIN LATERAL (
-					SELECT COUNT(*) AS n FROM (
-						SELECT c.user_id FROM announcement_claims c
-						WHERE c.announcement_id = a.id AND c.user_id <> a.author_id
-						UNION
-						SELECT r.user_id FROM announcement_responses r
-						WHERE r.announcement_id = a.id AND r.status = 'ready' AND r.user_id <> a.author_id
-					) u
-				) att ON true
-				WHERE a.group_id = $1 AND a.status = 'killed' AND a.author_id = gm.user_id
-				  AND a.killed_at >= win.lo AND a.killed_at < win.hi
-			) AS score
-		FROM group_members gm
-		JOIN users u ON u.id = gm.user_id
-		CROSS JOIN LATERAL (
+		WITH win AS (
 			SELECT
 				CASE $2
 					WHEN 'current_month'  THEN date_trunc('month', now())
@@ -234,7 +184,75 @@ func (s *GroupStore) Members(ctx context.Context, groupID int64, period string) 
 					WHEN 'previous_month' THEN date_trunc('month', now())
 					ELSE 'infinity'::timestamptz
 				END AS hi
-		) win
+		),
+		-- Announcements each member authored in the created-at window (any status).
+		authored AS (
+			SELECT a.author_id AS user_id,
+			       COUNT(*) AS announced,
+			       COALESCE(SUM(cw.points), 0) AS announced_charm
+			FROM announcements a
+			JOIN creatures cr ON cr.id = a.creature_id
+			LEFT JOIN charm_weights cw ON cw.difficulty = cr.difficulty
+			CROSS JOIN win
+			WHERE a.group_id = $1
+			  AND a.created_at >= win.lo AND a.created_at < win.hi
+			GROUP BY a.author_id
+		),
+		-- Charm the member "gave away": for each killed Warden they announced in
+		-- the kill window, the creature's charm times its participant count.
+		scored AS (
+			SELECT a.author_id AS user_id,
+			       COALESCE(SUM(COALESCE(cw.points, 0) * att.n), 0) AS score
+			FROM announcements a
+			JOIN creatures cr ON cr.id = a.creature_id
+			LEFT JOIN charm_weights cw ON cw.difficulty = cr.difficulty
+			CROSS JOIN win
+			JOIN LATERAL (
+				SELECT COUNT(*) AS n FROM (
+					SELECT c.user_id FROM announcement_claims c
+					WHERE c.announcement_id = a.id AND c.user_id <> a.author_id
+					UNION
+					SELECT r.user_id FROM announcement_responses r
+					WHERE r.announcement_id = a.id AND r.status = 'ready' AND r.user_id <> a.author_id
+				) u
+			) att ON true
+			WHERE a.group_id = $1 AND a.status = 'killed'
+			  AND a.killed_at >= win.lo AND a.killed_at < win.hi
+			GROUP BY a.author_id
+		),
+		-- Killed announcements authored by someone else that the member claimed or
+		-- reacted Ready to (Coming does not count). One row per (announcement,
+		-- participant) after the UNION dedups, so DISTINCT/charm sums are exact.
+		attended AS (
+			SELECT p.user_id,
+			       COUNT(DISTINCT a.id) AS attended,
+			       COALESCE(SUM(cw.points), 0) AS attended_charm
+			FROM announcements a
+			JOIN creatures cr ON cr.id = a.creature_id
+			LEFT JOIN charm_weights cw ON cw.difficulty = cr.difficulty
+			CROSS JOIN win
+			JOIN LATERAL (
+				SELECT c.user_id FROM announcement_claims c
+				WHERE c.announcement_id = a.id AND c.user_id <> a.author_id
+				UNION
+				SELECT r.user_id FROM announcement_responses r
+				WHERE r.announcement_id = a.id AND r.status = 'ready' AND r.user_id <> a.author_id
+			) p ON true
+			WHERE a.group_id = $1 AND a.status = 'killed'
+			  AND a.killed_at >= win.lo AND a.killed_at < win.hi
+			GROUP BY p.user_id
+		)
+		SELECT gm.user_id, u.character_name, u.discord_username, gm.role, gm.joined_at,
+		       COALESCE(att.attended, 0)         AS attended,
+		       COALESCE(auth.announced, 0)       AS announced,
+		       COALESCE(att.attended_charm, 0)   AS attended_charm,
+		       COALESCE(auth.announced_charm, 0) AS announced_charm,
+		       COALESCE(sc.score, 0)             AS score
+		FROM group_members gm
+		JOIN users u ON u.id = gm.user_id
+		LEFT JOIN authored auth ON auth.user_id = gm.user_id
+		LEFT JOIN scored   sc   ON sc.user_id   = gm.user_id
+		LEFT JOIN attended att  ON att.user_id  = gm.user_id
 		WHERE gm.group_id = $1
 		ORDER BY
 			CASE gm.role WHEN 'owner' THEN 0 WHEN 'admin' THEN 1 ELSE 2 END,

@@ -91,10 +91,8 @@ func (s *AnnouncementStore) ListByGroup(ctx context.Context, groupID int64, limi
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
-	for i := range out {
-		if err := s.hydrate(ctx, &out[i]); err != nil {
-			return nil, err
-		}
+	if err := s.hydrateList(ctx, out); err != nil {
+		return nil, err
 	}
 	return out, nil
 }
@@ -135,12 +133,81 @@ func (s *AnnouncementStore) ListForUser(ctx context.Context, userID int64, limit
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
-	for i := range out {
-		if err := s.hydrate(ctx, &out[i]); err != nil {
-			return nil, err
-		}
+	if err := s.hydrateList(ctx, out); err != nil {
+		return nil, err
 	}
 	return out, nil
+}
+
+// hydrateList loads responses and claims for a whole page of announcements in
+// two queries total (vs. two per row), attaching each by announcement id.
+// Order within an announcement is preserved because a globally updated_at/
+// claimed_at-sorted stream stays sorted within any subset.
+func (s *AnnouncementStore) hydrateList(ctx context.Context, items []models.Announcement) error {
+	if len(items) == 0 {
+		return nil
+	}
+	byID := make(map[int64]*models.Announcement, len(items))
+	ids := make([]int64, len(items))
+	for i := range items {
+		items[i].Responses = []models.AnnouncementResponse{}
+		items[i].Claims = []models.AnnouncementClaim{}
+		byID[items[i].ID] = &items[i]
+		ids[i] = items[i].ID
+	}
+
+	respRows, err := s.pool.Query(ctx, `
+		SELECT r.announcement_id, r.user_id,
+		       COALESCE(NULLIF(u.character_name, ''), u.discord_username),
+		       u.character_name <> '' AS registered,
+		       u.discord_id,
+		       r.status
+		FROM announcement_responses r
+		JOIN users u ON u.id = r.user_id
+		WHERE r.announcement_id = ANY($1)
+		ORDER BY r.updated_at ASC`, ids)
+	if err != nil {
+		return err
+	}
+	defer respRows.Close()
+	for respRows.Next() {
+		var aid int64
+		var r models.AnnouncementResponse
+		if err := respRows.Scan(&aid, &r.UserID, &r.CharacterName, &r.Registered, &r.DiscordID, &r.Status); err != nil {
+			return err
+		}
+		if a := byID[aid]; a != nil {
+			a.Responses = append(a.Responses, r)
+		}
+	}
+	if err := respRows.Err(); err != nil {
+		return err
+	}
+
+	claimRows, err := s.pool.Query(ctx, `
+		SELECT cl.announcement_id, cl.user_id,
+		       COALESCE(NULLIF(u.character_name, ''), u.discord_username),
+		       u.character_name <> '' AS registered,
+		       u.discord_id
+		FROM announcement_claims cl
+		JOIN users u ON u.id = cl.user_id
+		WHERE cl.announcement_id = ANY($1)
+		ORDER BY cl.claimed_at ASC`, ids)
+	if err != nil {
+		return err
+	}
+	defer claimRows.Close()
+	for claimRows.Next() {
+		var aid int64
+		var c models.AnnouncementClaim
+		if err := claimRows.Scan(&aid, &c.UserID, &c.CharacterName, &c.Registered, &c.DiscordID); err != nil {
+			return err
+		}
+		if a := byID[aid]; a != nil {
+			a.Claims = append(a.Claims, c)
+		}
+	}
+	return claimRows.Err()
 }
 
 // hydrate loads the responses and claims for an announcement.

@@ -136,17 +136,15 @@ func (s *CreatureStore) Highscores(ctx context.Context) ([]models.HighscoreEntry
 			FROM (
 				SELECT a.author_id,
 				       MAX(COALESCE(cw.points, 0)) AS charm,
-				       COUNT(DISTINCT att.user_id) AS n
+				       COUNT(DISTINCT p.uid) AS n
 				FROM announcements a
 				JOIN creatures cr ON cr.id = a.creature_id
 				LEFT JOIN charm_weights cw ON cw.difficulty = cr.difficulty
-				LEFT JOIN LATERAL (
-					SELECT c.user_id FROM announcement_claims c
-					WHERE c.announcement_id = a.id AND c.user_id <> a.author_id
+				LEFT JOIN (
+					SELECT c.announcement_id, c.user_id AS uid FROM announcement_claims c
 					UNION
-					SELECT r.user_id FROM announcement_responses r
-					WHERE r.announcement_id = a.id AND r.status = 'ready' AND r.user_id <> a.author_id
-				) att ON true
+					SELECT r.announcement_id, r.user_id FROM announcement_responses r WHERE r.status = 'ready'
+				) p ON p.announcement_id = a.id AND p.uid <> a.author_id
 				WHERE a.status = 'killed'
 				GROUP BY COALESCE(a.broadcast_id, 'id:' || a.id), a.author_id
 			) b
