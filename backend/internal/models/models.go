@@ -152,11 +152,19 @@ type AnnouncementResponse struct {
 	UserID        int64  `json:"userId"`
 	CharacterName string `json:"characterName"`
 	Status        string `json:"status"`
+	// DiscordID and Registered are bot-only (hidden from the web API): the bot
+	// renders unregistered responders by their Discord server nickname.
+	DiscordID  string `json:"-"` // for server-nickname lookup by the Discord bot
+	Registered bool   `json:"-"` // true when the user has a website character name
 }
 
 type AnnouncementClaim struct {
 	UserID        int64  `json:"userId"`
 	CharacterName string `json:"characterName"`
+	// DiscordID and Registered are bot-only (hidden from the web API); see
+	// AnnouncementResponse.
+	DiscordID  string `json:"-"`
+	Registered bool   `json:"-"`
 }
 
 // DiscordRole is a selectable role in a linked Discord guild.

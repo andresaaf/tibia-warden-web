@@ -10,6 +10,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/andresaaf/tibia-warden-web/backend/internal/config"
@@ -30,7 +31,23 @@ type Bot struct {
 	stores  *store.Stores
 	hub     *ws.Hub
 	appID   string
+	siteURL string // PublicBaseURL, linked in the "register" nudge
+
+	// nickMu guards nickCache, a short-lived cache of guild server nicknames
+	// (keyed "guildID:discordID") so repainting a message on every button click
+	// doesn't issue a REST lookup per unregistered responder each time.
+	nickMu    sync.Mutex
+	nickCache map[string]nickEntry
 }
+
+// nickEntry is a cached guild nickname lookup with the time it was fetched.
+type nickEntry struct {
+	name string
+	at   time.Time
+}
+
+// nickTTL is how long a cached server nickname is reused before re-fetching.
+const nickTTL = 10 * time.Minute
 
 // New constructs the bot. It returns (nil, nil) when no bot token is configured,
 // leaving the application to run without Discord integration.
@@ -44,7 +61,7 @@ func New(cfg *config.Config, stores *store.Stores, hub *ws.Hub) (*Bot, error) {
 	}
 	session.Identify.Intents = discordgo.IntentsGuilds
 
-	b := &Bot{session: session, stores: stores, hub: hub}
+	b := &Bot{session: session, stores: stores, hub: hub, siteURL: cfg.PublicBaseURL, nickCache: map[string]nickEntry{}}
 	session.AddHandler(b.onReady)
 	session.AddHandler(b.onInteraction)
 	return b, nil
@@ -228,6 +245,13 @@ func (b *Bot) handleComponent(s *discordgo.Session, i *discordgo.InteractionCrea
 		return
 	}
 
+	// Nudge Discord-only users to register: they can still take part, but keep
+	// getting this ephemeral (and miss charm-point credit) until they link a
+	// Tibia character on the website.
+	if u.CharacterName == "" {
+		b.nudgeUnregistered(s, i)
+	}
+
 	ann, err = b.stores.Announcements.GetByID(ctx, annID)
 	if err != nil {
 		return
@@ -235,9 +259,9 @@ func (b *Bot) handleComponent(s *discordgo.Session, i *discordgo.InteractionCrea
 	b.hub.Broadcast(ann.GroupID, ws.EventAnnouncementUpdated, ann)
 
 	// Repaint the clicked message via the deferred interaction's webhook.
-	_, _, roleID, _ := b.stores.Groups.DiscordSettings(ctx, ann.GroupID)
+	guildID, _, roleID, _ := b.stores.Groups.DiscordSettings(ctx, ann.GroupID)
 	content := messageContent(roleID, ann)
-	embeds := []*discordgo.MessageEmbed{buildEmbed(ann)}
+	embeds := []*discordgo.MessageEmbed{b.buildEmbed(ann, guildID)}
 	components := buildComponents(ann)
 	if _, err := s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
 		Content:         &content,
@@ -270,13 +294,13 @@ func (b *Bot) PostAnnouncement(ctx context.Context, ann *models.Announcement) {
 	if b == nil || b.session == nil || ann == nil {
 		return
 	}
-	_, channelID, roleID, err := b.stores.Groups.DiscordSettings(ctx, ann.GroupID)
+	guildID, channelID, roleID, err := b.stores.Groups.DiscordSettings(ctx, ann.GroupID)
 	if err != nil || channelID == "" {
 		return
 	}
 	send := &discordgo.MessageSend{
 		Content:    messageContent(roleID, ann),
-		Embeds:     []*discordgo.MessageEmbed{buildEmbed(ann)},
+		Embeds:     []*discordgo.MessageEmbed{b.buildEmbed(ann, guildID)},
 		Components: buildComponents(ann),
 	}
 	if roleID != "" {
@@ -306,11 +330,11 @@ func (b *Bot) SyncAnnouncement(ctx context.Context, ann *models.Announcement) {
 	if b == nil || b.session == nil || ann == nil || ann.DiscordMessageID == "" {
 		return
 	}
-	_, channelID, roleID, err := b.stores.Groups.DiscordSettings(ctx, ann.GroupID)
+	guildID, channelID, roleID, err := b.stores.Groups.DiscordSettings(ctx, ann.GroupID)
 	if err != nil || channelID == "" {
 		return
 	}
-	embeds := []*discordgo.MessageEmbed{buildEmbed(ann)}
+	embeds := []*discordgo.MessageEmbed{b.buildEmbed(ann, guildID)}
 	components := buildComponents(ann)
 	content := messageContent(roleID, ann)
 	if _, err := b.session.ChannelMessageEditComplex(&discordgo.MessageEdit{
@@ -476,6 +500,23 @@ func (b *Bot) ephemeral(s *discordgo.Session, i *discordgo.InteractionCreate, ms
 	})
 }
 
+// nudgeUnregistered sends the clicking user a (deliberately repetitive)
+// ephemeral reminder that they're taking part as an unregistered Discord user.
+// It fires on every reaction from a user with no linked character, so it keeps
+// nagging until they register. Only the clicking user sees it.
+func (b *Bot) nudgeUnregistered(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	msg := "👋 You're taking part as an **unregistered** Discord user. You can still join every hunt — but until you register on the website you won't get automatic tracking of killed wardens, and you'll keep getting this reminder every time you react."
+	if b.siteURL != "" {
+		msg += "\n\nRegister here: " + b.siteURL
+	}
+	if _, err := s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
+		Content: msg,
+		Flags:   discordgo.MessageFlagsEphemeral,
+	}); err != nil {
+		slog.Error("discord: failed to send register nudge", "error", err)
+	}
+}
+
 // followupError sends an ephemeral error to the clicking user after the
 // interaction has already been acknowledged (deferred). Use this instead of
 // ephemeral once handleComponent has deferred, since the interaction can no
@@ -489,7 +530,7 @@ func (b *Bot) followupError(s *discordgo.Session, i *discordgo.InteractionCreate
 	}
 }
 
-func buildEmbed(a *models.Announcement) *discordgo.MessageEmbed {
+func (b *Bot) buildEmbed(a *models.Announcement, guildID string) *discordgo.MessageEmbed {
 	color := 0x4eb87a
 	status := "🟢 Open — on your way?"
 	if a.Status == models.StatusKilled {
@@ -504,14 +545,14 @@ func buildEmbed(a *models.Announcement) *discordgo.MessageEmbed {
 	if a.Note != "" {
 		fields = append(fields, &discordgo.MessageEmbedField{Name: "Note", Value: a.Note})
 	}
-	if coming := namesByStatus(a, models.ResponseComing); coming != "" {
+	if coming := b.namesByStatus(a, models.ResponseComing, guildID); coming != "" {
 		fields = append(fields, &discordgo.MessageEmbedField{Name: "🏃 Coming", Value: coming, Inline: true})
 	}
-	if ready := namesByStatus(a, models.ResponseReady); ready != "" {
+	if ready := b.namesByStatus(a, models.ResponseReady, guildID); ready != "" {
 		fields = append(fields, &discordgo.MessageEmbedField{Name: "✅ Ready", Value: ready, Inline: true})
 	}
 	if a.Status == models.StatusKilled {
-		claims := claimNames(a)
+		claims := b.claimNames(a, guildID)
 		if claims == "" {
 			claims = "—"
 		}
@@ -560,20 +601,68 @@ func messageContent(roleID string, a *models.Announcement) string {
 	return "<@&" + roleID + "> " + a.CreatureName
 }
 
-func namesByStatus(a *models.Announcement, status string) string {
+func (b *Bot) namesByStatus(a *models.Announcement, status, guildID string) string {
 	var names []string
 	for _, r := range a.Responses {
 		if r.Status == status {
-			names = append(names, r.CharacterName)
+			names = append(names, b.displayName(r.Registered, r.CharacterName, r.DiscordID, guildID))
 		}
 	}
 	return strings.Join(names, "\n")
 }
 
-func claimNames(a *models.Announcement) string {
+func (b *Bot) claimNames(a *models.Announcement, guildID string) string {
 	var names []string
 	for _, c := range a.Claims {
-		names = append(names, c.CharacterName)
+		names = append(names, b.displayName(c.Registered, c.CharacterName, c.DiscordID, guildID))
 	}
 	return strings.Join(names, "\n")
+}
+
+// displayName renders a responder/claimant for the Discord embed. Registered
+// users show their website character name unchanged; unregistered (Discord-only)
+// users show their Discord server nickname wrapped in angle brackets — e.g.
+// "<Some User>" — so they stay easy to distinguish. When no server nickname can
+// be resolved, it falls back to characterName (the global Discord username).
+func (b *Bot) displayName(registered bool, characterName, discordID, guildID string) string {
+	if registered {
+		return characterName
+	}
+	nick := b.guildNick(guildID, discordID)
+	if nick == "" {
+		nick = characterName
+	}
+	return "<" + nick + ">"
+}
+
+// guildNick resolves a user's Discord server nickname (falling back to their
+// global display name, then username, via Member.DisplayName). Results are
+// cached for nickTTL to avoid a REST lookup on every message repaint. It returns
+// "" when the guild/user is unknown or the lookup fails, letting the caller fall
+// back to a stored name.
+func (b *Bot) guildNick(guildID, discordID string) string {
+	if guildID == "" || discordID == "" {
+		return ""
+	}
+	key := guildID + ":" + discordID
+
+	b.nickMu.Lock()
+	if e, ok := b.nickCache[key]; ok && time.Since(e.at) < nickTTL {
+		b.nickMu.Unlock()
+		return e.name
+	}
+	b.nickMu.Unlock()
+
+	name := ""
+	member, err := b.session.GuildMember(guildID, discordID)
+	if err != nil {
+		slog.Debug("discord: guild member lookup failed", "guild", guildID, "user", discordID, "error", err)
+	} else if member != nil {
+		name = member.DisplayName()
+	}
+
+	b.nickMu.Lock()
+	b.nickCache[key] = nickEntry{name: name, at: time.Now()}
+	b.nickMu.Unlock()
+	return name
 }

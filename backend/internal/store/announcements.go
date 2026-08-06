@@ -149,7 +149,11 @@ func (s *AnnouncementStore) hydrate(ctx context.Context, a *models.Announcement)
 	a.Claims = []models.AnnouncementClaim{}
 
 	respRows, err := s.pool.Query(ctx, `
-		SELECT r.user_id, COALESCE(NULLIF(u.character_name, ''), u.discord_username), r.status
+		SELECT r.user_id,
+		       COALESCE(NULLIF(u.character_name, ''), u.discord_username),
+		       u.character_name <> '' AS registered,
+		       u.discord_id,
+		       r.status
 		FROM announcement_responses r
 		JOIN users u ON u.id = r.user_id
 		WHERE r.announcement_id = $1
@@ -160,7 +164,7 @@ func (s *AnnouncementStore) hydrate(ctx context.Context, a *models.Announcement)
 	defer respRows.Close()
 	for respRows.Next() {
 		var r models.AnnouncementResponse
-		if err := respRows.Scan(&r.UserID, &r.CharacterName, &r.Status); err != nil {
+		if err := respRows.Scan(&r.UserID, &r.CharacterName, &r.Registered, &r.DiscordID, &r.Status); err != nil {
 			return err
 		}
 		a.Responses = append(a.Responses, r)
@@ -170,7 +174,10 @@ func (s *AnnouncementStore) hydrate(ctx context.Context, a *models.Announcement)
 	}
 
 	claimRows, err := s.pool.Query(ctx, `
-		SELECT cl.user_id, COALESCE(NULLIF(u.character_name, ''), u.discord_username)
+		SELECT cl.user_id,
+		       COALESCE(NULLIF(u.character_name, ''), u.discord_username),
+		       u.character_name <> '' AS registered,
+		       u.discord_id
 		FROM announcement_claims cl
 		JOIN users u ON u.id = cl.user_id
 		WHERE cl.announcement_id = $1
@@ -181,7 +188,7 @@ func (s *AnnouncementStore) hydrate(ctx context.Context, a *models.Announcement)
 	defer claimRows.Close()
 	for claimRows.Next() {
 		var c models.AnnouncementClaim
-		if err := claimRows.Scan(&c.UserID, &c.CharacterName); err != nil {
+		if err := claimRows.Scan(&c.UserID, &c.CharacterName, &c.Registered, &c.DiscordID); err != nil {
 			return err
 		}
 		a.Claims = append(a.Claims, c)
