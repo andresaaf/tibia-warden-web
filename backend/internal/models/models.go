@@ -55,14 +55,14 @@ type Creature struct {
 }
 
 // HighscoreEntry is one row of the statistics leaderboard: a user's total
-// killed Wardens, the Charm Points those kills are worth, and how many Wardens
-// they've announced.
+// killed Wardens, the Charm Points those kills are worth, and the Charm Points
+// they've "given away" as an announcer (deduped per broadcast).
 type HighscoreEntry struct {
 	UserID        int64  `json:"userId"`
 	CharacterName string `json:"characterName"`
 	Kills         int    `json:"kills"`
 	CharmPoints   int    `json:"charmPoints"`
-	Announced     int    `json:"announced"`
+	Score         int    `json:"score"`
 }
 
 type Group struct {

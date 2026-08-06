@@ -3,14 +3,15 @@
 	import { goto } from '$app/navigation';
 	import { api } from '$lib/api';
 	import { currentUser, authLoading } from '$lib/stores';
+	import { formatK } from '$lib/format';
 	import type { HighscoreEntry } from '$lib/types';
 
 	let entries = $state<HighscoreEntry[]>([]);
 	let loading = $state(true);
 	let error = $state('');
 
-	type SortKey = 'kills' | 'charmPoints' | 'announced';
-	const NUMERIC_KEYS: SortKey[] = ['kills', 'charmPoints', 'announced'];
+	type SortKey = 'kills' | 'charmPoints' | 'score';
+	const NUMERIC_KEYS: SortKey[] = ['kills', 'charmPoints', 'score'];
 	let sortKey = $state<SortKey>('kills');
 
 	$effect(() => {
@@ -50,7 +51,7 @@
 <div class="container stack">
 	<div>
 		<h1>Statistics</h1>
-		<p class="muted">Echo Wardens killed and announced across all groups.</p>
+		<p class="muted">Echo Wardens killed, and charm points given away, across all groups.</p>
 	</div>
 
 	{#if error}
@@ -77,8 +78,8 @@
 							</button>
 						</th>
 						<th class="num">
-							<button class="sort" class:active={sortKey === 'announced'} onclick={() => (sortKey = 'announced')}>
-								Announced{sortKey === 'announced' ? ' ▼' : ''}
+							<button class="sort" class:active={sortKey === 'score'} onclick={() => (sortKey = 'score')}>
+								Score{sortKey === 'score' ? ' ▼' : ''}
 							</button>
 						</th>
 					</tr>
@@ -90,7 +91,7 @@
 							<td class="player">{e.characterName}</td>
 							<td class="num">{e.kills}</td>
 							<td class="num charm">{e.charmPoints}</td>
-							<td class="num">{e.announced}</td>
+							<td class="num" title={`${e.score.toLocaleString()} charm points given away`}>{formatK(e.score)}</td>
 						</tr>
 					{/each}
 				</tbody>

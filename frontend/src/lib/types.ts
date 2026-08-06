@@ -109,7 +109,8 @@ export interface HighscoreEntry {
 	characterName: string;
 	kills: number;
 	charmPoints: number;
-	announced: number;
+	/** Charm points "given away" as an announcer, global and deduped per broadcast. */
+	score: number;
 }
 
 export interface Announcement {
