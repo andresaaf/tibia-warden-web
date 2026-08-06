@@ -6,6 +6,7 @@ package discord
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"sort"
 	"strconv"
@@ -532,10 +533,13 @@ func (b *Bot) followupError(s *discordgo.Session, i *discordgo.InteractionCreate
 
 func (b *Bot) buildEmbed(a *models.Announcement, guildID string) *discordgo.MessageEmbed {
 	color := 0x4eb87a
-	status := "🟢 Open — on your way?"
+	status := "🟢 Open"
 	if a.Status == models.StatusKilled {
 		color = 0x9aa2b1
 		status = "💀 Killed"
+	}
+	if a.Difficulty != "" {
+		status += fmt.Sprintf(" — %s ★ %d", a.Difficulty, a.CharmPoints)
 	}
 
 	var fields []*discordgo.MessageEmbedField
