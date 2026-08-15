@@ -12,6 +12,12 @@ const (
 	DifficultyChallenging = "Challenging"
 )
 
+// Rarity enumerates the creature occurrences we track (from TibiaWiki).
+const (
+	RarityCommon   = "Common"
+	RarityUncommon = "Uncommon"
+)
+
 // Group visibility values.
 const (
 	VisibilityPublic  = "public"
@@ -52,6 +58,7 @@ type Creature struct {
 	ID         int64  `json:"id"`
 	Name       string `json:"name"`
 	Difficulty string `json:"difficulty"`
+	Rarity     string `json:"rarity"`
 	ImageURL   string `json:"imageUrl"`
 	Killed     bool   `json:"killed"`
 }

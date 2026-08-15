@@ -3,7 +3,7 @@
 	import { goto } from '$app/navigation';
 	import { api } from '$lib/api';
 	import { currentUser, authLoading } from '$lib/stores';
-	import { DIFFICULTIES, type Creature, type Difficulty } from '$lib/types';
+	import { DIFFICULTIES, RARITIES, type Creature, type Difficulty, type Rarity } from '$lib/types';
 
 	type StatusFilter = 'all' | 'remaining' | 'found';
 
@@ -11,6 +11,7 @@
 	let displayed = $state<Creature[]>([]);
 	let search = $state('');
 	let activeDifficulties = $state<Set<Difficulty>>(new Set());
+	let activeRarities = $state<Set<Rarity>>(new Set());
 	let statusFilter = $state<StatusFilter>('all');
 	let loading = $state(true);
 	let error = $state('');
@@ -28,7 +29,7 @@
 		loading = true;
 		error = '';
 		try {
-			creatures = await api.creatures(search.trim(), [...activeDifficulties]);
+			creatures = await api.creatures(search.trim(), [...activeDifficulties], [...activeRarities]);
 			applyStatusFilter();
 		} catch {
 			error = 'Failed to load the warden list.';
@@ -60,6 +61,14 @@
 		if (next.has(d)) next.delete(d);
 		else next.add(d);
 		activeDifficulties = next;
+		load();
+	}
+
+	function toggleRarity(r: Rarity) {
+		const next = new Set(activeRarities);
+		if (next.has(r)) next.delete(r);
+		else next.add(r);
+		activeRarities = next;
 		load();
 	}
 
@@ -97,17 +106,30 @@
 			oninput={onSearchInput}
 		/>
 		<div class="filters">
-			<div class="chips">
-				{#each DIFFICULTIES as d}
-					<button
-						class="chip"
-						class:active={activeDifficulties.has(d)}
-						data-diff={d}
-						onclick={() => toggleDifficulty(d)}
-					>
-						{d}
-					</button>
-				{/each}
+			<div class="chip-rows">
+				<div class="chips">
+					{#each DIFFICULTIES as d}
+						<button
+							class="chip"
+							class:active={activeDifficulties.has(d)}
+							data-diff={d}
+							onclick={() => toggleDifficulty(d)}
+						>
+							{d}
+						</button>
+					{/each}
+				</div>
+				<div class="chips">
+					{#each RARITIES as r}
+						<button
+							class="chip"
+							class:active={activeRarities.has(r)}
+							onclick={() => toggleRarity(r)}
+						>
+							{r}
+						</button>
+					{/each}
+				</div>
 			</div>
 			<div class="segmented" role="group" aria-label="Filter by status">
 				<button
@@ -177,6 +199,11 @@
 		align-items: center;
 		justify-content: space-between;
 		gap: 0.6rem;
+	}
+	.chip-rows {
+		display: flex;
+		flex-direction: column;
+		gap: 0.4rem;
 	}
 	.chips {
 		display: flex;

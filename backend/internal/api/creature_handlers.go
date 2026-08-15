@@ -17,8 +17,13 @@ var validDifficulties = map[string]struct{}{
 	models.DifficultyChallenging: {},
 }
 
-// handleListCreatures returns the warden list for the current user, with search
-// and difficulty filters applied.
+var validRarities = map[string]struct{}{
+	models.RarityCommon:   {},
+	models.RarityUncommon: {},
+}
+
+// handleListCreatures returns the warden list for the current user, with search,
+// difficulty and rarity filters applied.
 func (s *Server) handleListCreatures(w http.ResponseWriter, r *http.Request) {
 	search := r.URL.Query().Get("search")
 
@@ -32,7 +37,17 @@ func (s *Server) handleListCreatures(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	creatures, err := s.stores.Creatures.List(r.Context(), userID(r), search, difficulties)
+	var rarities []string
+	if raw := r.URL.Query().Get("rarity"); raw != "" {
+		for _, rr := range strings.Split(raw, ",") {
+			rr = strings.TrimSpace(rr)
+			if _, ok := validRarities[rr]; ok {
+				rarities = append(rarities, rr)
+			}
+		}
+	}
+
+	creatures, err := s.stores.Creatures.List(r.Context(), userID(r), search, difficulties, rarities)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "failed to load creatures")
 		return

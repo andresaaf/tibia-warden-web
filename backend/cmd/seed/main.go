@@ -5,8 +5,8 @@
 //	seed -file ./data/creatures.json
 //	seed -file ./data/creatures.csv
 //
-// JSON format: an array of objects with "name", "difficulty" and optional "imageUrl".
-// CSV format:  a header row including "name" and "difficulty" (and optional "imageUrl"/"image").
+// JSON format: an array of objects with "name", "difficulty" and optional "rarity"/"imageUrl".
+// CSV format:  a header row including "name" and "difficulty" (and optional "rarity", "imageUrl"/"image").
 package main
 
 import (
@@ -28,6 +28,7 @@ import (
 type creatureRecord struct {
 	Name       string `json:"name"`
 	Difficulty string `json:"difficulty"`
+	Rarity     string `json:"rarity"`
 	ImageURL   string `json:"imageUrl"`
 }
 
@@ -38,6 +39,11 @@ var validDifficulties = map[string]string{
 	"medium":      "Medium",
 	"hard":        "Hard",
 	"challenging": "Challenging",
+}
+
+var validRarities = map[string]string{
+	"common":   "Common",
+	"uncommon": "Uncommon",
 }
 
 func main() {
@@ -83,7 +89,8 @@ func main() {
 			log.Printf("skipping invalid record: name=%q difficulty=%q", rec.Name, rec.Difficulty)
 			continue
 		}
-		if err := stores.Creatures.Upsert(ctx, name, diff, strings.TrimSpace(rec.ImageURL)); err != nil {
+		rarity := validRarities[strings.ToLower(strings.TrimSpace(rec.Rarity))]
+		if err := stores.Creatures.Upsert(ctx, name, diff, rarity, strings.TrimSpace(rec.ImageURL)); err != nil {
 			log.Fatalf("failed to upsert %q: %v", name, err)
 		}
 		imported++
@@ -137,6 +144,12 @@ func parseCSV(data []byte) ([]creatureRecord, error) {
 	} else if c, ok := idx["image"]; ok {
 		imageCol = c
 	}
+	rarityCol := -1
+	if c, ok := idx["rarity"]; ok {
+		rarityCol = c
+	} else if c, ok := idx["occurrence"]; ok {
+		rarityCol = c
+	}
 
 	var recs []creatureRecord
 	for _, row := range rows[1:] {
@@ -146,6 +159,9 @@ func parseCSV(data []byte) ([]creatureRecord, error) {
 		}
 		if diffCol < len(row) {
 			rec.Difficulty = row[diffCol]
+		}
+		if rarityCol >= 0 && rarityCol < len(row) {
+			rec.Rarity = row[rarityCol]
 		}
 		if imageCol >= 0 && imageCol < len(row) {
 			rec.ImageURL = row[imageCol]

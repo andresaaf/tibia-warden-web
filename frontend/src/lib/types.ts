@@ -15,6 +15,10 @@ export const DIFFICULTIES: Difficulty[] = [
 	'Challenging'
 ];
 
+export type Rarity = 'Common' | 'Uncommon';
+
+export const RARITIES: Rarity[] = ['Common', 'Uncommon'];
+
 export interface User {
 	id: number;
 	discordId: string;
@@ -30,6 +34,7 @@ export interface Creature {
 	id: number;
 	name: string;
 	difficulty: Difficulty;
+	rarity: Rarity;
 	imageUrl: string;
 	killed: boolean;
 }

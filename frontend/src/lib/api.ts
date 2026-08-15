@@ -52,10 +52,11 @@ export const api = {
 	logout: () => request<void>('POST', '/api/auth/logout'),
 
 	// Warden list
-	creatures: (search: string, difficulties: string[]) => {
+	creatures: (search: string, difficulties: string[], rarities: string[]) => {
 		const params = new URLSearchParams();
 		if (search) params.set('search', search);
 		if (difficulties.length) params.set('difficulty', difficulties.join(','));
+		if (rarities.length) params.set('rarity', rarities.join(','));
 		const qs = params.toString();
 		return request<Creature[]>('GET', `/api/creatures${qs ? `?${qs}` : ''}`);
 	},

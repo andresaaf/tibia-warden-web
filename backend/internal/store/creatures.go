@@ -14,22 +14,24 @@ type CreatureStore struct {
 }
 
 // Upsert inserts or updates a creature by name. Used by the seeder.
-func (s *CreatureStore) Upsert(ctx context.Context, name, difficulty, imageURL string) error {
+func (s *CreatureStore) Upsert(ctx context.Context, name, difficulty, rarity, imageURL string) error {
 	_, err := s.pool.Exec(ctx, `
-		INSERT INTO creatures (name, difficulty, image_url)
-		VALUES ($1, $2, $3)
+		INSERT INTO creatures (name, difficulty, rarity, image_url)
+		VALUES ($1, $2, $3, $4)
 		ON CONFLICT (name) DO UPDATE
 			SET difficulty = EXCLUDED.difficulty,
+			    rarity     = EXCLUDED.rarity,
 			    image_url  = EXCLUDED.image_url`,
-		name, difficulty, imageURL)
+		name, difficulty, rarity, imageURL)
 	return err
 }
 
-// List returns creatures for a user, optionally filtered by a search term and
-// difficulty classes, with each creature's killed state resolved for that user.
-func (s *CreatureStore) List(ctx context.Context, userID int64, search string, difficulties []string) ([]models.Creature, error) {
+// List returns creatures for a user, optionally filtered by a search term,
+// difficulty classes and rarities, with each creature's killed state resolved
+// for that user.
+func (s *CreatureStore) List(ctx context.Context, userID int64, search string, difficulties, rarities []string) ([]models.Creature, error) {
 	query := `
-		SELECT c.id, c.name, c.difficulty, c.image_url,
+		SELECT c.id, c.name, c.difficulty, c.rarity, c.image_url,
 		       (wk.user_id IS NOT NULL) AS killed
 		FROM creatures c
 		LEFT JOIN warden_kills wk ON wk.creature_id = c.id AND wk.user_id = $1
@@ -44,6 +46,10 @@ func (s *CreatureStore) List(ctx context.Context, userID int64, search string, d
 		args = append(args, difficulties)
 		query += " AND c.difficulty = ANY($" + strconv.Itoa(len(args)) + ")"
 	}
+	if len(rarities) > 0 {
+		args = append(args, rarities)
+		query += " AND c.rarity = ANY($" + strconv.Itoa(len(args)) + ")"
+	}
 	query += " ORDER BY c.name ASC"
 
 	rows, err := s.pool.Query(ctx, query, args...)
@@ -55,7 +61,7 @@ func (s *CreatureStore) List(ctx context.Context, userID int64, search string, d
 	var out []models.Creature
 	for rows.Next() {
 		var c models.Creature
-		if err := rows.Scan(&c.ID, &c.Name, &c.Difficulty, &c.ImageURL, &c.Killed); err != nil {
+		if err := rows.Scan(&c.ID, &c.Name, &c.Difficulty, &c.Rarity, &c.ImageURL, &c.Killed); err != nil {
 			return nil, err
 		}
 		out = append(out, c)

@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/andresaaf/tibia-warden-web/backend/internal/models"
 	"github.com/andresaaf/tibia-warden-web/backend/internal/store"
 )
 
@@ -24,8 +25,12 @@ var difficulties = map[string]string{
 	"challenging": "Challenging",
 }
 
-// allowedOccurrence is the set of occurrences we import.
-var allowedOccurrence = map[string]bool{"common": true, "uncommon": true}
+// occurrences maps lower-cased TibiaWiki occurrences to the canonical rarity.
+// Only these occurrences are imported.
+var occurrences = map[string]string{
+	"common":   models.RarityCommon,
+	"uncommon": models.RarityUncommon,
+}
 
 // apiCreature captures only the fields we need from the (expanded) API response.
 type apiCreature struct {
@@ -73,10 +78,11 @@ func Sync(ctx context.Context, creatures *store.CreatureStore, apiURL string) (i
 		if name == "" || !ok {
 			continue
 		}
-		if !allowedOccurrence[strings.ToLower(strings.TrimSpace(c.Occurrence))] {
+		rarity, ok := occurrences[strings.ToLower(strings.TrimSpace(c.Occurrence))]
+		if !ok {
 			continue
 		}
-		if err := creatures.Upsert(ctx, name, difficulty, imageURL(name)); err != nil {
+		if err := creatures.Upsert(ctx, name, difficulty, rarity, imageURL(name)); err != nil {
 			return imported, 0, fmt.Errorf("upsert %q: %w", name, err)
 		}
 		kept = append(kept, name)

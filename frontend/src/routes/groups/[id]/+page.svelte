@@ -81,7 +81,7 @@
 			if (isManager) loadAdminData();
 			const [ann, crt, killed] = await Promise.all([
 				api.announcements(groupId),
-				api.creatures('', []),
+				api.creatures('', [], []),
 				api.killedCreatures()
 			]);
 			announcements = ann;

@@ -54,7 +54,7 @@
 			const [f, g, c, k] = await Promise.all([
 				api.feed(),
 				api.listGroups('mine'),
-				api.creatures('', []),
+				api.creatures('', [], []),
 				api.killedCreatures()
 			]);
 			feed = f;
