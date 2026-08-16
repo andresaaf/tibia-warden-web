@@ -100,6 +100,7 @@ func NewRouter(cfg *config.Config, stores *store.Stores, oauth *auth.DiscordProv
 			r.Delete("/announcements/{announcementID}/response", s.handleClearResponse)
 			r.Post("/announcements/{announcementID}/killed", s.handleMarkAnnouncementKilled)
 			r.Post("/announcements/{announcementID}/claim", s.handleClaimAnnouncement)
+			r.Post("/announcements/{announcementID}/note", s.handleUpdateAnnouncementNote)
 
 			// WebSocket (auth via cookie).
 			r.Get("/groups/{groupID}/ws", s.handleWebSocket)

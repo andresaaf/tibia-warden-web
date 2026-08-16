@@ -423,6 +423,41 @@ func (s *AnnouncementStore) MarkKilledWithSiblings(ctx context.Context, announce
 	return affected, nil
 }
 
+// UpdateNoteWithSiblings updates an announcement's note and cascades the change
+// to any sibling announcements from the same multi-group broadcast, so the shared
+// note stays identical across every group (regardless of each copy's status). It
+// returns the IDs of all announcements that changed (primary first). Returns
+// ErrNotFound if the primary does not exist.
+func (s *AnnouncementStore) UpdateNoteWithSiblings(ctx context.Context, announcementID int64, note string) ([]int64, error) {
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback(ctx)
+
+	tag, err := tx.Exec(ctx,
+		`UPDATE announcements SET note = $2 WHERE id = $1`, announcementID, note)
+	if err != nil {
+		return nil, err
+	}
+	if tag.RowsAffected() == 0 {
+		return nil, ErrNotFound
+	}
+
+	affected, err := propagateToSiblings(ctx, tx, announcementID, `
+		UPDATE announcements SET note = $3
+		WHERE broadcast_id = $1 AND id <> $2
+		RETURNING id`, note)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return nil, err
+	}
+	return affected, nil
+}
+
 // Claim records that a user obtained the Echo Warden benefit for a killed
 // announcement and marks the corresponding creature on their warden list, all
 // in one transaction. Returns ErrNotFound if the announcement is not killed.

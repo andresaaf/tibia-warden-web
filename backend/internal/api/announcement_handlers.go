@@ -10,6 +10,14 @@ import (
 	"github.com/andresaaf/tibia-warden-web/backend/internal/ws"
 )
 
+// maxNoteLength caps announcement note length, staying under Discord's 1024-char
+// embed field-value limit.
+const maxNoteLength = 1000
+
+// errForbidden signals an authorization failure whose HTTP response has already
+// been written by the helper that returned it.
+var errForbidden = errors.New("forbidden")
+
 // handleListAnnouncements returns recent announcements for a group.
 func (s *Server) handleListAnnouncements(w http.ResponseWriter, r *http.Request) {
 	groupID, ok := parseID(w, r, "groupID")
@@ -227,26 +235,11 @@ func (s *Server) handleMarkAnnouncementKilled(w http.ResponseWriter, r *http.Req
 	if !ok {
 		return
 	}
-	uid := userID(r)
-	ann, err := s.stores.Announcements.GetByID(r.Context(), announcementID)
+	ann, err := s.authorizeAnnouncementManage(w, r, announcementID, "mark it killed")
 	if err != nil {
-		if errors.Is(err, store.ErrNotFound) {
-			writeError(w, http.StatusNotFound, "announcement not found")
-			return
-		}
-		writeError(w, http.StatusInternalServerError, "failed to load announcement")
 		return
 	}
-	role, err := s.stores.Groups.Role(r.Context(), ann.GroupID, uid)
-	if err != nil {
-		writeError(w, http.StatusForbidden, "you are not a member of this group")
-		return
-	}
-	if uid != ann.AuthorID && role != models.RoleOwner && role != models.RoleAdmin {
-		writeError(w, http.StatusForbidden, "only the person who announced it or a group admin can mark it killed")
-		return
-	}
-	affected, err := s.stores.Announcements.MarkKilledWithSiblings(r.Context(), announcementID)
+	affected, err := s.stores.Announcements.MarkKilledWithSiblings(r.Context(), ann.ID)
 	if err != nil {
 		if errors.Is(err, store.ErrNotFound) {
 			writeError(w, http.StatusBadRequest, "this is already marked killed")
@@ -302,6 +295,74 @@ func (s *Server) authorizeAnnouncement(r *http.Request, announcementID int64) (i
 		return 0, err
 	}
 	return groupID, nil
+}
+
+// authorizeAnnouncementManage loads an announcement and verifies the current user
+// is allowed to manage it — i.e. is the author or a group owner/admin. On failure
+// it writes the appropriate error response and returns a non-nil error, so callers
+// can simply `return`. The action word is used in the 403 message ("only the
+// person who announced it or a group admin can <action>").
+func (s *Server) authorizeAnnouncementManage(w http.ResponseWriter, r *http.Request, announcementID int64, action string) (*models.Announcement, error) {
+	uid := userID(r)
+	ann, err := s.stores.Announcements.GetByID(r.Context(), announcementID)
+	if err != nil {
+		if errors.Is(err, store.ErrNotFound) {
+			writeError(w, http.StatusNotFound, "announcement not found")
+			return nil, err
+		}
+		writeError(w, http.StatusInternalServerError, "failed to load announcement")
+		return nil, err
+	}
+	role, err := s.stores.Groups.Role(r.Context(), ann.GroupID, uid)
+	if err != nil {
+		writeError(w, http.StatusForbidden, "you are not a member of this group")
+		return nil, err
+	}
+	if uid != ann.AuthorID && role != models.RoleOwner && role != models.RoleAdmin {
+		writeError(w, http.StatusForbidden, "only the person who announced it or a group admin can "+action)
+		return nil, errForbidden
+	}
+	return ann, nil
+}
+
+// handleUpdateAnnouncementNote edits the note on an open announcement (poster or
+// group admin). For a multi-group broadcast the change cascades to every sibling.
+func (s *Server) handleUpdateAnnouncementNote(w http.ResponseWriter, r *http.Request) {
+	announcementID, ok := parseID(w, r, "announcementID")
+	if !ok {
+		return
+	}
+	ann, err := s.authorizeAnnouncementManage(w, r, announcementID, "edit the note")
+	if err != nil {
+		return
+	}
+	if ann.Status != models.StatusOpen {
+		writeError(w, http.StatusBadRequest, "you can only edit the note of an open announcement")
+		return
+	}
+
+	var body struct {
+		Note string `json:"note"`
+	}
+	if err := decodeJSON(r, &body); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	note := strings.TrimSpace(body.Note)
+	if len(note) > maxNoteLength {
+		writeError(w, http.StatusBadRequest, "note is too long")
+		return
+	}
+
+	affected, err := s.stores.Announcements.UpdateNoteWithSiblings(r.Context(), ann.ID, note)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to update note")
+		return
+	}
+	for _, id := range affected {
+		s.broadcastAnnouncement(r, id)
+	}
+	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 }
 
 // broadcastAnnouncement reloads an announcement and pushes it to its group room

@@ -31,8 +31,31 @@
 		return a.claims.some((c) => c.userId === meId);
 	}
 	let canKill = $derived(a.authorId === meId || canManage);
+	let canEditNote = $derived(a.status === 'open' && (a.authorId === meId || canManage));
 	let coming = $derived(a.responses.filter((r) => r.status === 'coming'));
 	let ready = $derived(a.responses.filter((r) => r.status === 'ready'));
+
+	let editingNote = $state(false);
+	let editNoteText = $state('');
+	let savingNote = $state(false);
+	function startEditNote() {
+		editNoteText = a.note;
+		editingNote = true;
+	}
+	function cancelEditNote() {
+		editingNote = false;
+	}
+	async function saveNote() {
+		savingNote = true;
+		try {
+			await api.editAnnouncementNote(a.id, editNoteText.trim());
+			editingNote = false;
+		} catch (err) {
+			fail(err);
+		} finally {
+			savingNote = false;
+		}
+	}
 
 	async function respond(status: 'coming' | 'ready') {
 		try {
@@ -85,7 +108,34 @@
 					<span class="badge mine" title="You've already killed this Echo Warden">✓ In your list</span>
 				{/if}
 			</div>
-			{#if a.note}<div class="muted note">{a.note}</div>{/if}
+			{#if editingNote}
+				<form class="note-edit" onsubmit={(e) => { e.preventDefault(); saveNote(); }}>
+					<!-- svelte-ignore a11y_autofocus -->
+					<textarea
+						bind:value={editNoteText}
+						maxlength="1000"
+						rows="2"
+						placeholder="Add a note…"
+						disabled={savingNote}
+						autofocus
+					></textarea>
+					<div class="note-edit-actions">
+						<button type="submit" class="btn btn-sm btn-primary" disabled={savingNote}>
+							{savingNote ? 'Saving…' : 'Save'}
+						</button>
+						<button type="button" class="btn btn-sm" onclick={cancelEditNote} disabled={savingNote}>
+							Cancel
+						</button>
+					</div>
+				</form>
+			{:else}
+				{#if a.note}<div class="muted note">{a.note}</div>{/if}
+				{#if canEditNote}
+					<button type="button" class="note-edit-trigger" onclick={startEditNote}>
+						{a.note ? '✏️ Edit note' : '＋ Add note'}
+					</button>
+				{/if}
+			{/if}
 			<div class="muted small">
 				by {a.authorName} · {new Date(a.createdAt).toLocaleTimeString()}
 			</div>
@@ -152,6 +202,34 @@
 	}
 	.note {
 		margin-top: 0.15rem;
+	}
+	.note-edit {
+		margin-top: 0.35rem;
+		display: flex;
+		flex-direction: column;
+		gap: 0.4rem;
+	}
+	.note-edit textarea {
+		width: 100%;
+		resize: vertical;
+		font: inherit;
+	}
+	.note-edit-actions {
+		display: flex;
+		gap: 0.4rem;
+	}
+	.note-edit-trigger {
+		margin-top: 0.2rem;
+		padding: 0;
+		background: none;
+		border: none;
+		color: var(--text-dim);
+		font-size: 0.82rem;
+		cursor: pointer;
+	}
+	.note-edit-trigger:hover {
+		color: var(--text);
+		text-decoration: underline;
 	}
 	.small {
 		font-size: 0.82rem;

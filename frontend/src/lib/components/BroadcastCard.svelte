@@ -72,6 +72,31 @@
 			fail(err);
 		}
 	}
+
+	// The note is shared across the broadcast; editing the primary cascades to
+	// every sibling on the backend.
+	let canEditNote = $derived(!killed && canKill);
+	let editingNote = $state(false);
+	let editNoteText = $state('');
+	let savingNote = $state(false);
+	function startEditNote() {
+		editNoteText = primary.note;
+		editingNote = true;
+	}
+	function cancelEditNote() {
+		editingNote = false;
+	}
+	async function saveNote() {
+		savingNote = true;
+		try {
+			await api.editAnnouncementNote(primary.id, editNoteText.trim());
+			editingNote = false;
+		} catch (err) {
+			fail(err);
+		} finally {
+			savingNote = false;
+		}
+	}
 </script>
 
 <div class="card announcement" class:killed>
@@ -98,7 +123,34 @@
 					<span class="badge mine" title="You've already killed this Echo Warden">✓ In your list</span>
 				{/if}
 			</div>
-			{#if primary.note}<div class="muted note">{primary.note}</div>{/if}
+			{#if editingNote}
+				<form class="note-edit" onsubmit={(e) => { e.preventDefault(); saveNote(); }}>
+					<!-- svelte-ignore a11y_autofocus -->
+					<textarea
+						bind:value={editNoteText}
+						maxlength="1000"
+						rows="2"
+						placeholder="Add a note…"
+						disabled={savingNote}
+						autofocus
+					></textarea>
+					<div class="note-edit-actions">
+						<button type="submit" class="btn btn-sm btn-primary" disabled={savingNote}>
+							{savingNote ? 'Saving…' : 'Save'}
+						</button>
+						<button type="button" class="btn btn-sm" onclick={cancelEditNote} disabled={savingNote}>
+							Cancel
+						</button>
+					</div>
+				</form>
+			{:else}
+				{#if primary.note}<div class="muted note">{primary.note}</div>{/if}
+				{#if canEditNote}
+					<button type="button" class="note-edit-trigger" onclick={startEditNote}>
+						{primary.note ? '✏️ Edit note' : '＋ Add note'}
+					</button>
+				{/if}
+			{/if}
 			<div class="muted small">
 				by {primary.authorName} · {new Date(primary.createdAt).toLocaleTimeString()}
 			</div>
@@ -178,6 +230,34 @@
 	}
 	.note {
 		margin-top: 0.15rem;
+	}
+	.note-edit {
+		margin-top: 0.35rem;
+		display: flex;
+		flex-direction: column;
+		gap: 0.4rem;
+	}
+	.note-edit textarea {
+		width: 100%;
+		resize: vertical;
+		font: inherit;
+	}
+	.note-edit-actions {
+		display: flex;
+		gap: 0.4rem;
+	}
+	.note-edit-trigger {
+		margin-top: 0.2rem;
+		padding: 0;
+		background: none;
+		border: none;
+		color: var(--text-dim);
+		font-size: 0.82rem;
+		cursor: pointer;
+	}
+	.note-edit-trigger:hover {
+		color: var(--text);
+		text-decoration: underline;
 	}
 	.small {
 		font-size: 0.82rem;

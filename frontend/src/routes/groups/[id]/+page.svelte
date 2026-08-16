@@ -51,6 +51,10 @@
 	let showRoles = $state(false);
 	let autodelete = $state(-1);
 
+	let editingNoteId = $state<number | null>(null);
+	let editNoteText = $state('');
+	let savingNote = $state(false);
+
 	$effect(() => {
 		autodelete = group?.discordAutodeleteSeconds ?? -1;
 	});
@@ -298,6 +302,31 @@
 			await api.markAnnouncementKilled(a.id);
 		} catch (err) {
 			error = err instanceof ApiError ? err.message : 'Failed to mark killed.';
+		}
+	}
+	function canEditNote(a: Announcement): boolean {
+		return a.status === 'open' && (a.authorId === me?.id || isManager);
+	}
+	function startEditNote(a: Announcement) {
+		editingNoteId = a.id;
+		editNoteText = a.note;
+		error = '';
+	}
+	function cancelEditNote() {
+		editingNoteId = null;
+		editNoteText = '';
+	}
+	async function saveNote(a: Announcement) {
+		savingNote = true;
+		error = '';
+		try {
+			await api.editAnnouncementNote(a.id, editNoteText.trim());
+			editingNoteId = null;
+			editNoteText = '';
+		} catch (err) {
+			error = err instanceof ApiError ? err.message : 'Failed to update note.';
+		} finally {
+			savingNote = false;
 		}
 	}
 	async function claim(a: Announcement) {
@@ -917,7 +946,34 @@
 								{/if}
 							</div>
 							{#if a.location}<div class="loc">📍 {a.location}</div>{/if}
-							{#if a.note}<div class="muted note">{a.note}</div>{/if}
+							{#if editingNoteId === a.id}
+								<form class="note-edit" onsubmit={(e) => { e.preventDefault(); saveNote(a); }}>
+									<!-- svelte-ignore a11y_autofocus -->
+									<textarea
+										bind:value={editNoteText}
+										maxlength="1000"
+										rows="2"
+										placeholder="Add a note…"
+										disabled={savingNote}
+										autofocus
+									></textarea>
+									<div class="note-edit-actions">
+										<button type="submit" class="btn btn-sm btn-primary" disabled={savingNote}>
+											{savingNote ? 'Saving…' : 'Save'}
+										</button>
+										<button type="button" class="btn btn-sm" onclick={cancelEditNote} disabled={savingNote}>
+											Cancel
+										</button>
+									</div>
+								</form>
+							{:else}
+								{#if a.note}<div class="muted note">{a.note}</div>{/if}
+								{#if canEditNote(a)}
+									<button type="button" class="note-edit-trigger" onclick={() => startEditNote(a)}>
+										{a.note ? '✏️ Edit note' : '＋ Add note'}
+									</button>
+								{/if}
+							{/if}
 							<div class="muted small">
 								by {a.authorName} · {new Date(a.createdAt).toLocaleTimeString()}
 							</div>
@@ -1414,6 +1470,34 @@
 	}
 	.note {
 		margin-top: 0.15rem;
+	}
+	.note-edit {
+		margin-top: 0.35rem;
+		display: flex;
+		flex-direction: column;
+		gap: 0.4rem;
+	}
+	.note-edit textarea {
+		width: 100%;
+		resize: vertical;
+		font: inherit;
+	}
+	.note-edit-actions {
+		display: flex;
+		gap: 0.4rem;
+	}
+	.note-edit-trigger {
+		margin-top: 0.2rem;
+		padding: 0;
+		background: none;
+		border: none;
+		color: var(--text-dim);
+		font-size: 0.82rem;
+		cursor: pointer;
+	}
+	.note-edit-trigger:hover {
+		color: var(--text);
+		text-decoration: underline;
 	}
 	.small {
 		font-size: 0.82rem;

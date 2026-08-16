@@ -125,6 +125,8 @@ export const api = {
 		request<void>('POST', `/api/announcements/${announcementId}/killed`),
 	claimAnnouncement: (announcementId: number) =>
 		request<void>('POST', `/api/announcements/${announcementId}/claim`),
+	editAnnouncementNote: (announcementId: number, note: string) =>
+		request<void>('POST', `/api/announcements/${announcementId}/note`, { note }),
 
 	// Admin
 	adminUsers: (search = '') =>
