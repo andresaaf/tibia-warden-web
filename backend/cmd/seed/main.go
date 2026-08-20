@@ -5,7 +5,9 @@
 //	seed -file ./data/creatures.json
 //	seed -file ./data/creatures.csv
 //	seed -file ./data/creatures.json -areas ./data/areas.json
+//	seed -areas ./data/areas.json   (areas only, leaves creatures untouched)
 //
+// At least one of -file / -areas is required.
 // JSON format: an array of objects with "name", "difficulty" and optional "rarity"/"imageUrl".
 // CSV format:  a header row including "name" and "difficulty" (and optional "rarity", "imageUrl"/"image").
 // Areas format (-areas, optional, .json): an array of objects with "name" and a
@@ -56,23 +58,37 @@ var validRarities = map[string]string{
 
 func main() {
 	filePath := flag.String("file", "", "path to the creatures data file (.json or .csv)")
-	areasPath := flag.String("areas", "", "optional path to an areas data file (.json)")
+	areasPath := flag.String("areas", "", "path to an areas data file (.json)")
 	flag.Parse()
 
-	if *filePath == "" {
-		log.Fatal("the -file flag is required")
+	if *filePath == "" && *areasPath == "" {
+		log.Fatal("provide -file (creatures) and/or -areas")
 	}
 	dbURL := os.Getenv("DATABASE_URL")
 	if dbURL == "" {
 		log.Fatal("DATABASE_URL must be set")
 	}
 
-	records, err := loadRecords(*filePath)
-	if err != nil {
-		log.Fatalf("failed to load records: %v", err)
+	// Load and validate the input files before touching the database, so a bad
+	// file fails fast.
+	var records []creatureRecord
+	if *filePath != "" {
+		var err error
+		records, err = loadRecords(*filePath)
+		if err != nil {
+			log.Fatalf("failed to load records: %v", err)
+		}
+		if len(records) == 0 {
+			log.Fatal("no records found in file")
+		}
 	}
-	if len(records) == 0 {
-		log.Fatal("no records found in file")
+	var areas []areaRecord
+	if *areasPath != "" {
+		var err error
+		areas, err = loadAreas(*areasPath)
+		if err != nil {
+			log.Fatalf("failed to load areas: %v", err)
+		}
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
@@ -90,28 +106,25 @@ func main() {
 
 	stores := store.New(pool)
 
-	var imported int
-	for _, rec := range records {
-		name := strings.TrimSpace(rec.Name)
-		diff, ok := validDifficulties[strings.ToLower(strings.TrimSpace(rec.Difficulty))]
-		if name == "" || !ok {
-			log.Printf("skipping invalid record: name=%q difficulty=%q", rec.Name, rec.Difficulty)
-			continue
+	if records != nil {
+		var imported int
+		for _, rec := range records {
+			name := strings.TrimSpace(rec.Name)
+			diff, ok := validDifficulties[strings.ToLower(strings.TrimSpace(rec.Difficulty))]
+			if name == "" || !ok {
+				log.Printf("skipping invalid record: name=%q difficulty=%q", rec.Name, rec.Difficulty)
+				continue
+			}
+			rarity := validRarities[strings.ToLower(strings.TrimSpace(rec.Rarity))]
+			if err := stores.Creatures.Upsert(ctx, name, diff, rarity, strings.TrimSpace(rec.ImageURL)); err != nil {
+				log.Fatalf("failed to upsert %q: %v", name, err)
+			}
+			imported++
 		}
-		rarity := validRarities[strings.ToLower(strings.TrimSpace(rec.Rarity))]
-		if err := stores.Creatures.Upsert(ctx, name, diff, rarity, strings.TrimSpace(rec.ImageURL)); err != nil {
-			log.Fatalf("failed to upsert %q: %v", name, err)
-		}
-		imported++
+		fmt.Printf("imported/updated %d creatures\n", imported)
 	}
 
-	fmt.Printf("imported/updated %d creatures\n", imported)
-
-	if *areasPath != "" {
-		areas, err := loadAreas(*areasPath)
-		if err != nil {
-			log.Fatalf("failed to load areas: %v", err)
-		}
+	if areas != nil {
 		seedAreas(ctx, stores, areas)
 	}
 }
