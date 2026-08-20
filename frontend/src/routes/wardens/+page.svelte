@@ -38,6 +38,7 @@
 	let areasError = $state('');
 	/** Completed areas the user has manually expanded (see areaOpen). */
 	let expandedAreas = $state<Set<number>>(new Set());
+	let areaSearch = $state('');
 
 	$effect(() => {
 		if (!$authLoading && !$currentUser) goto('/', { replaceState: true });
@@ -179,10 +180,32 @@
 		expandedAreas = next;
 	}
 
-	// Incomplete areas first (in their server order), completed areas at the end.
-	let sortedAreas = $derived(
-		[...areas].sort((a, b) => Number(areaComplete(a)) - Number(areaComplete(b)))
-	);
+	let searching = $derived(areaSearch.trim() !== '');
+
+	// Search matches area names first, then creatures within areas. A name match
+	// shows the whole area; a creature-only match narrows the area to just the
+	// matching monsters. Ordering: name matches, then creature-only matches, and
+	// within each group incomplete areas before complete (the default sort).
+	// Completion/progress is always over an area's full membership, never `shown`.
+	let filteredAreas = $derived.by(() => {
+		const term = areaSearch.trim().toLowerCase();
+		const withMeta = areas.map((area) => {
+			const nameMatch = term !== '' && area.name.toLowerCase().includes(term);
+			const matches =
+				term === '' ? area.creatures : area.creatures.filter((c) => c.name.toLowerCase().includes(term));
+			return {
+				area,
+				shown: nameMatch ? area.creatures : matches,
+				nameMatch,
+				creatureMatch: matches.length > 0
+			};
+		});
+		const visible = term === '' ? withMeta : withMeta.filter((m) => m.nameMatch || m.creatureMatch);
+		return visible.sort((a, b) => {
+			if (term !== '' && a.nameMatch !== b.nameMatch) return a.nameMatch ? -1 : 1;
+			return Number(areaComplete(a.area)) - Number(areaComplete(b.area));
+		});
+	});
 	let completedAreaCount = $derived(areas.filter((a) => areaComplete(a)).length);
 	let killedCount = $derived(displayed.filter((c) => killedIds.has(c.id)).length);
 </script>
@@ -319,14 +342,23 @@
 	{:else if areas.length === 0}
 		<p class="muted">No areas have been set up yet.</p>
 	{:else}
+		<input
+			class="area-search"
+			type="text"
+			placeholder="Search areas or creatures…"
+			bind:value={areaSearch}
+		/>
+		{#if filteredAreas.length === 0}
+			<p class="muted">No areas or creatures match your search.</p>
+		{:else}
 		<div class="areas">
-			{#each sortedAreas as area (area.id)}
+			{#each filteredAreas as { area, shown } (area.id)}
 				{@const done = areaComplete(area)}
-				{@const open = areaOpen(area)}
+				{@const open = searching || areaOpen(area)}
 				<div class="area" class:complete={done}>
 					<button
 						class="area-head"
-						class:clickable={done}
+						class:clickable={done && !searching}
 						aria-expanded={open}
 						onclick={() => toggleArea(area)}
 					>
@@ -337,7 +369,7 @@
 					</button>
 					{#if open}
 						<div class="grid">
-							{#each area.creatures as creature (creature.id)}
+							{#each shown as creature (creature.id)}
 								<button
 									class="creature"
 									class:killed={killedIds.has(creature.id)}
@@ -362,10 +394,14 @@
 				</div>
 			{/each}
 		</div>
+		{/if}
 	{/if}
 </div>
 
 <style>
+	.area-search {
+		width: 100%;
+	}
 	.filters {
 		display: flex;
 		flex-wrap: wrap;
