@@ -33,6 +33,12 @@ services:
       PUBLIC_BASE_URL: ${PUBLIC_BASE_URL}
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
       COOKIE_SECURE: ${COOKIE_SECURE:-false}
+    volumes:
+      # Seed data (creatures + areas) is read at seed time via
+      # `docker exec app /app/seed`. Mount data/ read-only so host edits are
+      # picked up without rebuilding the image. The image still bakes a copy in
+      # (COPY data/ in the Dockerfile), so this only overrides it when present.
+      - ./data:/app/data:ro
     # No host port: the app is reached only through the Caddy reverse proxy.
     expose:
       - "8080"
