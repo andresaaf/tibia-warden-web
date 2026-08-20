@@ -8,6 +8,7 @@ type Stores struct {
 	Users         *UserStore
 	Sessions      *SessionStore
 	Creatures     *CreatureStore
+	Areas         *AreaStore
 	Groups        *GroupStore
 	Announcements *AnnouncementStore
 }
@@ -19,6 +20,7 @@ func New(pool *pgxpool.Pool) *Stores {
 		Users:         &UserStore{pool: pool},
 		Sessions:      &SessionStore{pool: pool},
 		Creatures:     &CreatureStore{pool: pool},
+		Areas:         &AreaStore{pool: pool},
 		Groups:        &GroupStore{pool: pool},
 		Announcements: &AnnouncementStore{pool: pool},
 	}

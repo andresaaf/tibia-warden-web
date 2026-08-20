@@ -63,6 +63,15 @@ type Creature struct {
 	Killed     bool   `json:"killed"`
 }
 
+// Area groups the Echo Warden creatures found at one in-game location. The same
+// creature may appear in several areas. Each nested Creature carries the
+// requesting user's killed state, so the client can compute area completion.
+type Area struct {
+	ID        int64      `json:"id"`
+	Name      string     `json:"name"`
+	Creatures []Creature `json:"creatures"`
+}
+
 // HighscoreEntry is one row of the statistics leaderboard: a user's total
 // killed Wardens, the Charm Points those kills are worth, and the Charm Points
 // they've "given away" as an announcer (deduped per broadcast).

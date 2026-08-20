@@ -39,6 +39,12 @@ export interface Creature {
 	killed: boolean;
 }
 
+export interface Area {
+	id: number;
+	name: string;
+	creatures: Creature[];
+}
+
 export type Visibility = 'public' | 'private';
 export type Role = 'owner' | 'admin' | 'member';
 export type RosterPeriod = 'lifetime' | 'current_month' | 'previous_month';

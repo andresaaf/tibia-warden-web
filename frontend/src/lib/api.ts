@@ -1,5 +1,6 @@
 import type {
 	Announcement,
+	Area,
 	Creature,
 	DiscordRole,
 	Group,
@@ -63,6 +64,7 @@ export const api = {
 	markKilled: (creatureId: number) => request<void>('PUT', `/api/wardens/${creatureId}`),
 	unmarkKilled: (creatureId: number) => request<void>('DELETE', `/api/wardens/${creatureId}`),
 	killedCreatures: () => request<number[]>('GET', '/api/wardens'),
+	areas: () => request<Area[]>('GET', '/api/areas'),
 
 	// Statistics
 	highscores: () => request<HighscoreEntry[]>('GET', '/api/highscores'),

@@ -3,9 +3,19 @@
 	import { goto } from '$app/navigation';
 	import { api } from '$lib/api';
 	import { currentUser, authLoading } from '$lib/stores';
-	import { DIFFICULTIES, RARITIES, type Creature, type Difficulty, type Rarity } from '$lib/types';
+	import {
+		DIFFICULTIES,
+		RARITIES,
+		type Area,
+		type Creature,
+		type Difficulty,
+		type Rarity
+	} from '$lib/types';
 
 	type StatusFilter = 'all' | 'remaining' | 'found';
+	type ViewMode = 'flat' | 'area';
+
+	let viewMode = $state<ViewMode>('flat');
 
 	let creatures = $state<Creature[]>([]);
 	let displayed = $state<Creature[]>([]);
@@ -17,19 +27,44 @@
 	let error = $state('');
 	let debounce: ReturnType<typeof setTimeout>;
 
+	/** Authoritative killed state across both views, keyed by creature id. A
+	 * creature can appear in several areas (and the flat list) at once, so all
+	 * rendered instances read their state from here rather than a per-object flag. */
+	let killedIds = $state<Set<number>>(new Set());
+
+	let areas = $state<Area[]>([]);
+	let areasLoaded = $state(false);
+	let areasLoading = $state(false);
+	let areasError = $state('');
+	/** Completed areas the user has manually expanded (see areaOpen). */
+	let expandedAreas = $state<Set<number>>(new Set());
+
 	$effect(() => {
 		if (!$authLoading && !$currentUser) goto('/', { replaceState: true });
 	});
 
 	onMount(() => {
+		loadKilled();
 		load();
 	});
+
+	/** Seed the authoritative killed set from the full (unfiltered) warden list. */
+	async function loadKilled() {
+		try {
+			const ids = await api.killedCreatures();
+			killedIds = new Set(ids);
+		} catch {
+			// Non-fatal: the per-list payloads below still fill in killed state for
+			// the creatures they return.
+		}
+	}
 
 	async function load() {
 		loading = true;
 		error = '';
 		try {
 			creatures = await api.creatures(search.trim(), [...activeDifficulties], [...activeRarities]);
+			mergeKilled(creatures);
 			applyStatusFilter();
 		} catch {
 			error = 'Failed to load the warden list.';
@@ -38,11 +73,44 @@
 		}
 	}
 
+	async function loadAreas() {
+		areasLoading = true;
+		areasError = '';
+		try {
+			areas = await api.areas();
+			for (const a of areas) mergeKilled(a.creatures);
+			areasLoaded = true;
+		} catch {
+			areasError = 'Failed to load areas.';
+		} finally {
+			areasLoading = false;
+		}
+	}
+
+	/** Union the killed creatures from a payload into the authoritative set.
+	 * Only adds (never removes), so filtered flat-list payloads can't drop state. */
+	function mergeKilled(list: Creature[]) {
+		let changed = false;
+		const next = new Set(killedIds);
+		for (const c of list) {
+			if (c.killed && !next.has(c.id)) {
+				next.add(c.id);
+				changed = true;
+			}
+		}
+		if (changed) killedIds = next;
+	}
+
+	function setViewMode(next: ViewMode) {
+		viewMode = next;
+		if (next === 'area' && !areasLoaded && !areasLoading) loadAreas();
+	}
+
 	/** Snapshot the status filter over the loaded set. Called on load and when the
 	 * status filter changes — not on every kill toggle, so items stay put until refilter. */
 	function applyStatusFilter() {
 		displayed = creatures.filter((c) =>
-			statusFilter === 'all' ? true : statusFilter === 'remaining' ? !c.killed : c.killed
+			statusFilter === 'all' ? true : statusFilter === 'remaining' ? !killedIds.has(c.id) : killedIds.has(c.id)
 		);
 	}
 
@@ -72,20 +140,51 @@
 		load();
 	}
 
-	async function toggleKilled(creature: Creature) {
-		const previous = creature.killed;
-		creature.killed = !previous;
-		displayed = [...displayed];
+	async function toggleKilled(creatureId: number) {
+		const wasKilled = killedIds.has(creatureId);
+		const next = new Set(killedIds);
+		if (wasKilled) next.delete(creatureId);
+		else next.add(creatureId);
+		killedIds = next;
 		try {
-			if (creature.killed) await api.markKilled(creature.id);
-			else await api.unmarkKilled(creature.id);
+			if (wasKilled) await api.unmarkKilled(creatureId);
+			else await api.markKilled(creatureId);
 		} catch {
-			creature.killed = previous;
-			displayed = [...displayed];
+			const rollback = new Set(killedIds);
+			if (wasKilled) rollback.add(creatureId);
+			else rollback.delete(creatureId);
+			killedIds = rollback;
 		}
 	}
 
-	let killedCount = $derived(displayed.filter((c) => c.killed).length);
+	function areaKilledCount(area: Area): number {
+		return area.creatures.reduce((n, c) => n + (killedIds.has(c.id) ? 1 : 0), 0);
+	}
+
+	function areaComplete(area: Area): boolean {
+		return area.creatures.length > 0 && areaKilledCount(area) === area.creatures.length;
+	}
+
+	/** Completed areas collapse by default; the arrow expands them. Incomplete
+	 * areas are always open (their monsters are what you still need to hunt). */
+	function areaOpen(area: Area): boolean {
+		return !areaComplete(area) || expandedAreas.has(area.id);
+	}
+
+	function toggleArea(area: Area) {
+		if (!areaComplete(area)) return; // incomplete areas stay expanded
+		const next = new Set(expandedAreas);
+		if (next.has(area.id)) next.delete(area.id);
+		else next.add(area.id);
+		expandedAreas = next;
+	}
+
+	// Incomplete areas first (in their server order), completed areas at the end.
+	let sortedAreas = $derived(
+		[...areas].sort((a, b) => Number(areaComplete(a)) - Number(areaComplete(b)))
+	);
+	let completedAreaCount = $derived(areas.filter((a) => areaComplete(a)).length);
+	let killedCount = $derived(displayed.filter((c) => killedIds.has(c.id)).length);
 </script>
 
 <div class="container stack">
@@ -93,100 +192,174 @@
 		<div>
 			<h1>Warden List</h1>
 			<p class="muted">
-				{killedCount} of {displayed.length} shown creatures marked
+				{#if viewMode === 'flat'}
+					{killedCount} of {displayed.length} shown creatures marked
+				{:else}
+					{completedAreaCount} of {areas.length} areas complete
+				{/if}
 			</p>
 		</div>
-	</div>
-
-	<div class="card stack">
-		<input
-			type="text"
-			placeholder="Search creatures…"
-			bind:value={search}
-			oninput={onSearchInput}
-		/>
-		<div class="filters">
-			<div class="chip-rows">
-				<div class="chips">
-					{#each DIFFICULTIES as d}
-						<button
-							class="chip"
-							class:active={activeDifficulties.has(d)}
-							data-diff={d}
-							onclick={() => toggleDifficulty(d)}
-						>
-							{d}
-						</button>
-					{/each}
-				</div>
-				<div class="chips">
-					{#each RARITIES as r}
-						<button
-							class="chip"
-							class:active={activeRarities.has(r)}
-							onclick={() => toggleRarity(r)}
-						>
-							{r}
-						</button>
-					{/each}
-				</div>
-			</div>
-			<div class="segmented" role="group" aria-label="Filter by status">
-				<button
-					class="segment"
-					class:active={statusFilter === 'all'}
-					aria-pressed={statusFilter === 'all'}
-					onclick={() => setStatusFilter('all')}
-				>
-					All
-				</button>
-				<button
-					class="segment"
-					class:active={statusFilter === 'remaining'}
-					aria-pressed={statusFilter === 'remaining'}
-					onclick={() => setStatusFilter('remaining')}
-				>
-					Remaining
-				</button>
-				<button
-					class="segment"
-					class:active={statusFilter === 'found'}
-					aria-pressed={statusFilter === 'found'}
-					onclick={() => setStatusFilter('found')}
-				>
-					Found
-				</button>
-			</div>
+		<div class="segmented" role="group" aria-label="View mode">
+			<button
+				class="segment"
+				class:active={viewMode === 'flat'}
+				aria-pressed={viewMode === 'flat'}
+				onclick={() => setViewMode('flat')}
+			>
+				List
+			</button>
+			<button
+				class="segment"
+				class:active={viewMode === 'area'}
+				aria-pressed={viewMode === 'area'}
+				onclick={() => setViewMode('area')}
+			>
+				Areas
+			</button>
 		</div>
 	</div>
 
-	{#if error}
-		<p class="error">{error}</p>
-	{:else if loading}
+	{#if viewMode === 'flat'}
+		<div class="card stack">
+			<input
+				type="text"
+				placeholder="Search creatures…"
+				bind:value={search}
+				oninput={onSearchInput}
+			/>
+			<div class="filters">
+				<div class="chip-rows">
+					<div class="chips">
+						{#each DIFFICULTIES as d}
+							<button
+								class="chip"
+								class:active={activeDifficulties.has(d)}
+								data-diff={d}
+								onclick={() => toggleDifficulty(d)}
+							>
+								{d}
+							</button>
+						{/each}
+					</div>
+					<div class="chips">
+						{#each RARITIES as r}
+							<button
+								class="chip"
+								class:active={activeRarities.has(r)}
+								onclick={() => toggleRarity(r)}
+							>
+								{r}
+							</button>
+						{/each}
+					</div>
+				</div>
+				<div class="segmented" role="group" aria-label="Filter by status">
+					<button
+						class="segment"
+						class:active={statusFilter === 'all'}
+						aria-pressed={statusFilter === 'all'}
+						onclick={() => setStatusFilter('all')}
+					>
+						All
+					</button>
+					<button
+						class="segment"
+						class:active={statusFilter === 'remaining'}
+						aria-pressed={statusFilter === 'remaining'}
+						onclick={() => setStatusFilter('remaining')}
+					>
+						Remaining
+					</button>
+					<button
+						class="segment"
+						class:active={statusFilter === 'found'}
+						aria-pressed={statusFilter === 'found'}
+						onclick={() => setStatusFilter('found')}
+					>
+						Found
+					</button>
+				</div>
+			</div>
+		</div>
+
+		{#if error}
+			<p class="error">{error}</p>
+		{:else if loading}
+			<p class="muted">Loading…</p>
+		{:else if displayed.length === 0}
+			<p class="muted">No creatures match your filters.</p>
+		{:else}
+			<div class="grid">
+				{#each displayed as creature (creature.id)}
+					<button
+						class="creature"
+						class:killed={killedIds.has(creature.id)}
+						onclick={() => toggleKilled(creature.id)}
+					>
+						<span class="check" aria-hidden="true">{killedIds.has(creature.id) ? '✓' : ''}</span>
+						{#if creature.imageUrl}
+							<img
+								class="creature-img"
+								src={creature.imageUrl}
+								alt=""
+								loading="lazy"
+								onerror={(e) => ((e.currentTarget as HTMLImageElement).style.visibility = 'hidden')}
+							/>
+						{/if}
+						<span class="name">{creature.name}</span>
+						<span class="badge diff" data-diff={creature.difficulty}>{creature.difficulty}</span>
+					</button>
+				{/each}
+			</div>
+		{/if}
+	{:else if areasError}
+		<p class="error">{areasError}</p>
+	{:else if areasLoading}
 		<p class="muted">Loading…</p>
-	{:else if displayed.length === 0}
-		<p class="muted">No creatures match your filters.</p>
+	{:else if areas.length === 0}
+		<p class="muted">No areas have been set up yet.</p>
 	{:else}
-		<div class="grid">
-			{#each displayed as creature (creature.id)}
-				<button
-					class="creature"
-					class:killed={creature.killed}
-					onclick={() => toggleKilled(creature)}
-				>
-					<span class="check" aria-hidden="true">{creature.killed ? '✓' : ''}</span>
-					{#if creature.imageUrl}
-						<img
-							class="creature-img"
-							src={creature.imageUrl}
-							alt=""
-							loading="lazy"
-							onerror={(e) => ((e.currentTarget as HTMLImageElement).style.visibility = 'hidden')}
-						/>
+		<div class="areas">
+			{#each sortedAreas as area (area.id)}
+				{@const done = areaComplete(area)}
+				{@const open = areaOpen(area)}
+				<div class="area" class:complete={done}>
+					<button
+						class="area-head"
+						class:clickable={done}
+						aria-expanded={open}
+						onclick={() => toggleArea(area)}
+					>
+						<span class="arrow" aria-hidden="true">{done ? (open ? '▾' : '▸') : ''}</span>
+						<span class="area-name">{area.name}</span>
+						{#if done}<span class="area-done" aria-hidden="true">✓</span>{/if}
+						<span class="area-progress">{areaKilledCount(area)} / {area.creatures.length}</span>
+					</button>
+					{#if open}
+						<div class="grid">
+							{#each area.creatures as creature (creature.id)}
+								<button
+									class="creature"
+									class:killed={killedIds.has(creature.id)}
+									onclick={() => toggleKilled(creature.id)}
+								>
+									<span class="check" aria-hidden="true">{killedIds.has(creature.id) ? '✓' : ''}</span>
+									{#if creature.imageUrl}
+										<img
+											class="creature-img"
+											src={creature.imageUrl}
+											alt=""
+											loading="lazy"
+											onerror={(e) => ((e.currentTarget as HTMLImageElement).style.visibility = 'hidden')}
+										/>
+									{/if}
+									<span class="name">{creature.name}</span>
+									<span class="badge diff" data-diff={creature.difficulty}>{creature.difficulty}</span>
+								</button>
+							{/each}
+						</div>
 					{/if}
-					<span class="name">{creature.name}</span>
-					<span class="badge diff" data-diff={creature.difficulty}>{creature.difficulty}</span>
-				</button>
+				</div>
 			{/each}
 		</div>
 	{/if}
@@ -250,6 +423,57 @@
 		display: grid;
 		grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
 		gap: 0.6rem;
+	}
+	.areas {
+		display: flex;
+		flex-direction: column;
+		gap: 0.8rem;
+	}
+	.area {
+		border: 1px solid var(--border);
+		border-radius: var(--radius);
+		background: var(--bg-elev);
+		padding: 0.6rem;
+	}
+	.area.complete {
+		border-color: var(--success);
+		background: color-mix(in srgb, var(--success) 8%, var(--bg-elev));
+	}
+	.area-head {
+		display: flex;
+		align-items: center;
+		gap: 0.6rem;
+		width: 100%;
+		background: transparent;
+		border: none;
+		color: var(--text);
+		text-align: left;
+		padding: 0.3rem 0.4rem;
+		cursor: default;
+	}
+	.area-head.clickable {
+		cursor: pointer;
+	}
+	.arrow {
+		width: 1rem;
+		flex: none;
+		color: var(--text-dim);
+	}
+	.area-name {
+		flex: 1;
+		font-weight: 650;
+	}
+	.area-done {
+		color: var(--success);
+		font-weight: 700;
+	}
+	.area-progress {
+		color: var(--text-dim);
+		font-size: 0.85rem;
+		font-variant-numeric: tabular-nums;
+	}
+	.area .grid {
+		margin-top: 0.6rem;
 	}
 	.creature {
 		display: flex;

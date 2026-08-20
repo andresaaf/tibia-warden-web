@@ -4,9 +4,12 @@
 //
 //	seed -file ./data/creatures.json
 //	seed -file ./data/creatures.csv
+//	seed -file ./data/creatures.json -areas ./data/areas.json
 //
 // JSON format: an array of objects with "name", "difficulty" and optional "rarity"/"imageUrl".
 // CSV format:  a header row including "name" and "difficulty" (and optional "rarity", "imageUrl"/"image").
+// Areas format (-areas, optional, .json): an array of objects with "name" and a
+// "creatures" list of creature names; membership is replaced on each run.
 package main
 
 import (
@@ -32,6 +35,11 @@ type creatureRecord struct {
 	ImageURL   string `json:"imageUrl"`
 }
 
+type areaRecord struct {
+	Name      string   `json:"name"`
+	Creatures []string `json:"creatures"`
+}
+
 var validDifficulties = map[string]string{
 	"harmless":    "Harmless",
 	"trivial":     "Trivial",
@@ -48,6 +56,7 @@ var validRarities = map[string]string{
 
 func main() {
 	filePath := flag.String("file", "", "path to the creatures data file (.json or .csv)")
+	areasPath := flag.String("areas", "", "optional path to an areas data file (.json)")
 	flag.Parse()
 
 	if *filePath == "" {
@@ -97,6 +106,69 @@ func main() {
 	}
 
 	fmt.Printf("imported/updated %d creatures\n", imported)
+
+	if *areasPath != "" {
+		areas, err := loadAreas(*areasPath)
+		if err != nil {
+			log.Fatalf("failed to load areas: %v", err)
+		}
+		seedAreas(ctx, stores, areas)
+	}
+}
+
+// seedAreas upserts each area and replaces its membership, resolving creature
+// names to ids. Unknown creature names are logged and skipped.
+func seedAreas(ctx context.Context, stores *store.Stores, areas []areaRecord) {
+	var imported int
+	for _, area := range areas {
+		name := strings.TrimSpace(area.Name)
+		if name == "" {
+			log.Printf("skipping area with empty name")
+			continue
+		}
+		wanted := make([]string, 0, len(area.Creatures))
+		for _, c := range area.Creatures {
+			if c = strings.TrimSpace(c); c != "" {
+				wanted = append(wanted, c)
+			}
+		}
+		ids, err := stores.Areas.CreatureIDsByName(ctx, wanted)
+		if err != nil {
+			log.Fatalf("failed to resolve creatures for area %q: %v", name, err)
+		}
+		creatureIDs := make([]int64, 0, len(wanted))
+		for _, c := range wanted {
+			if id, ok := ids[c]; ok {
+				creatureIDs = append(creatureIDs, id)
+			} else {
+				log.Printf("area %q: unknown creature %q, skipping", name, c)
+			}
+		}
+		areaID, err := stores.Areas.UpsertArea(ctx, name)
+		if err != nil {
+			log.Fatalf("failed to upsert area %q: %v", name, err)
+		}
+		if err := stores.Areas.ReplaceAreaCreatures(ctx, areaID, creatureIDs); err != nil {
+			log.Fatalf("failed to set creatures for area %q: %v", name, err)
+		}
+		imported++
+	}
+	fmt.Printf("imported/updated %d areas\n", imported)
+}
+
+func loadAreas(path string) ([]areaRecord, error) {
+	if strings.ToLower(filepath.Ext(path)) != ".json" {
+		return nil, fmt.Errorf("areas file must be .json: %s", path)
+	}
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	var recs []areaRecord
+	if err := json.Unmarshal(data, &recs); err != nil {
+		return nil, fmt.Errorf("parse json: %w", err)
+	}
+	return recs, nil
 }
 
 func loadRecords(path string) ([]creatureRecord, error) {
