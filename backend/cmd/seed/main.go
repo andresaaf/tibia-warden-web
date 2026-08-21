@@ -38,6 +38,14 @@ type creatureRecord struct {
 }
 
 type areaRecord struct {
+	Name string `json:"name"`
+	// Subareas is the nested form. As a shorthand, Creatures may be given
+	// directly on the area for a standalone area with a single implicit subarea.
+	Subareas  []subareaRecord `json:"subareas"`
+	Creatures []string        `json:"creatures"`
+}
+
+type subareaRecord struct {
 	Name      string   `json:"name"`
 	Creatures []string `json:"creatures"`
 }
@@ -129,44 +137,76 @@ func main() {
 	}
 }
 
-// seedAreas upserts each area and replaces its membership, resolving creature
-// names to ids. Unknown creature names are logged and skipped.
+// seedAreas rebuilds the area/subarea tree from the file: it clears existing
+// areas, then upserts each area and its subareas, replacing each subarea's
+// creature membership. Creatures attach to subareas; an area given only a
+// top-level "creatures" list becomes a single implicit subarea named after it.
+// Unknown creature names are logged and skipped.
 func seedAreas(ctx context.Context, stores *store.Stores, areas []areaRecord) {
-	var imported int
-	for _, area := range areas {
+	if err := stores.Areas.ClearAreas(ctx); err != nil {
+		log.Fatalf("failed to clear areas: %v", err)
+	}
+
+	var areaCount, subareaCount int
+	for ai, area := range areas {
 		name := strings.TrimSpace(area.Name)
 		if name == "" {
 			log.Printf("skipping area with empty name")
 			continue
 		}
-		wanted := make([]string, 0, len(area.Creatures))
-		for _, c := range area.Creatures {
-			if c = strings.TrimSpace(c); c != "" {
-				wanted = append(wanted, c)
-			}
+
+		// Normalize to the nested form: prefer explicit subareas; otherwise fall
+		// back to the top-level creatures shorthand as one implicit subarea.
+		subareas := area.Subareas
+		if len(subareas) == 0 && len(area.Creatures) > 0 {
+			subareas = []subareaRecord{{Name: name, Creatures: area.Creatures}}
 		}
-		ids, err := stores.Areas.CreatureIDsByName(ctx, wanted)
-		if err != nil {
-			log.Fatalf("failed to resolve creatures for area %q: %v", name, err)
+		if len(subareas) == 0 {
+			log.Printf("area %q: no subareas or creatures, skipping", name)
+			continue
 		}
-		creatureIDs := make([]int64, 0, len(wanted))
-		for _, c := range wanted {
-			if id, ok := ids[c]; ok {
-				creatureIDs = append(creatureIDs, id)
-			} else {
-				log.Printf("area %q: unknown creature %q, skipping", name, c)
-			}
-		}
-		areaID, err := stores.Areas.UpsertArea(ctx, name)
+
+		areaID, err := stores.Areas.UpsertArea(ctx, name, ai)
 		if err != nil {
 			log.Fatalf("failed to upsert area %q: %v", name, err)
 		}
-		if err := stores.Areas.ReplaceAreaCreatures(ctx, areaID, creatureIDs); err != nil {
-			log.Fatalf("failed to set creatures for area %q: %v", name, err)
+		areaCount++
+
+		for si, sub := range subareas {
+			subName := strings.TrimSpace(sub.Name)
+			if subName == "" {
+				log.Printf("area %q: skipping subarea with empty name", name)
+				continue
+			}
+			wanted := make([]string, 0, len(sub.Creatures))
+			for _, c := range sub.Creatures {
+				if c = strings.TrimSpace(c); c != "" {
+					wanted = append(wanted, c)
+				}
+			}
+			ids, err := stores.Areas.CreatureIDsByName(ctx, wanted)
+			if err != nil {
+				log.Fatalf("failed to resolve creatures for area %q / subarea %q: %v", name, subName, err)
+			}
+			creatureIDs := make([]int64, 0, len(wanted))
+			for _, c := range wanted {
+				if id, ok := ids[c]; ok {
+					creatureIDs = append(creatureIDs, id)
+				} else {
+					log.Printf("area %q / subarea %q: unknown creature %q, skipping", name, subName, c)
+				}
+			}
+			subareaID, err := stores.Areas.UpsertSubarea(ctx, areaID, subName, si)
+			if err != nil {
+				log.Fatalf("failed to upsert subarea %q in area %q: %v", subName, name, err)
+			}
+			if err := stores.Areas.ReplaceSubareaCreatures(ctx, subareaID, creatureIDs); err != nil {
+				log.Fatalf("failed to set creatures for subarea %q in area %q: %v", subName, name, err)
+			}
+			subareaCount++
 		}
-		imported++
 	}
-	fmt.Printf("imported/updated %d areas\n", imported)
+	fmt.Printf("imported/updated %d areas, %d subareas\n", areaCount, subareaCount)
 }
 
 func loadAreas(path string) ([]areaRecord, error) {
