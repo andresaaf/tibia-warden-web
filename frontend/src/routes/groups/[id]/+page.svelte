@@ -6,6 +6,7 @@
 	import { currentUser, authLoading } from '$lib/stores';
 	import { GroupRoom, type RoomEvent } from '$lib/ws';
 	import { formatK } from '$lib/format';
+	import { copyText } from '$lib/clipboard';
 	import type {
 		Announcement,
 		Creature,
@@ -457,32 +458,6 @@
 		}
 	}
 
-	function copyCode(code: string) {
-		// navigator.clipboard is only available in secure contexts (HTTPS/localhost);
-		// fall back to a temporary textarea for plain-HTTP LAN access.
-		if (navigator.clipboard && window.isSecureContext) {
-			navigator.clipboard.writeText(code).catch(() => fallbackCopy(code));
-		} else {
-			fallbackCopy(code);
-		}
-	}
-
-	function fallbackCopy(text: string) {
-		const ta = document.createElement('textarea');
-		ta.value = text;
-		ta.style.position = 'fixed';
-		ta.style.opacity = '0';
-		document.body.appendChild(ta);
-		ta.focus();
-		ta.select();
-		try {
-			document.execCommand('copy');
-		} catch {
-			/* ignore */
-		}
-		document.body.removeChild(ta);
-	}
-
 	async function generateDiscordCode() {
 		discordBusy = true;
 		try {
@@ -633,7 +608,7 @@
 								<code>{inv.code}</code>
 								<span class="badge">{inviteUsesLabel(inv)}</span>
 								{#if !inviteExhausted(inv)}
-									<button class="btn btn-sm" onclick={() => copyCode(inv.code)}>Copy</button>
+									<button class="btn btn-sm" onclick={() => copyText(inv.code)}>Copy</button>
 								{/if}
 								<button class="btn-x" title="Delete invite" aria-label="Delete invite" onclick={() => deleteInvite(inv.id)}>×</button>
 							</div>
@@ -841,7 +816,7 @@
 						{#if discordCode}
 							<div class="link-code">
 								<code>/link {discordCode}</code>
-								<button class="btn btn-sm" onclick={() => copyCode(`/link ${discordCode}`)}>Copy</button>
+								<button class="btn btn-sm" onclick={() => copyText(`/link ${discordCode}`)}>Copy</button>
 							</div>
 							<p class="muted small">This code expires in 15 minutes and can be used once.</p>
 						{:else}
@@ -975,7 +950,12 @@
 								{/if}
 							{/if}
 							<div class="muted small">
-								by {a.authorName} · {new Date(a.createdAt).toLocaleTimeString()}
+								by {a.authorName}<button
+									type="button"
+									class="exiva-btn"
+									title={`Copy: exiva "${a.authorName}`}
+									aria-label={`Copy exiva command for ${a.authorName}`}
+									onclick={() => copyText(`exiva "${a.authorName}`)}>🔍</button> · {new Date(a.createdAt).toLocaleTimeString()}
 							</div>
 						</div>
 					</div>
@@ -1498,6 +1478,19 @@
 	.note-edit-trigger:hover {
 		color: var(--text);
 		text-decoration: underline;
+	}
+	.exiva-btn {
+		padding: 0;
+		margin-left: 0.15rem;
+		background: none;
+		border: none;
+		font-size: 0.9rem;
+		line-height: 1;
+		cursor: pointer;
+		opacity: 0.65;
+	}
+	.exiva-btn:hover {
+		opacity: 1;
 	}
 	.small {
 		font-size: 0.82rem;

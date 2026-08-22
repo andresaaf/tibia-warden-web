@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { api, ApiError } from '$lib/api';
+	import { copyText } from '$lib/clipboard';
 	import type { Announcement } from '$lib/types';
 
 	let {
@@ -152,7 +153,12 @@
 				{/if}
 			{/if}
 			<div class="muted small">
-				by {primary.authorName} · {new Date(primary.createdAt).toLocaleTimeString()}
+				by {primary.authorName}<button
+					type="button"
+					class="exiva-btn"
+					title={`Copy: exiva "${primary.authorName}`}
+					aria-label={`Copy exiva command for ${primary.authorName}`}
+					onclick={() => copyText(`exiva "${primary.authorName}`)}>🔍</button> · {new Date(primary.createdAt).toLocaleTimeString()}
 			</div>
 		</div>
 	</div>
@@ -258,6 +264,19 @@
 	.note-edit-trigger:hover {
 		color: var(--text);
 		text-decoration: underline;
+	}
+	.exiva-btn {
+		padding: 0;
+		margin-left: 0.15rem;
+		background: none;
+		border: none;
+		font-size: 0.9rem;
+		line-height: 1;
+		cursor: pointer;
+		opacity: 0.65;
+	}
+	.exiva-btn:hover {
+		opacity: 1;
 	}
 	.small {
 		font-size: 0.82rem;
