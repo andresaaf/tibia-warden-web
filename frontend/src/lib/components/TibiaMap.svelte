@@ -25,6 +25,8 @@
 	} = $props();
 
 	const TILE_BASE = 'https://tibiamaps.github.io/tibia-map-data/mapper';
+	const MinZ = 0;
+	const MaxZ = 15;
 	// Sensible default centre (Thais temple) when nothing is marked yet.
 	const DEFAULT = { x: 32369, y: 32241, z: 7 };
 	// Current map floor being viewed; the marker's floor follows this in pick mode.
@@ -84,6 +86,11 @@
 
 			layer = new (TibiaLayer as unknown as typeof L.TileLayer)(TILE_BASE, {
 				tileSize: 256,
+				// Tiles exist only at native zoom 0; let Leaflet up/downscale them
+				// across the map's whole zoom range. Without an explicit minZoom the
+				// GridLayer default (0) clamps the map and breaks zooming out.
+				minZoom: -2,
+				maxZoom: 3,
 				minNativeZoom: 0,
 				maxNativeZoom: 0,
 				noWrap: true,
@@ -113,7 +120,22 @@
 				});
 			}
 
+			// Shift + scroll changes floor instead of zooming. Capture on the wrapper
+			// (an ancestor of Leaflet's container) so it runs before Leaflet's own
+			// wheel-zoom handler and we can stop it.
+			const wrapper = el.parentElement;
+			const onWheel = (ev: WheelEvent) => {
+				if (!ev.shiftKey) return;
+				ev.preventDefault();
+				ev.stopPropagation();
+				const dir = ev.deltaY > 0 ? 1 : -1; // scroll down = go deeper (z+1)
+				const next = Math.min(MaxZ, Math.max(MinZ, currentZ + dir));
+				if (next !== currentZ) changeFloor(next);
+			};
+			wrapper?.addEventListener('wheel', onWheel, { capture: true, passive: false });
+
 			cleanup = () => {
+				wrapper?.removeEventListener('wheel', onWheel, { capture: true });
 				map?.remove();
 				map = undefined;
 			};
@@ -155,7 +177,7 @@
 <div class="tibia-map" style:height>
 	<div class="canvas" bind:this={el}></div>
 	<div class="floor">
-		<label>
+		<label title="Shift + scroll to change floor">
 			Floor
 			<select value={currentZ} onchange={(e) => changeFloor(Number(e.currentTarget.value))}>
 				{#each floors as f (f.value)}
@@ -164,7 +186,9 @@
 			</select>
 		</label>
 		{#if mode === 'pick'}
-			<span class="hint">{touched ? `${x}, ${y}` : 'Click the map to mark the spot'}</span>
+			<span class="hint">{touched ? `${x}, ${y}` : 'Click to mark · shift-scroll for floors'}</span>
+		{:else}
+			<span class="hint">Shift-scroll for floors</span>
 		{/if}
 	</div>
 </div>
