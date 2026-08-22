@@ -1418,6 +1418,9 @@
 	}
 	.combobox {
 		position: relative;
+		/* Sit above the map picker's stacking context (see TibiaMap) so the
+		   dropdown isn't covered by the map added below this field. */
+		z-index: 5;
 	}
 	.combobox-list {
 		position: absolute;

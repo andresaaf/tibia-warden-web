@@ -104,6 +104,9 @@
 <style>
 	.combobox {
 		position: relative;
+		/* Sit above the map picker's stacking context so the dropdown isn't
+		   covered when a map is added below this field. */
+		z-index: 5;
 	}
 	.combobox-list {
 		position: absolute;

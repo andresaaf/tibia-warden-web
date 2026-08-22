@@ -25,6 +25,9 @@
 	} = $props();
 
 	const TILE_BASE = 'https://tibiamaps.github.io/tibia-map-data/mapper';
+	// 1x1 transparent gif, used for tiles that don't exist in the dataset.
+	const BLANK_TILE =
+		'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
 	const MinZ = 0;
 	const MaxZ = 15;
 	// Sensible default centre (Thais temple) when nothing is marked yet.
@@ -52,12 +55,27 @@
 			await import('leaflet/dist/leaflet.css');
 			if (destroyed) return;
 
+			// The dataset's tile coverage is sparse and irregular. Fetch the list of
+			// existing tiles once so getTileUrl can skip requests for tiles that
+			// don't exist — otherwise GitHub's 404 HTML pages trip Firefox's Opaque
+			// Response Blocking and spam the console when zoomed out to the edges.
+			let tileSet: Set<string> | null = null;
+			fetch(`${TILE_BASE}/tiles.json`)
+				.then((r) => (r.ok ? r.json() : []))
+				.then((arr: string[]) => {
+					tileSet = new Set(arr);
+					layer?.redraw();
+				})
+				.catch(() => {});
+
 			const TibiaLayer = L.TileLayer.extend({
 				getTileUrl(coords: { x: number; y: number }) {
 					// At native zoom a tile spans 256 coords; its name uses the
 					// absolute world coordinate of its top-left pixel.
 					const fl = (this as unknown as { options: { floor: number } }).options.floor;
-					return `${TILE_BASE}/Minimap_Color_${coords.x * 256}_${coords.y * 256}_${fl}.png`;
+					const key = `${coords.x * 256}_${coords.y * 256}_${fl}`;
+					if (tileSet && !tileSet.has(key)) return BLANK_TILE; // don't request missing tiles
+					return `${TILE_BASE}/Minimap_Color_${key}.png`;
 				}
 			});
 
@@ -96,9 +114,7 @@
 				noWrap: true,
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				floor: currentZ,
-				// 1x1 transparent gif: hide 404s for tiles that don't exist.
-				errorTileUrl:
-					'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'
+				errorTileUrl: BLANK_TILE
 			} as unknown as L.TileLayerOptions);
 			layer.addTo(map);
 
@@ -197,6 +213,11 @@
 	.tibia-map {
 		display: flex;
 		flex-direction: column;
+		/* Own stacking context at z-index 0 so Leaflet's high internal z-indexes
+		   (panes ~400, controls ~800) stay contained and don't paint over the
+		   creature search dropdown above the map. */
+		position: relative;
+		z-index: 0;
 		/* Cap the width so the map keeps a near-square shape on wide desktop cards
 		   instead of stretching into a short letterbox strip; on a narrow phone
 		   card it just fills the available width. */
