@@ -546,6 +546,9 @@ func (b *Bot) buildEmbed(a *models.Announcement, guildID string) *discordgo.Mess
 	if a.Location != "" {
 		fields = append(fields, &discordgo.MessageEmbedField{Name: "📍 Location", Value: a.Location})
 	}
+	if a.Note != "" {
+		fields = append(fields, &discordgo.MessageEmbedField{Name: "Note", Value: a.Note})
+	}
 	if a.AuthorName != "" {
 		// Copyable exiva command to locate the finder in-game. Discord has no
 		// click-to-copy button, but inline-code is tap-to-copy on mobile and
@@ -554,9 +557,6 @@ func (b *Bot) buildEmbed(a *models.Announcement, guildID string) *discordgo.Mess
 			Name:  "🔍 Locate finder",
 			Value: fmt.Sprintf("`exiva \"%s`", a.AuthorName),
 		})
-	}
-	if a.Note != "" {
-		fields = append(fields, &discordgo.MessageEmbedField{Name: "Note", Value: a.Note})
 	}
 	if coming := b.namesByStatus(a, models.ResponseComing, guildID); coming != "" {
 		fields = append(fields, &discordgo.MessageEmbedField{Name: "🏃 Coming", Value: coming, Inline: true})
