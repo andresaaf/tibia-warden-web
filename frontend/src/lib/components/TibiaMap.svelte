@@ -14,7 +14,7 @@
 		z = $bindable(),
 		mode = 'view',
 		touched = $bindable(false),
-		height = '260px'
+		height = '300px'
 	}: {
 		x: number | null;
 		y: number | null;
@@ -197,6 +197,10 @@
 	.tibia-map {
 		display: flex;
 		flex-direction: column;
+		/* Cap the width so the map keeps a near-square shape on wide desktop cards
+		   instead of stretching into a short letterbox strip; on a narrow phone
+		   card it just fills the available width. */
+		max-width: 460px;
 		border: 1px solid var(--border);
 		border-radius: 8px;
 		overflow: hidden;

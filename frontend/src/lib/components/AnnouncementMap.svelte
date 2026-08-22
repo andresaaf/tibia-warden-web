@@ -12,7 +12,7 @@
 
 <div class="ann-map">
 	{#if expanded}
-		<TibiaMap mode="view" {x} {y} {z} height="240px" />
+		<TibiaMap mode="view" {x} {y} {z} height="300px" />
 		<button type="button" class="toggle" onclick={() => (expanded = false)}>Collapse map</button>
 	{:else}
 		<button type="button" class="preview" onclick={() => (expanded = true)} title="Expand map">
@@ -30,7 +30,7 @@
 		position: relative;
 		display: block;
 		width: 100%;
-		max-width: 320px;
+		max-width: 460px;
 		padding: 0;
 		border: 1px solid var(--border);
 		border-radius: 8px;
