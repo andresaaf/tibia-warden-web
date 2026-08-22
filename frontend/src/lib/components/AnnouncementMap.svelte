@@ -42,6 +42,9 @@
 		display: block;
 		width: 100%;
 		height: auto;
+		/* Pixel-art map: keep hard edges when the browser scales the PNG. */
+		image-rendering: -moz-crisp-edges;
+		image-rendering: pixelated;
 	}
 	.hint {
 		position: absolute;

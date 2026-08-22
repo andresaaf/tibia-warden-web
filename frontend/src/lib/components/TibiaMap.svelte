@@ -239,6 +239,12 @@
 		background: #181a1e;
 		font: inherit;
 	}
+	/* Tibia's map is pixel art: scale tiles with nearest-neighbour so zooming in
+	   keeps hard edges instead of the browser's default blurry interpolation. */
+	.canvas :global(.leaflet-tile) {
+		image-rendering: -moz-crisp-edges;
+		image-rendering: pixelated;
+	}
 	.floor {
 		display: flex;
 		align-items: center;
