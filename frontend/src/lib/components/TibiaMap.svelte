@@ -192,7 +192,7 @@
 	}
 </script>
 
-<div class="tibia-map" style:height>
+<div class="tibia-map" class:picking={mode === 'pick'} style:height>
 	<div class="canvas" bind:this={el}></div>
 	<div class="floor">
 		<label title="Shift + scroll to change floor">
@@ -244,6 +244,13 @@
 	.canvas :global(.leaflet-tile) {
 		image-rendering: -moz-crisp-edges;
 		image-rendering: pixelated;
+	}
+	/* In pick mode use a crosshair (not Leaflet's grab hand) so it's easy to
+	   pinpoint the exact spot to click. */
+	.picking :global(.leaflet-grab),
+	.picking :global(.leaflet-container),
+	.picking :global(.leaflet-dragging .leaflet-grab) {
+		cursor: crosshair;
 	}
 	.floor {
 		display: flex;
