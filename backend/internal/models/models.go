@@ -151,6 +151,11 @@ type Announcement struct {
 	AuthorID         int64                  `json:"authorId"`
 	AuthorName       string                 `json:"authorName"`
 	Location         string                 `json:"location"`
+	// MapX, MapY, MapZ are the optional marked map spot (absolute Tibia world
+	// coordinates and floor). All nil together when no spot was marked.
+	MapX             *int                   `json:"mapX,omitempty"`
+	MapY             *int                   `json:"mapY,omitempty"`
+	MapZ             *int                   `json:"mapZ,omitempty"`
 	Note             string                 `json:"note"`
 	GoldCost         int                    `json:"goldCost"`
 	Status           string                 `json:"status"`

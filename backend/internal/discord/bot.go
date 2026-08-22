@@ -582,6 +582,14 @@ func (b *Bot) buildEmbed(a *models.Announcement, guildID string) *discordgo.Mess
 	if a.CreatureImageURL != "" {
 		embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL: a.CreatureImageURL}
 	}
+	// When a spot was marked, show the generated map crop. Referencing it by a
+	// stable public URL (rather than a file attachment) keeps the frequent
+	// in-place message edits — every button click repaints — working unchanged.
+	if a.MapX != nil && a.MapY != nil && a.MapZ != nil && b.siteURL != "" {
+		embed.Image = &discordgo.MessageEmbedImage{
+			URL: fmt.Sprintf("%s/api/announcements/%d/map.png", strings.TrimRight(b.siteURL, "/"), a.ID),
+		}
+	}
 	return embed
 }
 

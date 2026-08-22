@@ -138,6 +138,11 @@ export interface Announcement {
 	authorId: number;
 	authorName: string;
 	location: string;
+	/** Optional marked map spot: absolute Tibia world coords and floor. All
+	 * absent together when no spot was marked. */
+	mapX?: number | null;
+	mapY?: number | null;
+	mapZ?: number | null;
 	note: string;
 	goldCost: number;
 	status: AnnouncementStatus;

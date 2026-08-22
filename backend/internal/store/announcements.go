@@ -16,13 +16,13 @@ type AnnouncementStore struct {
 
 // Create inserts a new announcement and returns the fully hydrated record.
 // broadcastID links announcements from one multi-group broadcast (nil = single).
-func (s *AnnouncementStore) Create(ctx context.Context, groupID, creatureID, authorID int64, location, note string, goldCost int, broadcastID *string) (*models.Announcement, error) {
+func (s *AnnouncementStore) Create(ctx context.Context, groupID, creatureID, authorID int64, location, note string, goldCost int, broadcastID *string, mapX, mapY, mapZ *int) (*models.Announcement, error) {
 	var id int64
 	err := s.pool.QueryRow(ctx, `
-		INSERT INTO announcements (group_id, creature_id, author_id, location, note, gold_cost, broadcast_id)
-		VALUES ($1, $2, $3, $4, $5, $6, $7)
+		INSERT INTO announcements (group_id, creature_id, author_id, location, note, gold_cost, broadcast_id, map_x, map_y, map_z)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 		RETURNING id`,
-		groupID, creatureID, authorID, location, note, goldCost, broadcastID,
+		groupID, creatureID, authorID, location, note, goldCost, broadcastID, mapX, mapY, mapZ,
 	).Scan(&id)
 	if err != nil {
 		return nil, err
@@ -36,7 +36,7 @@ func (s *AnnouncementStore) GetByID(ctx context.Context, id int64) (*models.Anno
 	err := s.pool.QueryRow(ctx, `
 		SELECT a.id, a.group_id, a.creature_id, c.name, c.image_url, c.difficulty, COALESCE(cw.points, 0),
 		       a.author_id, u.character_name,
-		       a.location, a.note, a.gold_cost, a.status, a.killed_at, a.created_at, a.discord_message_id, a.broadcast_id
+		       a.location, a.map_x, a.map_y, a.map_z, a.note, a.gold_cost, a.status, a.killed_at, a.created_at, a.discord_message_id, a.broadcast_id
 		FROM announcements a
 		JOIN creatures c ON c.id = a.creature_id
 		LEFT JOIN charm_weights cw ON cw.difficulty = c.difficulty
@@ -44,7 +44,7 @@ func (s *AnnouncementStore) GetByID(ctx context.Context, id int64) (*models.Anno
 		WHERE a.id = $1`, id,
 	).Scan(&a.ID, &a.GroupID, &a.CreatureID, &a.CreatureName, &a.CreatureImageURL, &a.Difficulty, &a.CharmPoints,
 		&a.AuthorID, &a.AuthorName,
-		&a.Location, &a.Note, &a.GoldCost, &a.Status, &a.KilledAt, &a.CreatedAt, &a.DiscordMessageID, &a.BroadcastID)
+		&a.Location, &a.MapX, &a.MapY, &a.MapZ, &a.Note, &a.GoldCost, &a.Status, &a.KilledAt, &a.CreatedAt, &a.DiscordMessageID, &a.BroadcastID)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, ErrNotFound
 	}
@@ -65,7 +65,7 @@ func (s *AnnouncementStore) ListByGroup(ctx context.Context, groupID int64, limi
 	rows, err := s.pool.Query(ctx, `
 		SELECT a.id, a.group_id, a.creature_id, c.name, c.image_url, c.difficulty, COALESCE(cw.points, 0),
 		       a.author_id, u.character_name,
-		       a.location, a.note, a.gold_cost, a.status, a.killed_at, a.created_at, a.discord_message_id
+		       a.location, a.map_x, a.map_y, a.map_z, a.note, a.gold_cost, a.status, a.killed_at, a.created_at, a.discord_message_id
 		FROM announcements a
 		JOIN creatures c ON c.id = a.creature_id
 		LEFT JOIN charm_weights cw ON cw.difficulty = c.difficulty
@@ -83,7 +83,7 @@ func (s *AnnouncementStore) ListByGroup(ctx context.Context, groupID int64, limi
 		var a models.Announcement
 		if err := rows.Scan(&a.ID, &a.GroupID, &a.CreatureID, &a.CreatureName, &a.CreatureImageURL, &a.Difficulty, &a.CharmPoints,
 			&a.AuthorID, &a.AuthorName,
-			&a.Location, &a.Note, &a.GoldCost, &a.Status, &a.KilledAt, &a.CreatedAt, &a.DiscordMessageID); err != nil {
+			&a.Location, &a.MapX, &a.MapY, &a.MapZ, &a.Note, &a.GoldCost, &a.Status, &a.KilledAt, &a.CreatedAt, &a.DiscordMessageID); err != nil {
 			return nil, err
 		}
 		out = append(out, a)
@@ -105,7 +105,7 @@ func (s *AnnouncementStore) ListForUser(ctx context.Context, userID int64, limit
 	}
 	rows, err := s.pool.Query(ctx, `
 		SELECT a.id, a.group_id, g.name, gm.role, a.creature_id, c.name, c.image_url, c.difficulty, COALESCE(cw.points, 0),
-		       a.author_id, u.character_name, a.location, a.note, a.gold_cost, a.status,
+		       a.author_id, u.character_name, a.location, a.map_x, a.map_y, a.map_z, a.note, a.gold_cost, a.status,
 		       a.killed_at, a.created_at, a.discord_message_id, a.broadcast_id
 		FROM announcements a
 		JOIN groups g ON g.id = a.group_id
@@ -124,7 +124,8 @@ func (s *AnnouncementStore) ListForUser(ctx context.Context, userID int64, limit
 	for rows.Next() {
 		var a models.Announcement
 		if err := rows.Scan(&a.ID, &a.GroupID, &a.GroupName, &a.ViewerRole, &a.CreatureID, &a.CreatureName,
-			&a.CreatureImageURL, &a.Difficulty, &a.CharmPoints, &a.AuthorID, &a.AuthorName, &a.Location, &a.Note, &a.GoldCost,
+			&a.CreatureImageURL, &a.Difficulty, &a.CharmPoints, &a.AuthorID, &a.AuthorName, &a.Location,
+			&a.MapX, &a.MapY, &a.MapZ, &a.Note, &a.GoldCost,
 			&a.Status, &a.KilledAt, &a.CreatedAt, &a.DiscordMessageID, &a.BroadcastID); err != nil {
 			return nil, err
 		}

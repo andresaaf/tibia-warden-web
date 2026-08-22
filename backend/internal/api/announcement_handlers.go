@@ -53,6 +53,9 @@ func (s *Server) handleCreateAnnouncement(w http.ResponseWriter, r *http.Request
 	var body struct {
 		CreatureID int64  `json:"creatureId"`
 		Location   string `json:"location"`
+		MapX       *int   `json:"mapX"`
+		MapY       *int   `json:"mapY"`
+		MapZ       *int   `json:"mapZ"`
 		Note       string `json:"note"`
 		GoldCost   int    `json:"goldCost"`
 	}
@@ -76,10 +79,11 @@ func (s *Server) handleCreateAnnouncement(w http.ResponseWriter, r *http.Request
 	if body.GoldCost < 0 {
 		body.GoldCost = 0
 	}
+	mapX, mapY, mapZ := normalizeMapCoord(body.MapX, body.MapY, body.MapZ)
 
 	announcement, err := s.stores.Announcements.Create(
 		r.Context(), groupID, body.CreatureID, userID(r),
-		strings.TrimSpace(body.Location), strings.TrimSpace(body.Note), body.GoldCost, nil)
+		strings.TrimSpace(body.Location), strings.TrimSpace(body.Note), body.GoldCost, nil, mapX, mapY, mapZ)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "failed to create announcement")
 		return
@@ -108,6 +112,9 @@ func (s *Server) handleListFeed(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleBroadcastAnnouncement(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		CreatureID int64   `json:"creatureId"`
+		MapX       *int    `json:"mapX"`
+		MapY       *int    `json:"mapY"`
+		MapZ       *int    `json:"mapZ"`
 		Note       string  `json:"note"`
 		GoldCost   int     `json:"goldCost"`
 		GroupIDs   []int64 `json:"groupIds"`
@@ -154,6 +161,7 @@ func (s *Server) handleBroadcastAnnouncement(w http.ResponseWriter, r *http.Requ
 	}
 
 	note := strings.TrimSpace(body.Note)
+	mapX, mapY, mapZ := normalizeMapCoord(body.MapX, body.MapY, body.MapZ)
 	created := []models.Announcement{}
 
 	// Link the fan-out so a kill on one cascades to the others.
@@ -164,7 +172,7 @@ func (s *Server) handleBroadcastAnnouncement(w http.ResponseWriter, r *http.Requ
 		}
 	}
 	for _, gid := range targets {
-		ann, err := s.stores.Announcements.Create(r.Context(), gid, body.CreatureID, uid, "", note, body.GoldCost, broadcastID)
+		ann, err := s.stores.Announcements.Create(r.Context(), gid, body.CreatureID, uid, "", note, body.GoldCost, broadcastID, mapX, mapY, mapZ)
 		if err != nil {
 			continue
 		}

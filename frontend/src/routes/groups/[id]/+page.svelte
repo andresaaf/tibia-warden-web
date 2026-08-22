@@ -7,6 +7,8 @@
 	import { GroupRoom, type RoomEvent } from '$lib/ws';
 	import { formatK } from '$lib/format';
 	import { copyText } from '$lib/clipboard';
+	import TibiaMap from '$lib/components/TibiaMap.svelte';
+	import AnnouncementMap from '$lib/components/AnnouncementMap.svelte';
 	import type {
 		Announcement,
 		Creature,
@@ -36,6 +38,13 @@
 	let posting = $state(false);
 	let postError = $state('');
 	let creatureQuery = $state('');
+	// Optional map spot for the new announcement. Coords stay null until the
+	// announcer opens the picker and clicks (mapTouched), keeping the map opt-in.
+	let showMapPicker = $state(false);
+	let mapX = $state<number | null>(null);
+	let mapY = $state<number | null>(null);
+	let mapZ = $state<number | null>(null);
+	let mapTouched = $state(false);
 	let showCreatureList = $state(false);
 	let highlightIndex = $state(0);
 
@@ -270,12 +279,18 @@
 				creatureId: Number(creatureId),
 				location: '',
 				note: note.trim(),
-				goldCost: 0
+				goldCost: 0,
+				mapX: mapTouched ? mapX : null,
+				mapY: mapTouched ? mapY : null,
+				mapZ: mapTouched ? mapZ : null
 			});
 			creatureId = '';
 			note = '';
 			creatureQuery = '';
 			showCreatureList = false;
+			showMapPicker = false;
+			mapX = mapY = mapZ = null;
+			mapTouched = false;
 		} catch (err) {
 			postError = err instanceof ApiError ? err.message : 'Failed to post.';
 		} finally {
@@ -894,6 +909,32 @@
 				{/if}
 			</div>
 			<input type="text" placeholder="Note (optional)" bind:value={note} />
+			<div class="map-picker">
+				{#if showMapPicker}
+					<TibiaMap
+						mode="pick"
+						bind:x={mapX}
+						bind:y={mapY}
+						bind:z={mapZ}
+						bind:touched={mapTouched}
+					/>
+					<button
+						type="button"
+						class="map-toggle"
+						onclick={() => {
+							showMapPicker = false;
+							mapTouched = false;
+							mapX = mapY = mapZ = null;
+						}}
+					>
+						Remove map location
+					</button>
+				{:else}
+					<button type="button" class="map-toggle" onclick={() => (showMapPicker = true)}>
+						🗺️ Add map location
+					</button>
+				{/if}
+			</div>
 			{#if postError}<p class="error">{postError}</p>{/if}
 			<button class="btn btn-primary" type="submit" disabled={posting}>
 				{posting ? 'Posting…' : 'Post announcement'}
@@ -921,6 +962,9 @@
 								{/if}
 							</div>
 							{#if a.location}<div class="loc">📍 {a.location}</div>{/if}
+							{#if a.mapX != null && a.mapY != null && a.mapZ != null}
+								<AnnouncementMap id={a.id} x={a.mapX} y={a.mapY} z={a.mapZ} />
+							{/if}
 							{#if editingNoteId === a.id}
 								<form class="note-edit" onsubmit={(e) => { e.preventDefault(); saveNote(a); }}>
 									<!-- svelte-ignore a11y_autofocus -->
@@ -1474,6 +1518,23 @@
 		color: var(--text-dim);
 		font-size: 0.82rem;
 		cursor: pointer;
+	}
+	.map-picker {
+		display: flex;
+		flex-direction: column;
+		gap: 0.35rem;
+	}
+	.map-toggle {
+		align-self: flex-start;
+		padding: 0;
+		background: none;
+		border: none;
+		color: var(--text-dim);
+		font-size: 0.85rem;
+		cursor: pointer;
+	}
+	.map-toggle:hover {
+		color: var(--text);
 	}
 	.note-edit-trigger:hover {
 		color: var(--text);

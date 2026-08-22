@@ -114,10 +114,21 @@ export const api = {
 		note: string;
 		goldCost: number;
 		groupIds?: number[];
+		mapX?: number | null;
+		mapY?: number | null;
+		mapZ?: number | null;
 	}) => request<Announcement[]>('POST', '/api/announcements/broadcast', payload),
 	createAnnouncement: (
 		groupId: number,
-		payload: { creatureId: number; location: string; note: string; goldCost: number }
+		payload: {
+			creatureId: number;
+			location: string;
+			note: string;
+			goldCost: number;
+			mapX?: number | null;
+			mapY?: number | null;
+			mapZ?: number | null;
+		}
 	) => request<Announcement>('POST', `/api/groups/${groupId}/announcements`, payload),
 	setResponse: (announcementId: number, status: ResponseStatus) =>
 		request<void>('POST', `/api/announcements/${announcementId}/response`, { status }),

@@ -7,6 +7,7 @@
 	import AnnouncementCard from '$lib/components/AnnouncementCard.svelte';
 	import CreatureCombobox from '$lib/components/CreatureCombobox.svelte';
 	import BroadcastCard from '$lib/components/BroadcastCard.svelte';
+	import TibiaMap from '$lib/components/TibiaMap.svelte';
 	import type { Announcement, Creature, Group } from '$lib/types';
 
 	let feed = $state<Announcement[]>([]);
@@ -24,6 +25,12 @@
 	let posting = $state(false);
 	let postError = $state('');
 	let composerKey = $state(0);
+	// Optional map spot for the broadcast; opt-in — see the group page composer.
+	let showMapPicker = $state(false);
+	let mapX = $state<number | null>(null);
+	let mapY = $state<number | null>(null);
+	let mapZ = $state<number | null>(null);
+	let mapTouched = $state(false);
 
 	let me = $derived($currentUser);
 	let showLogin = $derived(!$authLoading && !$currentUser);
@@ -118,11 +125,17 @@
 				creatureId: Number(creatureId),
 				note: note.trim(),
 				goldCost: 0,
-				groupIds: target === 'all' ? undefined : [Number(target)]
+				groupIds: target === 'all' ? undefined : [Number(target)],
+				mapX: mapTouched ? mapX : null,
+				mapY: mapTouched ? mapY : null,
+				mapZ: mapTouched ? mapZ : null
 			});
 			creatureId = '';
 			note = '';
 			composerKey++;
+			showMapPicker = false;
+			mapX = mapY = mapZ = null;
+			mapTouched = false;
 		} catch (err) {
 			postError = err instanceof ApiError ? err.message : 'Failed to post.';
 		} finally {
@@ -196,6 +209,32 @@
 					<CreatureCombobox {creatures} bind:value={creatureId} />
 				{/key}
 				<input type="text" placeholder="Note (optional)" bind:value={note} />
+				<div class="map-picker">
+					{#if showMapPicker}
+						<TibiaMap
+							mode="pick"
+							bind:x={mapX}
+							bind:y={mapY}
+							bind:z={mapZ}
+							bind:touched={mapTouched}
+						/>
+						<button
+							type="button"
+							class="map-toggle"
+							onclick={() => {
+								showMapPicker = false;
+								mapTouched = false;
+								mapX = mapY = mapZ = null;
+							}}
+						>
+							Remove map location
+						</button>
+					{:else}
+						<button type="button" class="map-toggle" onclick={() => (showMapPicker = true)}>
+							🗺️ Add map location
+						</button>
+					{/if}
+				</div>
 				<div class="row target-row">
 					<span class="muted small">Post to</span>
 					<select bind:value={target}>
@@ -254,6 +293,23 @@
 	}
 	.target-row {
 		gap: 0.6rem;
+	}
+	.map-picker {
+		display: flex;
+		flex-direction: column;
+		gap: 0.35rem;
+	}
+	.map-toggle {
+		align-self: flex-start;
+		padding: 0;
+		background: none;
+		border: none;
+		color: var(--text-dim);
+		font-size: 0.85rem;
+		cursor: pointer;
+	}
+	.map-toggle:hover {
+		color: var(--text);
 	}
 	.target-row select {
 		width: auto;

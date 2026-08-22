@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { api, ApiError } from '$lib/api';
 	import { copyText } from '$lib/clipboard';
+	import AnnouncementMap from '$lib/components/AnnouncementMap.svelte';
 	import type { Announcement } from '$lib/types';
 
 	let {
@@ -136,6 +137,9 @@
 						{a.note ? '✏️ Edit note' : '＋ Add note'}
 					</button>
 				{/if}
+			{/if}
+			{#if a.mapX != null && a.mapY != null && a.mapZ != null}
+				<AnnouncementMap id={a.id} x={a.mapX} y={a.mapY} z={a.mapZ} />
 			{/if}
 			<div class="muted small">
 				by {a.authorName}<button

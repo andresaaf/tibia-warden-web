@@ -50,6 +50,10 @@ func NewRouter(cfg *config.Config, stores *store.Stores, oauth *auth.DiscordProv
 		r.Get("/auth/discord/login", s.handleDiscordLogin)
 		r.Get("/auth/discord/callback", s.handleDiscordCallback)
 
+		// Announcement map image (public: fetched by Discord's image proxy and
+		// embedded as an <img> on the site; exposes only a map crop).
+		r.Get("/announcements/{announcementID}/map.png", s.handleAnnouncementMap)
+
 		// Authenticated routes.
 		r.Group(func(r chi.Router) {
 			r.Use(s.requireAuth)
