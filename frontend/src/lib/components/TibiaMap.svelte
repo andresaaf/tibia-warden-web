@@ -59,8 +59,15 @@
 				}
 			});
 
+			// L.CRS.Simple negates Y (transformation 1,0,-1,0), which would make
+			// tile coordinates negative and 404. Tibia's map uses plain +y, so use
+			// a non-negating transformation: world (x, y) -> pixel (x, y) at zoom 0.
+			const TibiaCRS = L.Util.extend({}, L.CRS.Simple, {
+				transformation: new L.Transformation(1, 0, 1, 0)
+			});
+
 			map = L.map(el, {
-				crs: L.CRS.Simple,
+				crs: TibiaCRS,
 				minZoom: -2,
 				maxZoom: 3,
 				zoomControl: true,
