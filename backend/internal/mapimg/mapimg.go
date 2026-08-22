@@ -32,9 +32,12 @@ const (
 	MinZ      = 0
 	MaxZ      = 15
 
-	// Output window size, in world coordinates == pixels.
+	// Output image size in pixels.
 	windowW = 480
 	windowH = 320
+	// zoom is output pixels per world coordinate: the image shows
+	// windowW/zoom x windowH/zoom coords, scaled up. Higher = more zoomed in.
+	zoom = 2
 
 	tileBaseURL = "https://tibiamaps.github.io/tibia-map-data/mapper"
 )
@@ -85,15 +88,18 @@ func Render(ctx context.Context, x, y, z int) ([]byte, error) {
 }
 
 func render(ctx context.Context, x, y, z int) ([]byte, error) {
-	// World rect of the output window, centred on (x, y).
-	wx0 := x - windowW/2
-	wy0 := y - windowH/2
+	// World rect shown, centred on (x, y). Smaller than the output image so it
+	// can be scaled up (zoomed in).
+	worldW := windowW / zoom
+	worldH := windowH / zoom
+	wx0 := x - worldW/2
+	wy0 := y - worldH/2
 
 	// Covering tile range (each tile's top-left is aligned to tileSize).
 	tx0 := wx0 / tileSize
-	tx1 := (wx0 + windowW - 1) / tileSize
+	tx1 := (wx0 + worldW - 1) / tileSize
 	ty0 := wy0 / tileSize
-	ty1 := (wy0 + windowH - 1) / tileSize
+	ty1 := (wy0 + worldH - 1) / tileSize
 
 	canvas := image.NewRGBA(image.Rect(0, 0, (tx1-tx0+1)*tileSize, (ty1-ty0+1)*tileSize))
 	draw.Draw(canvas, canvas.Bounds(), image.NewUniform(color.RGBA{24, 26, 30, 255}), image.Point{}, draw.Src)
@@ -109,9 +115,19 @@ func render(ctx context.Context, x, y, z int) ([]byte, error) {
 		}
 	}
 
-	// Crop the window out of the tile-aligned canvas.
+	// Crop the shown world rect out of the tile-aligned canvas.
+	small := image.NewRGBA(image.Rect(0, 0, worldW, worldH))
+	draw.Draw(small, small.Bounds(), canvas, image.Point{X: wx0 - tx0*tileSize, Y: wy0 - ty0*tileSize}, draw.Src)
+
+	// Scale up to the output size with nearest-neighbour (keeps the minimap's
+	// blocky pixels crisp rather than blurring them).
 	out := image.NewRGBA(image.Rect(0, 0, windowW, windowH))
-	draw.Draw(out, out.Bounds(), canvas, image.Point{X: wx0 - tx0*tileSize, Y: wy0 - ty0*tileSize}, draw.Src)
+	for py := 0; py < windowH; py++ {
+		sy := py / zoom
+		for px := 0; px < windowW; px++ {
+			out.SetRGBA(px, py, small.RGBAAt(px/zoom, sy))
+		}
+	}
 
 	drawMarker(out, windowW/2, windowH/2)
 

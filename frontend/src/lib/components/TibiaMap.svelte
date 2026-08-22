@@ -120,7 +120,9 @@
 
 			const cx = x ?? DEFAULT.x;
 			const cy = y ?? DEFAULT.y;
-			map.setView([cy, cx], 0);
+			// View mode starts at zoom 1 (2x) to match the static preview image;
+			// pick mode starts wider (zoom 0) to give context while placing a pin.
+			map.setView([cy, cx], mode === 'view' ? 1 : 0);
 
 			if (x != null && y != null) placeMarker(L, cy, cx);
 
