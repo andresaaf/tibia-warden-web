@@ -153,7 +153,7 @@
 					</button>
 				{/if}
 			{/if}
-			{#if primary.mapX != null && primary.mapY != null && primary.mapZ != null}
+			{#if !killed && primary.mapX != null && primary.mapY != null && primary.mapZ != null}
 				<AnnouncementMap id={primary.id} x={primary.mapX} y={primary.mapY} z={primary.mapZ} />
 			{/if}
 			<div class="muted small">

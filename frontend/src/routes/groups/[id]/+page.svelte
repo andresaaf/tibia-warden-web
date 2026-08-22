@@ -962,7 +962,7 @@
 								{/if}
 							</div>
 							{#if a.location}<div class="loc">📍 {a.location}</div>{/if}
-							{#if a.mapX != null && a.mapY != null && a.mapZ != null}
+							{#if a.status !== 'killed' && a.mapX != null && a.mapY != null && a.mapZ != null}
 								<AnnouncementMap id={a.id} x={a.mapX} y={a.mapY} z={a.mapZ} />
 							{/if}
 							{#if editingNoteId === a.id}
