@@ -12,6 +12,7 @@ import (
 
 	"github.com/andresaaf/tibia-warden-web/backend/internal/api"
 	"github.com/andresaaf/tibia-warden-web/backend/internal/auth"
+	"github.com/andresaaf/tibia-warden-web/backend/internal/autokill"
 	"github.com/andresaaf/tibia-warden-web/backend/internal/config"
 	"github.com/andresaaf/tibia-warden-web/backend/internal/creatures"
 	"github.com/andresaaf/tibia-warden-web/backend/internal/database"
@@ -74,6 +75,12 @@ func main() {
 		}
 		defer bot.Stop()
 		slog.Info("discord bot enabled")
+	}
+
+	if cfg.AutoKillMinutes > 0 {
+		killer := autokill.New(stores, hub, bot, time.Duration(cfg.AutoKillMinutes)*time.Minute)
+		go killer.Run(ctx)
+		slog.Info("auto-kill sweeper enabled", "minutes", cfg.AutoKillMinutes)
 	}
 
 	router := api.NewRouter(cfg, stores, oauth, hub, bot)

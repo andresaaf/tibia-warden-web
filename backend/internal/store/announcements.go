@@ -585,6 +585,32 @@ func (s *AnnouncementStore) KilledAwaitingDiscordCleanup(ctx context.Context) ([
 	return out, rows.Err()
 }
 
+// ExpiredOpen returns the IDs of announcements that are still open but were
+// revealed on or before the cutoff — candidates for automatic killing when no
+// one remembered to mark them killed. An Echo Warden only lives ~10 minutes
+// after it spawns, so once the grace period has passed the reveal is stale.
+// Ordered oldest first; capped so one sweep never runs unbounded.
+func (s *AnnouncementStore) ExpiredOpen(ctx context.Context, cutoff time.Time) ([]int64, error) {
+	rows, err := s.pool.Query(ctx, `
+		SELECT id FROM announcements
+		WHERE status = 'open' AND created_at <= $1
+		ORDER BY created_at ASC
+		LIMIT 200`, cutoff)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []int64
+	for rows.Next() {
+		var id int64
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		out = append(out, id)
+	}
+	return out, rows.Err()
+}
+
 // DueDiscordDeletes returns mirrored messages whose scheduled delete time has passed.
 func (s *AnnouncementStore) DueDiscordDeletes(ctx context.Context) ([]DueDiscordDelete, error) {
 	rows, err := s.pool.Query(ctx, `

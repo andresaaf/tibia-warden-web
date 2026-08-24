@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -37,6 +38,11 @@ type Config struct {
 
 	// Secure controls whether session cookies require HTTPS. Disable only for local dev.
 	Secure bool
+
+	// AutoKillMinutes is how long after a reveal an announcement is automatically
+	// marked killed when no one did so manually. An Echo Warden only lives ~10
+	// minutes after spawning, so the default (15) leaves some slack. 0 disables it.
+	AutoKillMinutes int
 }
 
 // Load reads configuration from the environment and validates required values.
@@ -53,6 +59,7 @@ func Load() (*Config, error) {
 		PublicBaseURL:       getEnv("PUBLIC_BASE_URL", "http://localhost:5173"),
 		StaticDir:           os.Getenv("STATIC_DIR"),
 		Secure:              getEnv("COOKIE_SECURE", "false") == "true",
+		AutoKillMinutes:     getEnvInt("AUTO_KILL_MINUTES", 15),
 	}
 
 	origins := getEnv("ALLOWED_ORIGINS", "http://localhost:5173")
@@ -88,6 +95,16 @@ func Load() (*Config, error) {
 func getEnv(key, fallback string) string {
 	if v := os.Getenv(key); v != "" {
 		return v
+	}
+	return fallback
+}
+
+// getEnvInt reads an integer env var, falling back when unset or unparsable.
+func getEnvInt(key string, fallback int) int {
+	if v := os.Getenv(key); v != "" {
+		if n, err := strconv.Atoi(v); err == nil {
+			return n
+		}
 	}
 	return fallback
 }
