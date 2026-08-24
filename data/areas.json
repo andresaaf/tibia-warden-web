@@ -1,0 +1,141 @@
+[
+  { "name": "Gnomebase Alpha", "subareas": [
+    { "name": "Warzone 1", "creatures": ["Humongous Fungus", "Hideous Fungus", "Armadile", "Stone Devourer"] },
+    { "name": "Warzone 2", "creatures": ["Lost Berserker", "Magma Crawler", "Weeper", "Infected Weeper", "Lava Golem"] },
+    { "name": "Warzone 3", "creatures": ["Lost Berserker", "Ironblight", "Orewalker", "Cliff Strider"] },
+    { "name": "Tasks", "creatures": ["Damaged Crystal Golem", "Enraged Crystal Golem", "Vulcongra", "Massive Fire Elemental", "Dragon Lord", "Mutated Rat", "Wyvern", "Wiggler", "Giant Spider", "Massive Earth Elemental", "Crystalcrusher", "Crystal Spider"] }
+  ]},
+  { "name": "Gnome Deep Hub", "subareas": [
+    { "name": "Warzone 4", "creatures": ["Mole", "Drillworm", "Elder Wyrm", "Lava Lurker", "Chasm Spawn"] },
+    { "name": "Warzone 5", "creatures": ["High Voltage Elemental", "Cave Devourer", "Tunnel Tyrant"] },
+    { "name": "Warzone 6", "creatures": ["Mole", "Spit Nettle", "Deepworm", "Diremaw", "Humongous Fungus"] }
+  ]},
+  { "name": "Too Hot to Handle", "subareas": [
+    { "name": "Warzone 7", "creatures": ["Afflicted Strider", "Blemished Spawn", "Eyeless Devourer"] },
+    { "name": "Warzone 8", "creatures": ["Lavafungus", "Lavaworm", "Streaked Devourer"] },
+    { "name": "Warzone 9", "creatures": ["Cave Chimera", "Tremendous Tyrant", "Varnished Diremaw"] }
+  ]},
+  { "name": "Ingol", "subareas": [
+    { "name": "Surface/-1/-2", "creatures": ["Harpy", "Carnivostrich", "Liodile", "Rhindeer", "Crape Man", "Boar Man"] },
+    { "name": "-3/-4/-5", "creatures": ["Harpy", "Carnivostrich", "Liodile", "Rhindeer", "Crape Man", "Boar Man"] }
+  ]},
+  { "name": "Isle of Evil", "creatures": ["Berserker Chicken", "Demon Parrot", "Doom Deer", "Evil Sheep", "Evil Sheep Lord", "Hot Dog", "Infernal Frog", "Killer Rabbit", "Vampire Pig"] },
+  { "name": "Spirit Grounds", "creatures": ["Ghost", "Ghoul", "Bonelord", "Mummy", "Nightstalker", "Banshee", "Souleater", "Braindeath", "Nightmare", "Nightmare Scion", "Spectre", "Phantasm"] },
+  { "name": "Bounac", "subareas": [
+    { "name": "Surface", "creatures": ["Agrestic Chicken", "Usurper Knight", "Usurper Archer", "Usurper Warlock"] },
+    { "name": "Underground", "creatures": ["Crypt Warrior"] },
+    { "name": "Forest of Life", "creatures": ["Dark Carnisylvan", "Poisonous Carnisylvan", "Hulking Carnisylvan"] }
+  ]},
+  { "name": "Candia", "subareas": [
+    { "name": "Surface", "creatures": ["Chocolate Blob", "Cream Blob", "Fruit Drop", "Gingerbread Man", "Sugar Cube", "Sugar Cube Worker", "Truffle", "Truffle Cook", "Wafer Paper Butterfly"] },
+    { "name": "West", "creatures": ["Candy Horror", "Nibblemaw"] },
+    { "name": "East", "creatures": ["Angry Sugar Fairy", "Candy Floss Elemental", "Goggle Cake"] }
+  ]},
+  { "name": "Exotic Cave", "creatures": ["Exotic Cave Spider", "Exotic Bat"] },
+  { "name": "Issavi", "subareas": [
+    { "name": "Green Belt", "creatures": ["Young Goanna", "Adult Goanna", "Manticore", "Feral Sphinx"] },
+    { "name": "Central Steppe", "creatures": ["Young Goanna", "Adult Goanna", "Manticore", "Feral Sphinx", "Ogre Sage", "Ogre Rowdy", "Ogre Ruffian", "Lamassu", "Sphinx"] },
+    { "name": "Southern Steppe", "creatures": ["Young Goanna", "Adult Goanna", "Lamassu", "Sphinx", "Feral Sphinx"] },
+    { "name": "Sewers", "creatures": ["Priestess of the Wild Sun", "Black Sphinx Acolyte", "Burning Gladiator"] },
+    { "name": "Catacombs", "creatures": ["Crypt Warden", "Sphinx"] },
+    { "name": "Kilmaresh Mountains", "creatures": ["Priestess of the Wild Sun", "Black Sphinx Acolyte", "Burning Gladiator", "Lamassu", "Gryphon"] },
+    { "name": "Girtablilus", "creatures": ["Venerable Girtablilu", "Girtablilu Warrior"] },
+    { "name": "Bashmu", "creatures": ["Juvenile Bashmu", "Bashmu"] }
+  ]},
+  { "name": "Pirat", "subareas": [
+    { "name": "Pirat Mine", "creatures": ["Pirat Cutthroat", "Pirat Scoundrel", "Pirat Bombardier"] },
+    { "name": "Wreckoning", "creatures": ["Pirat Cutthroat", "Pirat Scoundrel", "Pirat Bombardier", "Pirat Mate"] }
+  ]},
+  { "name": "Secret Library", "subareas": [
+    { "name": "Fire", "creatures": ["Flying Book", "Ink Blob", "Guardian of Tales", "Rage Squid", "Burning Book"] },
+    { "name": "Energy", "creatures": ["Flying Book", "Biting Book", "Knowledge Elemental", "Energuardian of Tales", "Brain Squid", "Energetic Book"] },
+    { "name": "Ice", "creatures": ["Ink Blob", "Animated Feather", "Squid Warden", "Icecold Book"] },
+    { "name": "Earth", "creatures": ["Cursed Book", "Biting Book", "Ink Blob"] }
+  ]},
+  { "name": "Azzilon", "subareas": [
+    { "name": "Castle", "creatures": ["Broodrider Inferniarch", "Gorger Inferniarch", "Sineater Inferniarch"] },
+    { "name": "Catacombs", "creatures": ["Hellhunter Inferniarch", "Spellreaper Inferniarch", "Brinebrute Inferniarch"] }
+  ]},
+  { "name": "Bulltaur Lair", "creatures": ["Bulltaur Brute", "Bulltaur Alchemist", "Bulltaur Forgepriest"] },
+  { "name": "Cobra Bastion", "creatures": ["Cobra Scout", "Cobra Assassin", "Cobra Vizier"] },
+  { "name": "Barren Drift", "creatures": ["Cursed Prospector", "Evil Prospector"] },
+  { "name": "Roshamuul", "subareas": [
+    { "name": "West", "creatures": ["Shock Head", "Silencer", "Frazzlemaw", "Guzzlemaw"] },
+    { "name": "Upper", "creatures": ["Frazzlemaw", "Silencer", "Retching Horror", "Choking Fear", "Guzzlemaw"] },
+    { "name": "Mines", "creatures": ["Feversleep", "Terrorsleep"] },
+    { "name": "Prison", "creatures": ["Betrayed Wraith", "Nightmare", "Lost Soul", "Plaguesmith", "Dark Torturer", "Demon Outcast", "Blightwalker", "Hellhound", "Juggernaut"] }
+  ]},
+  { "name": "Feru", "subareas": [
+    { "name": "Hub", "creatures": ["Demon", "Vexclaw", "Grimeleech", "Hellflayer"] },
+    { "name": "Plagirath", "creatures": ["Plaguesmith", "Defiler", "Grimeleech", "Hellflayer"] },
+    { "name": "Zamulosh", "creatures": ["Nightmare", "Phantasm", "Vexclaw", "Grimeleech"] },
+    { "name": "Mazoran", "creatures": ["Fury", "Hellfire Fighter", "Hellhound", "Vexclaw", "Grimeleech", "Hellflayer"] },
+    { "name": "Razzagorn", "creatures": ["Destroyer", "Fury", "Vexclaw", "Hellflayer", "Juggernaut"] },
+    { "name": "Ragiaz", "creatures": ["Blightwalker", "Undead Dragon", "Vexclaw", "Hellflayer"] },
+    { "name": "Tarbaz", "creatures": ["Spectre", "Hand of Cursed Fate", "Vexclaw", "Grimeleech", "Hellflayer"] },
+    { "name": "Shulgrax", "creatures": ["Dark Torturer", "Vexclaw", "Grimeleech", "Hellflayer"] }
+  ]},
+  { "name": "Buried Cathedral", "creatures": ["Ripper Spectre", "Gazer Spectre", "Burster Spectre", "Arachnophobica"] },
+  { "name": "Isle of Ada", "creatures": ["Raubritter Chastener", "Raubritter Marksman", "Raubritter Skirmisher", "Night Harpy", "Stag"] },
+  { "name": "Marapur", "subareas": [
+    { "name": "Turtles", "creatures": ["Foam Stalker", "Two-Headed Turtle"] },
+    { "name": "Nagas", "creatures": ["Naga Warrior", "Naga Archer", "Makara"] }
+  ]},
+  { "name": "Radiant", "subareas": [
+    { "name": "Ascendancy", "creatures": ["Radiant Templar", "Radiant Inquisitor", "Radiant Zealot", "Devoted Radiant Templar", "Devoted Radiant Inquisitor", "Devoted Radiant Zealot"] },
+    { "name": "Skyhold", "creatures": ["Radiant Warden", "Radiant Paragon", "Radiant Acolyte", "Devoted Radiant Warden", "Devoted Radiant Paragon", "Devoted Radiant Acolyte"] }
+  ]},
+  { "name": "Thalassara", "subareas": [
+    { "name": "Surroundings", "creatures": ["Moonspawn Blightspitter", "Moonspawn Oozecrown"] },
+    { "name": "Moonstone Crater", "creatures": ["Moonstone Excavator", "Moonstone Overseer"] }
+  ]},
+  { "name": "Asura Citadel", "creatures": ["True Midnight Asura", "True Frost Flower Asura", "Winged Jaracal", "Silverfrost Sentinel", "Iceplume Strider"] },
+  { "name": "Medusa Tower", "creatures": ["Gargoyle", "Slime", "Stone Golem", "Clay Guardian", "Omnivora", "Behemoth", "Serpent Spawn", "Medusa"] },
+  { "name": "Nimmersatt", "creatures": ["Dragolisk", "Mega Dragon", "Wardragon"] },
+  { "name": "Norcferatu", "subareas": [
+    { "name": "Dungeons", "creatures": ["Dworc Shadowstalker", "Gloom Maw", "Norcferatu Heartless", "Norcferatu Nightweaver", "Orclops Bloodbreaker", "Varg"] },
+    { "name": "Fortress", "creatures": ["Dworc Shadowstalker", "Gloom Maw", "Norcferatu Heartless", "Norcferatu Nightweaver", "Orclops Bloodbreaker", "Varg"] }
+  ]},
+  { "name": "Podzilla", "subareas": [
+    { "name": "Rootthing", "creatures": ["Rootthing Amber Shaper", "Rootthing Bug Tracker", "Rootthing Nutshell"] },
+    { "name": "Quara", "creatures": ["Quara Raider", "Quara Plunderer", "Quara Looter"] }
+  ]},
+  { "name": "Barkless", "creatures": ["Barkless Devotee", "Barkless Fanatic"] },
+  { "name": "Demonwar", "creatures": ["Askarak Demon", "Shaburak Demon"] },
+  { "name": "Carnivora's Rocks", "creatures": ["Lumbering Carnivor", "Spiky Carnivor", "Menacing Carnivor"] },
+  { "name": "Book World", "creatures": ["Bramble Wyrmling", "Hawk Hopper", "Bluebeak", "Lion Hydra", "Crusader", "Headwalker"] },
+  { "name": "Soul War", "subareas": [
+	  {"name": "Claustrophobic Inferno", "creatures": ["Brachiodemon", "Infernal Demon", "Infernal Phantom"]},
+	  {"name": "Ebb and Flow", "creatures": ["Bony Sea Devil", "Capricious Phantom", "Turbulent Elemental"]},
+	  {"name": "Furious Crater", "creatures": ["Cloak of Terror", "Vibrant Phantom", "Courage Leech"]},
+	  {"name": "Mirrored Nightmare", "creatures": ["Many Faces", "Distorted Phantom", "Druid's Apparition", "Knight's Apparition", "Monk's Apparition", "Paladin's Apparition", "Sorcerer's Apparition"]},
+	  {"name": "Rotten Wasteland", "creatures": ["Branchy Crawler", "Mould Phantom", "Rotten Golem"]}
+  ]},
+  { "name": "Rotten Blood", "subareas": [
+	  {"name": "Jaded Roots", "creatures": ["Sopping Corpus", "Bloated Man-Maggot", "Mycobiontic Beetle", "Oozing Corpus"]},
+	  {"name": "Putrefactory", "creatures": ["Oozing Carcass", "Sopping Carcass", "Rotten Man-Maggot", "Meandering Mushroom"]},
+	  {"name": "Gloom Pillars", "creatures": ["Darklight Emitter", "Darklight Construct", "Wandering Pillar", "Converter"]},
+	  {"name": "Darklight Core", "creatures": ["Walking Pillar", "Darklight Source", "Darklight Striker", "Darklight Matter"]}
+  ]},
+  { "name": "Gnomprona", "subareas": [
+	  {"name": "Monster Graveyard", "creatures": ["Sulphider", "Sulphur Spouter", "Nighthunter", "Stalking Stalk", "Undertaker"]},
+	  {"name": "Crystal Enigma", "creatures": ["Headpecker", "Mantosaurus", "Mercurial Menace", "Noxious Ripptor", "Shrieking Cry-Stal"]},
+	  {"name": "Sparkling Pools", "creatures": ["Emerald Tortoise", "Gore Horn", "Gorerilla", "Hulking Prehemoth", "Sabretooth (Creature)"]}
+  ]},
+  { "name": "Svargrond Surface", "subareas": [
+	  {"name": "Okolnir", "creatures": ["Frost Dragon", "Frost Dragon Hatchling"]},
+	  {"name": "Krimhorn", "creatures": ["Barbarian Brutetamer", "Barbarian Bloodwalker", "Barbarian Headsplitter", "Barbarian Skullhunter", "Ice Witch"]},
+	  {"name": "Ragnir", "creatures": ["Barbarian Brutetamer", "Barbarian Bloodwalker", "Barbarian Headsplitter", "Barbarian Skullhunter", "Winter Wolf", "Mammoth"]},
+	  {"name": "Ice Witch Temple", "creatures": ["Ice Golem", "Ice Witch", "Crystal Spider", "Frost Dragon Hatchling", "Frost Dragon"]},
+	  {"name": "Formogar Glacier", "creatures": ["Ice Golem", "Crystal Spider", "Wyvern", "Silver Rabbit", "Badger", "Frost Troll", "Penguin", "Polar Bear", "Mammoth", "Wyvern"]}
+  ]},
+  { "name": "Svargrond Other", "subareas": [
+	  {"name": "Inukaya", "creatures": ["Chakoya Tribewarden", "Chakoya Toolshaper", "Chakoya Windcaller"]},
+	  {"name": "Grimlund", "creatures": ["Chakoya Tribewarden", "Chakoya Toolshaper", "Chakoya Windcaller"]},
+	  {"name": "Sea Serpent Area", "creatures": ["Deepsea Blood Crab", "Young Sea Serpent", "Sea Serpent"]}
+  ]},
+  { "name": "Formogar Mines", "subareas": [
+	  {"name": "-1", "creatures": ["Frost Troll", "Bandit", "Novice of the Cult", "Gargoyle", "Stone Golem", "Hunter", "Mammoth", "Ghost", "Acolyte of the Cult", "Ice Golem"]},
+	  {"name": "-2/-3/-4", "creatures": ["Ice Golem", "Acolyte of the Cult", "Adept of the Cult", "Enlightened of the Cult", "Ice Witch", "Crystal Spider", "Nightmare Scion", "Nightmare", "Destroyer", "Behemoth", "Hellspawn", "Lost Soul", "Plaguesmith", "Demon", "Juggernaut"]}
+  ]}
+]

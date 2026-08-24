@@ -12,6 +12,11 @@ node_modules/
 /frontend/build/
 /frontend/.vite/
 
+# Local seed-data overrides (the committed defaults are data/areas.json and
+# data/creatures.sample.json; a ".local" file overrides without editing them).
+/data/areas.local.json
+/data/creatures.local.json
+
 # Editor / OS
 .DS_Store
 Thumbs.db

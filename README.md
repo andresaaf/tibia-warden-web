@@ -26,7 +26,7 @@ and coordinate live reveal announcements within groups.
 ```
 backend/    Go API, WebSocket hub, embedded migrations, TibiaWiki creature sync, seeder
 frontend/   SvelteKit SPA
-data/        sample creature data for optional manual seeding (creatures.sample.json)
+data/        default area map (areas.json) + sample creature data (creatures.sample.json)
 Dockerfile   multi-stage build (frontend + backend -> one image)
 docker-compose.yml
 .env.example
@@ -105,6 +105,38 @@ Valid difficulties: `Harmless, Trivial, Easy, Medium, Hard, Challenging`
 go run ./cmd/seed -file ../data/creatures.json
 ```
 
+## Area data
+
+The Warden List's **Areas** view groups creatures by in-game area, and areas by
+subarea (each subarea is one echo-raid spawn). There is no upstream API for this,
+so the repo ships a curated **`data/areas.json`** as the default — it works out of
+the box. Seed it with the same tool (`-file`/`-areas` are independent; pass just
+`-areas` to leave creatures untouched):
+
+```sh
+go run ./cmd/seed -areas ../data/areas.json
+```
+
+Format: an array of areas, each with either a `subareas` list or, as a shorthand
+for a single-subarea area, a top-level `creatures` list. Creature names must match
+seeded creatures (unmatched names are logged and skipped). Re-running rebuilds the
+area tree from the file.
+
+```jsonc
+[
+  { "name": "Ingol", "subareas": [
+      { "name": "Surface / -1 / -2", "creatures": ["Harpy", "Boar Man"] },
+      { "name": "-3 / -4 / -5",      "creatures": ["Harpy", "Boar Man"] }
+  ]},
+  { "name": "Bounac", "creatures": ["Usurper Knight"] }   // shorthand: one subarea
+]
+```
+
+**Overriding the default:** to use your own areas without editing the tracked
+file, drop a `data/areas.local.json` (gitignored). When present, the seeder uses
+it instead of `data/areas.json` — so `-areas .../areas.json` transparently picks
+up your override.
+
 ## Production (Docker Compose)
 
 The stack includes a **Caddy** reverse proxy that terminates HTTPS and
@@ -139,6 +171,13 @@ On your Linux server:
    ```
 
    (Mount or copy your data file into the container first, or bake it into the image.)
+
+   The **Areas** view is seeded separately from the bundled default (see
+   [Area data](#area-data)); `data/` is mounted into the container, so:
+
+   ```sh
+   docker compose exec app /app/seed -areas /app/data/areas.json
+   ```
 
 ## Environment variables
 

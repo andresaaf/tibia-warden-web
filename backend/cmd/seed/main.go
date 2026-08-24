@@ -7,7 +7,9 @@
 //	seed -file ./data/creatures.json -areas ./data/areas.json
 //	seed -areas ./data/areas.json   (areas only, leaves creatures untouched)
 //
-// At least one of -file / -areas is required.
+// At least one of -file / -areas is required. If a ".local" sibling of the
+// -areas file exists (e.g. data/areas.local.json), it is used instead, so the
+// committed default (data/areas.json) can be overridden without editing it.
 // JSON format: an array of objects with "name", "difficulty" and optional "rarity"/"imageUrl".
 // CSV format:  a header row including "name" and "difficulty" (and optional "rarity", "imageUrl"/"image").
 // Areas format (-areas, optional, .json): an array of objects with "name" and a
@@ -92,8 +94,15 @@ func main() {
 	}
 	var areas []areaRecord
 	if *areasPath != "" {
+		// Prefer a local override sibling (e.g. data/areas.local.json) when present,
+		// so the committed default (data/areas.json) can be overridden without
+		// editing the tracked file.
+		resolved := preferLocal(*areasPath)
+		if resolved != *areasPath {
+			log.Printf("areas: using local override %s", resolved)
+		}
 		var err error
-		areas, err = loadAreas(*areasPath)
+		areas, err = loadAreas(resolved)
 		if err != nil {
 			log.Fatalf("failed to load areas: %v", err)
 		}
@@ -207,6 +216,18 @@ func seedAreas(ctx context.Context, stores *store.Stores, areas []areaRecord) {
 		}
 	}
 	fmt.Printf("imported/updated %d areas, %d subareas\n", areaCount, subareaCount)
+}
+
+// preferLocal returns the ".local" sibling of path (e.g. data/areas.json ->
+// data/areas.local.json) when it exists on disk, otherwise path unchanged. This
+// lets a committed default file be overridden by an untracked local copy.
+func preferLocal(path string) string {
+	ext := filepath.Ext(path)
+	local := strings.TrimSuffix(path, ext) + ".local" + ext
+	if _, err := os.Stat(local); err == nil {
+		return local
+	}
+	return path
 }
 
 func loadAreas(path string) ([]areaRecord, error) {
