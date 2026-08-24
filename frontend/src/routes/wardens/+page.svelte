@@ -9,11 +9,12 @@
 		type Area,
 		type Creature,
 		type Difficulty,
-		type Rarity
+		type Rarity,
+		type Subarea
 	} from '$lib/types';
 
 	type StatusFilter = 'all' | 'remaining' | 'found';
-	type ViewMode = 'flat' | 'area';
+	type ViewMode = 'flat' | 'area' | 'subarea';
 
 	let viewMode = $state<ViewMode>('flat');
 
@@ -104,7 +105,7 @@
 
 	function setViewMode(next: ViewMode) {
 		viewMode = next;
-		if (next === 'area' && !areasLoaded && !areasLoading) loadAreas();
+		if ((next === 'area' || next === 'subarea') && !areasLoaded && !areasLoading) loadAreas();
 	}
 
 	/** Snapshot the status filter over the loaded set. Called on load and when the
@@ -208,7 +209,72 @@
 	});
 	let completedAreaCount = $derived(areas.filter((a) => areaComplete(a)).length);
 	let killedCount = $derived(displayed.filter((c) => killedIds.has(c.id)).length);
+
+	function subareaKilledCount(sub: Subarea): number {
+		return sub.creatures.reduce((n, c) => n + (killedIds.has(c.id) ? 1 : 0), 0);
+	}
+
+	function subareaComplete(sub: Subarea): boolean {
+		return sub.creatures.length > 0 && subareaKilledCount(sub) === sub.creatures.length;
+	}
+
+	// Subareas view search, one level deeper than filteredAreas: an area-name match
+	// shows the whole area; otherwise each subarea shows if its name matches (whole
+	// subarea) or it contains matching creatures (narrowed to those). Area-level
+	// completion/collapse (areaComplete/areaOpen) is reused unchanged.
+	let filteredSubareaAreas = $derived.by(() => {
+		const term = areaSearch.trim().toLowerCase();
+		const withMeta = areas.map((area) => {
+			const nameMatch = term !== '' && area.name.toLowerCase().includes(term);
+			const shownSubareas = area.subareas
+				.map((subarea) => {
+					const subMatch = term !== '' && subarea.name.toLowerCase().includes(term);
+					const shown =
+						term === '' || nameMatch || subMatch
+							? subarea.creatures
+							: subarea.creatures.filter((c) => c.name.toLowerCase().includes(term));
+					return { subarea, shown, subMatch };
+				})
+				.filter((s) => term === '' || nameMatch || s.subMatch || s.shown.length > 0);
+			return { area, nameMatch, shownSubareas };
+		});
+		const visible =
+			term === '' ? withMeta : withMeta.filter((m) => m.nameMatch || m.shownSubareas.length > 0);
+		return visible.sort((a, b) => {
+			if (term !== '' && a.nameMatch !== b.nameMatch) return a.nameMatch ? -1 : 1;
+			return Number(areaComplete(a.area)) - Number(areaComplete(b.area));
+		});
+	});
 </script>
+
+{#snippet creatureButton(creature: Creature)}
+	<button
+		class="creature"
+		class:killed={killedIds.has(creature.id)}
+		onclick={() => toggleKilled(creature.id)}
+	>
+		<span class="check" aria-hidden="true">{killedIds.has(creature.id) ? '✓' : ''}</span>
+		{#if creature.imageUrl}
+			<img
+				class="creature-img"
+				src={creature.imageUrl}
+				alt=""
+				loading="lazy"
+				onerror={(e) => ((e.currentTarget as HTMLImageElement).style.visibility = 'hidden')}
+			/>
+		{/if}
+		<span class="name">{creature.name}</span>
+		<span class="badge diff" data-diff={creature.difficulty}>{creature.difficulty}</span>
+	</button>
+{/snippet}
+
+{#snippet creatureGrid(list: Creature[])}
+	<div class="grid">
+		{#each list as creature (creature.id)}
+			{@render creatureButton(creature)}
+		{/each}
+	</div>
+{/snippet}
 
 <div class="container stack">
 	<div class="spread">
@@ -238,6 +304,14 @@
 				onclick={() => setViewMode('area')}
 			>
 				Areas
+			</button>
+			<button
+				class="segment"
+				class:active={viewMode === 'subarea'}
+				aria-pressed={viewMode === 'subarea'}
+				onclick={() => setViewMode('subarea')}
+			>
+				Subareas
 			</button>
 		</div>
 	</div>
@@ -312,28 +386,7 @@
 		{:else if displayed.length === 0}
 			<p class="muted">No creatures match your filters.</p>
 		{:else}
-			<div class="grid">
-				{#each displayed as creature (creature.id)}
-					<button
-						class="creature"
-						class:killed={killedIds.has(creature.id)}
-						onclick={() => toggleKilled(creature.id)}
-					>
-						<span class="check" aria-hidden="true">{killedIds.has(creature.id) ? '✓' : ''}</span>
-						{#if creature.imageUrl}
-							<img
-								class="creature-img"
-								src={creature.imageUrl}
-								alt=""
-								loading="lazy"
-								onerror={(e) => ((e.currentTarget as HTMLImageElement).style.visibility = 'hidden')}
-							/>
-						{/if}
-						<span class="name">{creature.name}</span>
-						<span class="badge diff" data-diff={creature.difficulty}>{creature.difficulty}</span>
-					</button>
-				{/each}
-			</div>
+			{@render creatureGrid(displayed)}
 		{/if}
 	{:else if areasError}
 		<p class="error">{areasError}</p>
@@ -345,55 +398,83 @@
 		<input
 			class="area-search"
 			type="text"
-			placeholder="Search areas or creatures…"
+			placeholder={viewMode === 'subarea'
+				? 'Search areas, subareas or creatures…'
+				: 'Search areas or creatures…'}
 			bind:value={areaSearch}
 		/>
-		{#if filteredAreas.length === 0}
-			<p class="muted">No areas or creatures match your search.</p>
-		{:else}
-		<div class="areas">
-			{#each filteredAreas as { area, shown } (area.id)}
-				{@const done = areaComplete(area)}
-				{@const open = searching || areaOpen(area)}
-				<div class="area" class:complete={done}>
-					<button
-						class="area-head"
-						class:clickable={done && !searching}
-						aria-expanded={open}
-						onclick={() => toggleArea(area)}
-					>
-						<span class="arrow" aria-hidden="true">{done ? (open ? '▾' : '▸') : ''}</span>
-						<span class="area-name">{area.name}</span>
-						{#if done}<span class="area-done" aria-hidden="true">✓</span>{/if}
-						<span class="area-progress">{areaKilledCount(area)} / {area.creatures.length}</span>
-					</button>
-					{#if open}
-						<div class="grid">
-							{#each shown as creature (creature.id)}
-								<button
-									class="creature"
-									class:killed={killedIds.has(creature.id)}
-									onclick={() => toggleKilled(creature.id)}
-								>
-									<span class="check" aria-hidden="true">{killedIds.has(creature.id) ? '✓' : ''}</span>
-									{#if creature.imageUrl}
-										<img
-											class="creature-img"
-											src={creature.imageUrl}
-											alt=""
-											loading="lazy"
-											onerror={(e) => ((e.currentTarget as HTMLImageElement).style.visibility = 'hidden')}
-										/>
-									{/if}
-									<span class="name">{creature.name}</span>
-									<span class="badge diff" data-diff={creature.difficulty}>{creature.difficulty}</span>
-								</button>
-							{/each}
+		{#if viewMode === 'area'}
+			{#if filteredAreas.length === 0}
+				<p class="muted">No areas or creatures match your search.</p>
+			{:else}
+				<div class="areas">
+					{#each filteredAreas as { area, shown } (area.id)}
+						{@const done = areaComplete(area)}
+						{@const open = searching || areaOpen(area)}
+						<div class="area" class:complete={done}>
+							<button
+								class="area-head"
+								class:clickable={done && !searching}
+								aria-expanded={open}
+								onclick={() => toggleArea(area)}
+							>
+								<span class="arrow" aria-hidden="true">{done ? (open ? '▾' : '▸') : ''}</span>
+								<span class="area-name">{area.name}</span>
+								{#if done}<span class="area-done" aria-hidden="true">✓</span>{/if}
+								<span class="area-progress">{areaKilledCount(area)} / {area.creatures.length}</span>
+							</button>
+							{#if open}
+								{@render creatureGrid(shown)}
+							{/if}
 						</div>
-					{/if}
+					{/each}
 				</div>
-			{/each}
-		</div>
+			{/if}
+		{:else}
+			{#if filteredSubareaAreas.length === 0}
+				<p class="muted">No areas, subareas, or creatures match your search.</p>
+			{:else}
+				<div class="areas">
+					{#each filteredSubareaAreas as { area, shownSubareas } (area.id)}
+						{@const done = areaComplete(area)}
+						{@const open = searching || areaOpen(area)}
+						<div class="area" class:complete={done}>
+							<button
+								class="area-head"
+								class:clickable={done && !searching}
+								aria-expanded={open}
+								onclick={() => toggleArea(area)}
+							>
+								<span class="arrow" aria-hidden="true">{done ? (open ? '▾' : '▸') : ''}</span>
+								<span class="area-name">{area.name}</span>
+								{#if done}<span class="area-done" aria-hidden="true">✓</span>{/if}
+								<span class="area-progress">{areaKilledCount(area)} / {area.creatures.length}</span>
+							</button>
+							{#if open}
+								{#if area.subareas.length === 1}
+									{@render creatureGrid(shownSubareas[0].shown)}
+								{:else}
+									<div class="subareas">
+										{#each shownSubareas as { subarea, shown } (subarea.id)}
+											{@const subDone = subareaComplete(subarea)}
+											<div class="subarea" class:complete={subDone}>
+												<div class="subarea-head">
+													<span class="subarea-name">{subarea.name}</span>
+													{#if subDone}<span class="area-done" aria-hidden="true">✓</span>{/if}
+													<span class="subarea-progress"
+														>{subareaKilledCount(subarea)} / {subarea.creatures.length}</span
+													>
+												</div>
+												{@render creatureGrid(shown)}
+											</div>
+										{/each}
+									</div>
+								{/if}
+							{/if}
+						</div>
+					{/each}
+				</div>
+			{/if}
 		{/if}
 	{/if}
 </div>
@@ -510,6 +591,36 @@
 	}
 	.area .grid {
 		margin-top: 0.6rem;
+	}
+	.subareas {
+		display: flex;
+		flex-direction: column;
+		gap: 0.6rem;
+		margin-top: 0.6rem;
+	}
+	.subarea-head {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 0.15rem 0.4rem;
+		border-bottom: 1px solid var(--border);
+	}
+	.subarea.complete .subarea-head {
+		opacity: 0.6;
+	}
+	.subarea-name {
+		flex: 1;
+		font-weight: 600;
+		font-size: 0.9rem;
+		color: var(--text-dim);
+	}
+	.subarea-progress {
+		color: var(--text-dim);
+		font-size: 0.8rem;
+		font-variant-numeric: tabular-nums;
+	}
+	.subarea .grid {
+		margin-top: 0.4rem;
 	}
 	.creature {
 		display: flex;

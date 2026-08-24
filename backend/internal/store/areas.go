@@ -11,14 +11,15 @@ type AreaStore struct {
 	pool *pgxpool.Pool
 }
 
-// List returns every area with the DISTINCT union of the creatures across its
-// subareas, resolving each creature's killed state for the given user (LEFT JOIN
-// warden_kills, same as CreatureStore.List). A creature shared by two subareas of
-// the same area appears once. Rows are ordered by area then creature name; they
-// are grouped into nested Area values preserving that order.
+// List returns every area with both its subareas (each with their creatures, for
+// the Subareas view) and the DISTINCT union of creatures across those subareas
+// (for the Areas view). Each creature's killed state is resolved for the given
+// user (LEFT JOIN warden_kills, same as CreatureStore.List). Rows are ordered by
+// area, subarea, then creature name, and grouped in Go preserving that order.
 func (s *AreaStore) List(ctx context.Context, userID int64) ([]models.Area, error) {
 	rows, err := s.pool.Query(ctx, `
-		SELECT DISTINCT a.id, a.name, a.sort_order,
+		SELECT a.id, a.name,
+		       sa.id, sa.name,
 		       c.id, c.name, c.difficulty, c.rarity, c.image_url,
 		       (wk.user_id IS NOT NULL) AS killed
 		FROM areas a
@@ -26,32 +27,53 @@ func (s *AreaStore) List(ctx context.Context, userID int64) ([]models.Area, erro
 		JOIN subarea_creatures sc ON sc.subarea_id = sa.id
 		JOIN creatures c ON c.id = sc.creature_id
 		LEFT JOIN warden_kills wk ON wk.creature_id = c.id AND wk.user_id = $1
-		ORDER BY a.sort_order ASC, a.name ASC, c.name ASC`, userID)
+		ORDER BY a.sort_order ASC, a.name ASC, sa.sort_order ASC, sa.name ASC, c.name ASC`, userID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
+	// areaIdx: area id -> index in out. subIdx: subarea id -> index within its
+	// area. unionSeen: area id -> set of creature ids already in that area's union.
 	var out []models.Area
-	byID := map[int64]int{} // area id -> index in out
+	areaIdx := map[int64]int{}
+	subIdx := map[int64]int{}
+	unionSeen := map[int64]map[int64]bool{}
 	for rows.Next() {
 		var (
-			areaID    int64
-			areaName  string
-			areaOrder int
-			c         models.Creature
+			areaID   int64
+			areaName string
+			subID    int64
+			subName  string
+			c        models.Creature
 		)
-		if err := rows.Scan(&areaID, &areaName, &areaOrder,
+		if err := rows.Scan(&areaID, &areaName, &subID, &subName,
 			&c.ID, &c.Name, &c.Difficulty, &c.Rarity, &c.ImageURL, &c.Killed); err != nil {
 			return nil, err
 		}
-		idx, ok := byID[areaID]
+
+		ai, ok := areaIdx[areaID]
 		if !ok {
 			out = append(out, models.Area{ID: areaID, Name: areaName})
-			idx = len(out) - 1
-			byID[areaID] = idx
+			ai = len(out) - 1
+			areaIdx[areaID] = ai
+			unionSeen[areaID] = map[int64]bool{}
 		}
-		out[idx].Creatures = append(out[idx].Creatures, c)
+
+		// Union for the Areas view (dedup creatures shared across subareas).
+		if !unionSeen[areaID][c.ID] {
+			unionSeen[areaID][c.ID] = true
+			out[ai].Creatures = append(out[ai].Creatures, c)
+		}
+
+		// Nested subarea for the Subareas view (duplicates across subareas kept).
+		si, ok := subIdx[subID]
+		if !ok {
+			out[ai].Subareas = append(out[ai].Subareas, models.Subarea{ID: subID, Name: subName})
+			si = len(out[ai].Subareas) - 1
+			subIdx[subID] = si
+		}
+		out[ai].Subareas[si].Creatures = append(out[ai].Subareas[si].Creatures, c)
 	}
 	return out, rows.Err()
 }

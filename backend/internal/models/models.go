@@ -63,13 +63,25 @@ type Creature struct {
 	Killed     bool   `json:"killed"`
 }
 
+// Subarea is one echo-raid spawn point within an area. The same creature may
+// appear in several subareas (and across areas); each nested Creature carries the
+// requesting user's killed state.
+type Subarea struct {
+	ID        int64      `json:"id"`
+	Name      string     `json:"name"`
+	Creatures []Creature `json:"creatures"`
+}
+
 // Area groups the Echo Warden creatures found at one in-game location. The same
-// creature may appear in several areas. Each nested Creature carries the
-// requesting user's killed state, so the client can compute area completion.
+// creature may appear in several areas. Creatures is the DISTINCT union across
+// the area's subareas (for the Areas view); Subareas breaks the same data out per
+// spawn (for the Subareas view). Each nested Creature carries the requesting
+// user's killed state, so the client can compute area/subarea completion.
 type Area struct {
 	ID        int64      `json:"id"`
 	Name      string     `json:"name"`
 	Creatures []Creature `json:"creatures"`
+	Subareas  []Subarea  `json:"subareas"`
 }
 
 // HighscoreEntry is one row of the statistics leaderboard: a user's total

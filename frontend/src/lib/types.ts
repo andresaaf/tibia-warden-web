@@ -39,10 +39,19 @@ export interface Creature {
 	killed: boolean;
 }
 
-export interface Area {
+export interface Subarea {
 	id: number;
 	name: string;
 	creatures: Creature[];
+}
+
+export interface Area {
+	id: number;
+	name: string;
+	/** DISTINCT union of the area's subarea creatures (Areas view). */
+	creatures: Creature[];
+	/** Per-spawn breakdown; duplicates across subareas are kept (Subareas view). */
+	subareas: Subarea[];
 }
 
 export type Visibility = 'public' | 'private';
