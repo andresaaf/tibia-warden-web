@@ -155,13 +155,17 @@ func fetchTile(ctx context.Context, tileX, tileY, z int) (image.Image, error) {
 	return png.Decode(resp.Body)
 }
 
-// drawMarker paints a simple pin (white-ringed red dot) centred at (cx, cy).
+// drawMarker paints a high-contrast target dot (dark outline, white ring, amber
+// core) centred at (cx, cy). The dark outline keeps it visible on light terrain
+// and the amber core on dark terrain, so it reads on red buildings, green/white
+// wilderness and water alike.
 func drawMarker(img *image.RGBA, cx, cy int) {
+	dark := color.RGBA{20, 20, 20, 255}
 	white := color.RGBA{255, 255, 255, 255}
-	red := color.RGBA{220, 40, 40, 255}
+	amber := color.RGBA{255, 179, 0, 255}
+	fillDisc(img, cx, cy, 9, dark)
 	fillDisc(img, cx, cy, 7, white)
-	fillDisc(img, cx, cy, 5, red)
-	fillDisc(img, cx, cy, 2, white)
+	fillDisc(img, cx, cy, 5, amber)
 }
 
 func fillDisc(img *image.RGBA, cx, cy, r int, c color.RGBA) {

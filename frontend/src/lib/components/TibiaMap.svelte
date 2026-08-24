@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Map as LeafletMap, TileLayer, CircleMarker } from 'leaflet';
+	import type { Map as LeafletMap, TileLayer, Marker } from 'leaflet';
 	import { onMount } from 'svelte';
 
 	// TibiaMap renders the Tibia world map (tiles from the public, MIT-licensed
@@ -38,7 +38,14 @@
 	let el: HTMLDivElement;
 	let map: LeafletMap | undefined;
 	let layer: TileLayer | undefined;
-	let marker: CircleMarker | undefined;
+	let marker: Marker | undefined;
+
+	// High-contrast target dot (dark outline, white ring, amber core) — matches
+	// the static map image. Kept as an inline SVG so it stays crisp and identical
+	// on any terrain (red buildings, green/white wilderness, water).
+	const MARKER_SVG =
+		'<svg width="24" height="24" viewBox="-12 -12 24 24" xmlns="http://www.w3.org/2000/svg">' +
+		'<circle r="9" fill="#141414"/><circle r="7" fill="#ffffff"/><circle r="5" fill="#FFB300"/></svg>';
 
 	// Floor labels mirror Tibia's convention: 7 is ground ("0"), above is "+n".
 	const floors = Array.from({ length: 16 }, (_, f) => ({
@@ -170,13 +177,13 @@
 		if (marker) {
 			marker.setLatLng([lat, lng]);
 		} else {
-			marker = L.circleMarker([lat, lng], {
-				radius: 7,
-				color: '#fff',
-				weight: 2,
-				fillColor: '#dc2828',
-				fillOpacity: 1
-			}).addTo(map);
+			const icon = L.divIcon({
+				html: MARKER_SVG,
+				className: 'tibia-marker',
+				iconSize: [24, 24],
+				iconAnchor: [12, 12]
+			});
+			marker = L.marker([lat, lng], { icon, interactive: false, keyboard: false }).addTo(map);
 		}
 	}
 
@@ -244,6 +251,11 @@
 	.canvas :global(.leaflet-tile) {
 		image-rendering: -moz-crisp-edges;
 		image-rendering: pixelated;
+	}
+	/* Strip Leaflet's default div-icon white box/border so only our SVG dot shows. */
+	.canvas :global(.tibia-marker) {
+		background: none;
+		border: none;
 	}
 	/* In pick mode use a crosshair (not Leaflet's grab hand) so it's easy to
 	   pinpoint the exact spot to click. */
