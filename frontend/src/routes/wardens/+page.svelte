@@ -39,6 +39,8 @@
 	let areasError = $state('');
 	/** Completed areas the user has manually expanded (see areaOpen). */
 	let expandedAreas = $state<Set<number>>(new Set());
+	/** Completed subareas the user has manually expanded (see subareaOpen). */
+	let expandedSubareas = $state<Set<number>>(new Set());
 	let areaSearch = $state('');
 
 	$effect(() => {
@@ -216,6 +218,20 @@
 
 	function subareaComplete(sub: Subarea): boolean {
 		return sub.creatures.length > 0 && subareaKilledCount(sub) === sub.creatures.length;
+	}
+
+	/** Like areaOpen, one level down: completed subareas collapse by default and
+	 * the arrow expands them; incomplete subareas stay open. */
+	function subareaOpen(sub: Subarea): boolean {
+		return !subareaComplete(sub) || expandedSubareas.has(sub.id);
+	}
+
+	function toggleSubarea(sub: Subarea) {
+		if (!subareaComplete(sub)) return; // incomplete subareas stay expanded
+		const next = new Set(expandedSubareas);
+		if (next.has(sub.id)) next.delete(sub.id);
+		else next.add(sub.id);
+		expandedSubareas = next;
 	}
 
 	// Subareas view search, one level deeper than filteredAreas: an area-name match
@@ -457,15 +473,26 @@
 									<div class="subareas">
 										{#each shownSubareas as { subarea, shown } (subarea.id)}
 											{@const subDone = subareaComplete(subarea)}
+											{@const subOpen = searching || subareaOpen(subarea)}
 											<div class="subarea" class:complete={subDone}>
-												<div class="subarea-head">
+												<button
+													class="subarea-head"
+													class:clickable={subDone && !searching}
+													aria-expanded={subOpen}
+													onclick={() => toggleSubarea(subarea)}
+												>
+													<span class="arrow" aria-hidden="true"
+														>{subDone ? (subOpen ? '▾' : '▸') : ''}</span
+													>
 													<span class="subarea-name">{subarea.name}</span>
 													{#if subDone}<span class="area-done" aria-hidden="true">✓</span>{/if}
 													<span class="subarea-progress"
 														>{subareaKilledCount(subarea)} / {subarea.creatures.length}</span
 													>
-												</div>
-												{@render creatureGrid(shown)}
+												</button>
+												{#if subOpen}
+													{@render creatureGrid(shown)}
+												{/if}
 											</div>
 										{/each}
 									</div>
@@ -602,8 +629,17 @@
 		display: flex;
 		align-items: center;
 		gap: 0.5rem;
-		padding: 0.15rem 0.4rem;
+		width: 100%;
+		background: transparent;
+		border: none;
 		border-bottom: 1px solid var(--border);
+		color: var(--text);
+		text-align: left;
+		padding: 0.15rem 0.4rem;
+		cursor: default;
+	}
+	.subarea-head.clickable {
+		cursor: pointer;
 	}
 	.subarea.complete .subarea-head {
 		opacity: 0.6;
