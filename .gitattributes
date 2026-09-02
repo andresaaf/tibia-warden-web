@@ -1,1 +1,6 @@
-*.sh text eol=lf
+# The repository stores every text file with LF endings (it always has — every
+# blob in history is LF), and checks them out as LF on every platform, including
+# Windows with core.autocrlf=true. That keeps gofmt, prettier and svelte-check
+# seeing the same bytes git has, so formatters do not flag whole files over line
+# endings alone. Binary files are detected and left alone by text=auto.
+* text=auto eol=lf
