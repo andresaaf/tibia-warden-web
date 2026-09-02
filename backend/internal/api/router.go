@@ -76,6 +76,7 @@ func NewRouter(cfg *config.Config, stores *store.Stores, oauth *auth.DiscordProv
 
 			// Statistics leaderboard (global across all users).
 			r.Get("/highscores", s.handleListHighscores)
+			r.Get("/creatures/stats", s.handleListCreatureStats)
 
 			// Groups.
 			r.Get("/groups", s.handleListGroups)

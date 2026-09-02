@@ -175,6 +175,58 @@ func (s *CreatureStore) Highscores(ctx context.Context) ([]models.HighscoreEntry
 	return out, rows.Err()
 }
 
+// SightingStats returns per-creature sighting statistics for the Warden
+// sightings panel: how many times each creature has been announced across every
+// group, how many players have it on their Warden List, and when it was last
+// announced. A multi-group broadcast is one sighting (deduped by broadcast_id)
+// rather than one per group.
+// Every creature is returned, including ones nobody has announced, so the client
+// can answer "has this Warden ever been reported?" as well as "how often?".
+// Ordering is a sensible default; the client re-sorts on demand.
+func (s *CreatureStore) SightingStats(ctx context.Context) ([]models.CreatureSighting, error) {
+	rows, err := s.pool.Query(ctx, `
+		SELECT c.id, c.name, c.difficulty, c.rarity, c.image_url,
+		       COALESCE(cw.points, 0)::int   AS charm_points,
+		       COALESCE(a.sightings, 0)::int AS sightings,
+		       COALESCE(h.hunters, 0)::int   AS hunters,
+		       a.last_seen
+		FROM creatures c
+		LEFT JOIN charm_weights cw ON cw.difficulty = c.difficulty
+		LEFT JOIN (
+			SELECT creature_id,
+			       COUNT(*)          AS sightings,
+			       MAX(announced_at) AS last_seen
+			FROM (
+				SELECT a.creature_id,
+				       MIN(a.created_at) AS announced_at
+				FROM announcements a
+				GROUP BY a.creature_id, COALESCE(a.broadcast_id, 'id:' || a.id)
+			) d
+			GROUP BY creature_id
+		) a ON a.creature_id = c.id
+		LEFT JOIN (
+			SELECT creature_id, COUNT(*) AS hunters
+			FROM warden_kills
+			GROUP BY creature_id
+		) h ON h.creature_id = c.id
+		ORDER BY sightings DESC, c.name ASC`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var out []models.CreatureSighting
+	for rows.Next() {
+		var e models.CreatureSighting
+		if err := rows.Scan(&e.CreatureID, &e.Name, &e.Difficulty, &e.Rarity, &e.ImageURL,
+			&e.CharmPoints, &e.Sightings, &e.Hunters, &e.LastSeen); err != nil {
+			return nil, err
+		}
+		out = append(out, e)
+	}
+	return out, rows.Err()
+}
+
 // PruneExcept deletes creatures whose name is not in keepNames, but only when
 // they have no kill history and are not referenced by any announcement. Returns
 // the number of creatures deleted.

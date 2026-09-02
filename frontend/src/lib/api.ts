@@ -2,6 +2,7 @@ import type {
 	Announcement,
 	Area,
 	Creature,
+	CreatureSighting,
 	DiscordRole,
 	Group,
 	GroupMember,
@@ -68,6 +69,7 @@ export const api = {
 
 	// Statistics
 	highscores: () => request<HighscoreEntry[]>('GET', '/api/highscores'),
+	creatureStats: () => request<CreatureSighting[]>('GET', '/api/creatures/stats'),
 
 	// Groups
 	listGroups: (scope: 'public' | 'mine', search = '') => {

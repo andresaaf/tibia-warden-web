@@ -18,3 +18,18 @@ func (s *Server) handleListHighscores(w http.ResponseWriter, r *http.Request) {
 	}
 	writeJSON(w, http.StatusOK, entries)
 }
+
+// handleListCreatureStats returns per-creature sighting statistics: how often
+// each Warden has been announced, how many of those hunts ended in a kill, and
+// how many players have it on their Warden List.
+func (s *Server) handleListCreatureStats(w http.ResponseWriter, r *http.Request) {
+	stats, err := s.stores.Creatures.SightingStats(r.Context())
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to load creature statistics")
+		return
+	}
+	if stats == nil {
+		stats = []models.CreatureSighting{}
+	}
+	writeJSON(w, http.StatusOK, stats)
+}

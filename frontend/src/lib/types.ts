@@ -135,6 +135,24 @@ export interface HighscoreEntry {
 	score: number;
 }
 
+/** One row of the Warden sightings panel on the statistics page. Every creature
+ *  is returned, including ones nobody has ever announced (all counts 0). */
+export interface CreatureSighting {
+	creatureId: number;
+	name: string;
+	difficulty: Difficulty;
+	rarity: Rarity;
+	imageUrl: string;
+	/** Difficulty-weighted charm value of this Warden. */
+	charmPoints: number;
+	/** Times announced across all groups; a multi-group broadcast counts once. */
+	sightings: number;
+	/** Players who have this Warden ticked on their Warden List. */
+	hunters: number;
+	/** When it was last announced, or null if it never has been. */
+	lastSeen: string | null;
+}
+
 export interface Announcement {
 	id: number;
 	groupId: number;

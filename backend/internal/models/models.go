@@ -95,6 +95,23 @@ type HighscoreEntry struct {
 	Score         int    `json:"score"`
 }
 
+// CreatureSighting is one row of the Warden sightings panel: how often a
+// creature has been announced across every group (a multi-group broadcast counts
+// once, deduped by broadcast_id), how many players have it ticked on their
+// Warden List, and when it was last announced. Creatures nobody has ever
+// announced are returned too, with zeroes.
+type CreatureSighting struct {
+	CreatureID  int64      `json:"creatureId"`
+	Name        string     `json:"name"`
+	Difficulty  string     `json:"difficulty"`
+	Rarity      string     `json:"rarity"`
+	ImageURL    string     `json:"imageUrl"`
+	CharmPoints int        `json:"charmPoints"`
+	Sightings   int        `json:"sightings"`
+	Hunters     int        `json:"hunters"`
+	LastSeen    *time.Time `json:"lastSeen"`
+}
+
 type Group struct {
 	ID          int64     `json:"id"`
 	Name        string    `json:"name"`
