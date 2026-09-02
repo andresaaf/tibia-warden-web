@@ -15,18 +15,42 @@
 	type StatsView = 'players' | 'wardens';
 	let view = $state<StatsView>('players');
 
+	/** Clicking the active column flips it; a new column starts descending,
+	 *  which is what you want first for every column here. */
+	type Dir = 'desc' | 'asc';
+
 	type SortKey = 'kills' | 'charmPoints' | 'score';
 	const NUMERIC_KEYS: SortKey[] = ['kills', 'charmPoints', 'score'];
 	let sortKey = $state<SortKey>('kills');
+	let sortDir = $state<Dir>('desc');
 
 	// Warden sightings view.
 	type SightingKey = 'sightings' | 'hunters' | 'lastSeen';
 	let sightingSort = $state<SightingKey>('sightings');
+	let sightingDir = $state<Dir>('desc');
 	let sightingSearch = $state('');
 	let reportedOnly = $state(true);
 	let showAll = $state(false);
 	/** Rows shown before "Show all" is used; a search always shows every match. */
 	const TOP_N = 20;
+
+	function sortPlayersBy(key: SortKey) {
+		if (sortKey === key) sortDir = sortDir === 'desc' ? 'asc' : 'desc';
+		else ((sortKey = key), (sortDir = 'desc'));
+	}
+
+	function sortSightingsBy(key: SightingKey) {
+		if (sightingSort === key) sightingDir = sightingDir === 'desc' ? 'asc' : 'desc';
+		else ((sightingSort = key), (sightingDir = 'desc'));
+	}
+
+	function arrow(active: boolean, dir: Dir): string {
+		return active ? (dir === 'desc' ? ' ▼' : ' ▲') : '';
+	}
+
+	function ariaSort(active: boolean, dir: Dir): 'ascending' | 'descending' | 'none' {
+		return active ? (dir === 'desc' ? 'descending' : 'ascending') : 'none';
+	}
 
 	$effect(() => {
 		if (!$authLoading && !$currentUser) goto('/', { replaceState: true });
@@ -48,12 +72,14 @@
 		}
 	}
 
-	// Sort by the active column (desc), tie-breaking on the other numeric columns
-	// (desc), then player name (asc) for a stable order.
+	// Sort by the active column in the chosen direction, tie-breaking on the other
+	// numeric columns (always desc) then player name (asc) for a stable order —
+	// only the column you picked flips, so ties don't reshuffle with it.
 	let sorted = $derived.by(() => {
 		const rest = NUMERIC_KEYS.filter((k) => k !== sortKey);
+		const flip = sortDir === 'asc' ? -1 : 1;
 		return [...entries].sort((a, b) => {
-			if (b[sortKey] !== a[sortKey]) return b[sortKey] - a[sortKey];
+			if (b[sortKey] !== a[sortKey]) return (b[sortKey] - a[sortKey]) * flip;
 			for (const k of rest) {
 				if (b[k] !== a[k]) return b[k] - a[k];
 			}
@@ -65,13 +91,18 @@
 		return s.lastSeen ? Date.parse(s.lastSeen) : 0;
 	}
 
-	// Active column (desc; most recent first for Last seen), then times reported
-	// and name so the order is stable across sorts.
+	// Active column in the chosen direction (descending Last seen = most recent
+	// first), then times reported and name so ties stay stable across sorts.
 	function compareSightings(a: CreatureSighting, b: CreatureSighting): number {
+		const flip = sightingDir === 'asc' ? -1 : 1;
 		if (sightingSort === 'lastSeen') {
-			if (seenAt(b) !== seenAt(a)) return seenAt(b) - seenAt(a);
+			const [an, bn] = [seenAt(a), seenAt(b)];
+			// Wardens nobody has announced have no date: keep them last either way
+			// rather than letting ascending order lead with a wall of dashes.
+			if ((an === 0) !== (bn === 0)) return an === 0 ? 1 : -1;
+			if (an !== bn) return (bn - an) * flip;
 		} else if (b[sightingSort] !== a[sightingSort]) {
-			return b[sightingSort] - a[sightingSort];
+			return (b[sightingSort] - a[sightingSort]) * flip;
 		}
 		if (b.sightings !== a.sightings) return b.sightings - a.sightings;
 		return a.name.localeCompare(b.name);
@@ -151,19 +182,19 @@
 						<tr>
 							<th class="rank">#</th>
 							<th class="player">Player</th>
-							<th class="num">
-								<button class="sort" class:active={sortKey === 'kills'} onclick={() => (sortKey = 'kills')}>
-									Wardens{sortKey === 'kills' ? ' ▼' : ''}
+							<th class="num" aria-sort={ariaSort(sortKey === 'kills', sortDir)}>
+								<button class="sort" class:active={sortKey === 'kills'} onclick={() => sortPlayersBy('kills')}>
+									Wardens{arrow(sortKey === 'kills', sortDir)}
 								</button>
 							</th>
-							<th class="num">
-								<button class="sort" class:active={sortKey === 'charmPoints'} onclick={() => (sortKey = 'charmPoints')}>
-									Charm Points{sortKey === 'charmPoints' ? ' ▼' : ''}
+							<th class="num" aria-sort={ariaSort(sortKey === 'charmPoints', sortDir)}>
+								<button class="sort" class:active={sortKey === 'charmPoints'} onclick={() => sortPlayersBy('charmPoints')}>
+									Charm Points{arrow(sortKey === 'charmPoints', sortDir)}
 								</button>
 							</th>
-							<th class="num">
-								<button class="sort" class:active={sortKey === 'score'} onclick={() => (sortKey = 'score')}>
-									Score{sortKey === 'score' ? ' ▼' : ''}
+							<th class="num" aria-sort={ariaSort(sortKey === 'score', sortDir)}>
+								<button class="sort" class:active={sortKey === 'score'} onclick={() => sortPlayersBy('score')}>
+									Score{arrow(sortKey === 'score', sortDir)}
 								</button>
 							</th>
 						</tr>
@@ -217,34 +248,34 @@
 							<tr>
 								<th class="rank">#</th>
 								<th class="player">Warden</th>
-								<th class="num">
+								<th class="num" aria-sort={ariaSort(sightingSort === 'sightings', sightingDir)}>
 									<button
 										class="sort"
 										class:active={sightingSort === 'sightings'}
 										title="Times announced (a broadcast counts once)"
-										onclick={() => (sightingSort = 'sightings')}
+										onclick={() => sortSightingsBy('sightings')}
 									>
-										Reported{sightingSort === 'sightings' ? ' ▼' : ''}
+										Reported{arrow(sightingSort === 'sightings', sightingDir)}
 									</button>
 								</th>
-								<th class="num">
+								<th class="num" aria-sort={ariaSort(sightingSort === 'hunters', sightingDir)}>
 									<button
 										class="sort"
 										class:active={sightingSort === 'hunters'}
 										title="Players with this Warden ticked on their Warden List"
-										onclick={() => (sightingSort = 'hunters')}
+										onclick={() => sortSightingsBy('hunters')}
 									>
-										Players{sightingSort === 'hunters' ? ' ▼' : ''}
+										Players{arrow(sightingSort === 'hunters', sightingDir)}
 									</button>
 								</th>
-								<th class="num">
+								<th class="num" aria-sort={ariaSort(sightingSort === 'lastSeen', sightingDir)}>
 									<button
 										class="sort"
 										class:active={sightingSort === 'lastSeen'}
 										title="When it was last announced"
-										onclick={() => (sightingSort = 'lastSeen')}
+										onclick={() => sortSightingsBy('lastSeen')}
 									>
-										Last seen{sightingSort === 'lastSeen' ? ' ▼' : ''}
+										Last seen{arrow(sightingSort === 'lastSeen', sightingDir)}
 									</button>
 								</th>
 							</tr>
