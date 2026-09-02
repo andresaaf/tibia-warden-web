@@ -168,30 +168,30 @@ type InviteCode struct {
 }
 
 type Announcement struct {
-	ID               int64                  `json:"id"`
-	GroupID          int64                  `json:"groupId"`
-	CreatureID       int64                  `json:"creatureId"`
-	CreatureName     string                 `json:"creatureName"`
-	CreatureImageURL string                 `json:"creatureImageUrl,omitempty"`
-	Difficulty       string                 `json:"difficulty"`
+	ID               int64  `json:"id"`
+	GroupID          int64  `json:"groupId"`
+	CreatureID       int64  `json:"creatureId"`
+	CreatureName     string `json:"creatureName"`
+	CreatureImageURL string `json:"creatureImageUrl,omitempty"`
+	Difficulty       string `json:"difficulty"`
 	// CharmPoints is the difficulty-weighted charm value of this Warden, derived
 	// from charm_weights. Surfaced for display and future pay-per-charm pricing.
-	CharmPoints int `json:"charmPoints"`
-	AuthorID         int64                  `json:"authorId"`
-	AuthorName       string                 `json:"authorName"`
-	Location         string                 `json:"location"`
+	CharmPoints int    `json:"charmPoints"`
+	AuthorID    int64  `json:"authorId"`
+	AuthorName  string `json:"authorName"`
+	Location    string `json:"location"`
 	// MapX, MapY, MapZ are the optional marked map spot (absolute Tibia world
 	// coordinates and floor). All nil together when no spot was marked.
-	MapX             *int                   `json:"mapX,omitempty"`
-	MapY             *int                   `json:"mapY,omitempty"`
-	MapZ             *int                   `json:"mapZ,omitempty"`
-	Note             string                 `json:"note"`
-	GoldCost         int                    `json:"goldCost"`
-	Status           string                 `json:"status"`
-	KilledAt         *time.Time             `json:"killedAt,omitempty"`
-	CreatedAt        time.Time              `json:"createdAt"`
-	Responses        []AnnouncementResponse `json:"responses"`
-	Claims           []AnnouncementClaim    `json:"claims"`
+	MapX      *int                   `json:"mapX,omitempty"`
+	MapY      *int                   `json:"mapY,omitempty"`
+	MapZ      *int                   `json:"mapZ,omitempty"`
+	Note      string                 `json:"note"`
+	GoldCost  int                    `json:"goldCost"`
+	Status    string                 `json:"status"`
+	KilledAt  *time.Time             `json:"killedAt,omitempty"`
+	CreatedAt time.Time              `json:"createdAt"`
+	Responses []AnnouncementResponse `json:"responses"`
+	Claims    []AnnouncementClaim    `json:"claims"`
 	// DiscordMessageID is the mirrored Discord message, when the group is linked.
 	DiscordMessageID string `json:"-"` // GroupName and ViewerRole are populated for the aggregated home feed.
 	GroupName        string `json:"groupName,omitempty"`

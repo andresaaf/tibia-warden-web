@@ -607,4 +607,3 @@ func (s *Server) handleSetDiscordAutodelete(w http.ResponseWriter, r *http.Reque
 	}
 	writeJSON(w, http.StatusOK, map[string]int{"seconds": body.Seconds})
 }
-
