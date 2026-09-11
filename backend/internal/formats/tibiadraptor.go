@@ -113,6 +113,10 @@ var tibiaDraptor = Format{
 	Label:  "TibiaDraptor",
 	Export: exportTibiaDraptor,
 	Import: importTibiaDraptor,
+	Covers: func(name string) bool {
+		_, ok := draptorID(name)
+		return ok
+	},
 }
 
 func exportTibiaDraptor(names []string, character string, now time.Time) (Export, error) {

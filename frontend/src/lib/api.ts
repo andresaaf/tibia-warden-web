@@ -13,6 +13,7 @@ import type {
 	User,
 	WardenExport,
 	WardenFormat,
+	WardenImportMode,
 	WardenImportResult
 } from './types';
 
@@ -88,12 +89,11 @@ export const api = {
 		const unmapped = unmappedHeader ? unmappedHeader.split(',').map(decodeURIComponent) : [];
 		return { blob: await res.blob(), filename, unmapped };
 	},
-	importWardens: (format: WardenFormat, file: unknown) =>
-		request<WardenImportResult>(
-			'POST',
-			`/api/wardens/import?format=${encodeURIComponent(format)}`,
-			file
-		),
+	importWardens: (format: WardenFormat, file: unknown, mode: WardenImportMode, dryRun: boolean) => {
+		const params = new URLSearchParams({ format, mode });
+		if (dryRun) params.set('dryRun', '1');
+		return request<WardenImportResult>('POST', `/api/wardens/import?${params}`, file);
+	},
 	areas: () => request<Area[]>('GET', '/api/areas'),
 
 	// Statistics

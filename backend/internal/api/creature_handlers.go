@@ -7,6 +7,7 @@ import (
 	"mime"
 	"net/http"
 	"net/url"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -126,14 +127,26 @@ func (s *Server) handleExportWardens(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleImportWardens reads another tracker's export file (the raw request
-// body, ?format= as for export) and marks the wardens it lists as killed. It
-// only adds marks, never removes them.
+// body, ?format= as for export) and applies it to the current user's Warden
+// List. ?mode=add (default) only adds marks; ?mode=replace also unmarks wardens
+// the file doesn't list (see planImport). ?dryRun=1 returns the same result
+// without changing anything, for the import preview.
 func (s *Server) handleImportWardens(w http.ResponseWriter, r *http.Request) {
 	format, ok := formats.Get(r.URL.Query().Get("format"))
 	if !ok {
 		writeError(w, http.StatusBadRequest, "unknown import format")
 		return
 	}
+	mode := r.URL.Query().Get("mode")
+	if mode == "" {
+		mode = models.ImportModeAdd
+	}
+	if mode != models.ImportModeAdd && mode != models.ImportModeReplace {
+		writeError(w, http.StatusBadRequest, "unknown import mode")
+		return
+	}
+	dryRun := r.URL.Query().Get("dryRun") == "1"
+
 	// Generous cap: a tracker's full backup can carry many other sections.
 	data, err := io.ReadAll(io.LimitReader(r.Body, 8<<20))
 	if err != nil {
@@ -156,29 +169,70 @@ func (s *Server) handleImportWardens(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusInternalServerError, "failed to load warden list")
 		return
 	}
+	plan := planImport(creatures, names, mode, format.Covers)
+	plan.result.Unknown += unknown
+	plan.result.DryRun = dryRun
+
+	if !dryRun {
+		added, removed, err := s.stores.Creatures.ApplyImport(r.Context(), userID(r), plan.add, plan.remove)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "failed to update warden list")
+			return
+		}
+		plan.result.Added, plan.result.Removed = added, removed
+	}
+	writeJSON(w, http.StatusOK, plan.result)
+}
+
+type importPlan struct {
+	add, remove []int64
+	result      models.WardenImportResult
+}
+
+// planImport works out what importing names (our creature names, from a file)
+// does to a Warden List (every creature, with the user's killed state). Names
+// matching no creature count as unknown. In replace mode, marked creatures the
+// file doesn't list are unmarked — but only ones covers says the format can
+// represent: a warden the other tracker doesn't know can never appear in its
+// file, so its absence says nothing and the mark is kept.
+func planImport(creatures []models.Creature, names []string, mode string, covers func(string) bool) importPlan {
 	byName := make(map[string]int64, len(creatures))
 	for _, c := range creatures {
 		byName[strings.ToLower(c.Name)] = c.ID
 	}
-	ids := make([]int64, 0, len(names))
+	p := importPlan{result: models.WardenImportResult{
+		Mode:         mode,
+		AddedNames:   []string{},
+		RemovedNames: []string{},
+	}}
+	inFile := make(map[int64]bool, len(names))
 	for _, n := range names {
 		if id, ok := byName[strings.ToLower(n)]; ok {
-			ids = append(ids, id)
+			inFile[id] = true
 		} else {
-			unknown++
+			p.result.Unknown++
 		}
 	}
 
-	added, err := s.stores.Creatures.SetKilledMany(r.Context(), userID(r), ids)
-	if err != nil {
-		writeError(w, http.StatusInternalServerError, "failed to update warden list")
-		return
+	for _, c := range creatures {
+		switch {
+		case inFile[c.ID] && c.Killed:
+			p.result.AlreadyMarked++
+		case inFile[c.ID]:
+			p.add = append(p.add, c.ID)
+			p.result.AddedNames = append(p.result.AddedNames, c.Name)
+		case c.Killed && mode == models.ImportModeReplace && covers(c.Name):
+			p.remove = append(p.remove, c.ID)
+			p.result.RemovedNames = append(p.result.RemovedNames, c.Name)
+		case c.Killed && mode == models.ImportModeReplace:
+			p.result.KeptUnsupported++
+		}
 	}
-	writeJSON(w, http.StatusOK, map[string]int64{
-		"added":         added,
-		"alreadyMarked": int64(len(ids)) - added,
-		"unknown":       int64(unknown),
-	})
+	sort.Strings(p.result.AddedNames)
+	sort.Strings(p.result.RemovedNames)
+	p.result.Added = int64(len(p.add))
+	p.result.Removed = int64(len(p.remove))
+	return p
 }
 
 // handleMarkKilled marks a creature as killed for the current user.

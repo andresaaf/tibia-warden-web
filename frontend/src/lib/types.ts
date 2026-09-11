@@ -41,7 +41,9 @@ export interface Creature {
 
 /** Other trackers' file formats the Warden List can be exported to / imported
  * from. Ids match backend/internal/formats. */
-export const WARDEN_FORMATS = [{ id: 'tibiadraptor', label: 'TibiaDraptor' }] as const;
+export const WARDEN_FORMATS = [
+	{ id: 'tibiadraptor', label: 'TibiaDraptor', hint: 'Echo Warden JSON export from tibiadraptor.com' }
+] as const;
 
 export type WardenFormat = (typeof WARDEN_FORMATS)[number]['id'];
 
@@ -52,11 +54,22 @@ export interface WardenExport {
 	unmapped: string[];
 }
 
+/** 'add' only adds marks; 'replace' also unmarks wardens the file doesn't list. */
+export type WardenImportMode = 'add' | 'replace';
+
+/** Changes an import makes — or, when dryRun, would make. */
 export interface WardenImportResult {
+	mode: WardenImportMode;
+	dryRun: boolean;
 	added: number;
 	alreadyMarked: number;
+	removed: number;
+	/** Marked wardens a replace keeps because the format can't list them. */
+	keptUnsupported: number;
 	/** Entries in the file that don't match any creature on our list. */
 	unknown: number;
+	addedNames: string[];
+	removedNames: string[];
 }
 
 export interface Subarea {

@@ -1,18 +1,17 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
-	import { api, ApiError } from '$lib/api';
+	import { api } from '$lib/api';
 	import { currentUser, authLoading } from '$lib/stores';
+	import WardenTransferDialog from '$lib/components/WardenTransferDialog.svelte';
 	import {
 		DIFFICULTIES,
 		RARITIES,
-		WARDEN_FORMATS,
 		type Area,
 		type Creature,
 		type Difficulty,
 		type Rarity,
-		type Subarea,
-		type WardenFormat
+		type Subarea
 	} from '$lib/types';
 
 	type StatusFilter = 'all' | 'remaining' | 'found';
@@ -163,67 +162,13 @@
 		}
 	}
 
-	let transferFormat = $state<WardenFormat>(WARDEN_FORMATS[0].id);
-	let transferBusy = $state(false);
-	let transferNotice = $state('');
-	let transferError = $state('');
-	let importInput: HTMLInputElement;
+	let transferOpen = $state(false);
 
-	function formatLabel(id: WardenFormat): string {
-		return WARDEN_FORMATS.find((f) => f.id === id)?.label ?? id;
-	}
-
-	async function exportWardens() {
-		transferBusy = true;
-		transferNotice = '';
-		transferError = '';
-		try {
-			const { blob, filename, unmapped } = await api.exportWardens(transferFormat);
-			const url = URL.createObjectURL(blob);
-			const link = document.createElement('a');
-			link.href = url;
-			link.download = filename;
-			link.click();
-			setTimeout(() => URL.revokeObjectURL(url), 1000);
-			transferNotice = `Saved ${filename}.`;
-			if (unmapped.length) {
-				transferNotice += ` ${unmapped.length} marked ${unmapped.length === 1 ? 'warden' : 'wardens'} couldn't be mapped to ${formatLabel(transferFormat)} and ${unmapped.length === 1 ? 'was' : 'were'} left out: ${unmapped.join(', ')}.`;
-			}
-		} catch (err) {
-			transferError = err instanceof ApiError ? `Export failed: ${err.message}` : 'Export failed.';
-		} finally {
-			transferBusy = false;
-		}
-	}
-
-	/** Import a file picked via the hidden input. Only ever adds marks. */
-	async function onImportFile(e: Event) {
-		const input = e.currentTarget as HTMLInputElement;
-		const file = input.files?.[0];
-		input.value = ''; // allow re-picking the same file
-		if (!file) return;
-
-		transferBusy = true;
-		transferNotice = '';
-		transferError = '';
-		try {
-			let parsed: unknown;
-			try {
-				parsed = JSON.parse(await file.text());
-			} catch {
-				transferError = `${file.name} isn't a valid JSON file.`;
-				return;
-			}
-			const result = await api.importWardens(transferFormat, parsed);
-			transferNotice = `Imported from ${formatLabel(transferFormat)}: ${result.added} added · ${result.alreadyMarked} already marked`;
-			if (result.unknown) transferNotice += ` · ${result.unknown} unrecognised`;
-			await loadKilled();
-			applyStatusFilter();
-		} catch (err) {
-			transferError = err instanceof ApiError ? `Import failed: ${err.message}` : 'Import failed.';
-		} finally {
-			transferBusy = false;
-		}
+	/** After an import (which may add and remove marks), reload the authoritative
+	 * killed set and re-snapshot the status filter. */
+	async function onImported() {
+		await loadKilled();
+		applyStatusFilter();
 	}
 
 	function areaKilledCount(area: Area): number {
@@ -357,6 +302,8 @@
 	</div>
 {/snippet}
 
+<WardenTransferDialog bind:open={transferOpen} markedCount={killedIds.size} {onImported} />
+
 <div class="container stack">
 	<div class="spread page-head">
 		<div>
@@ -370,41 +317,7 @@
 			</p>
 		</div>
 		<div class="head-actions">
-			<div class="transfer" role="group" aria-label="Export or import your Warden List">
-				<select
-					class="transfer-format"
-					bind:value={transferFormat}
-					disabled={transferBusy}
-					aria-label="File format"
-				>
-					{#each WARDEN_FORMATS as f}
-						<option value={f.id}>{f.label}</option>
-					{/each}
-				</select>
-				<button
-					class="btn btn-sm"
-					onclick={exportWardens}
-					disabled={transferBusy}
-					title="Download your marked wardens as a {formatLabel(transferFormat)} file"
-				>
-					Export
-				</button>
-				<button
-					class="btn btn-sm"
-					onclick={() => importInput.click()}
-					disabled={transferBusy}
-					title="Mark the wardens listed in a {formatLabel(transferFormat)} export file"
-				>
-					Import
-				</button>
-				<input
-					bind:this={importInput}
-					type="file"
-					accept=".json,application/json"
-					hidden
-					onchange={onImportFile}
-				/>
-			</div>
+			<button class="btn btn-sm" onclick={() => (transferOpen = true)}>Import / Export</button>
 			<div class="segmented" role="group" aria-label="View mode">
 				<button
 					class="segment"
@@ -433,12 +346,6 @@
 			</div>
 		</div>
 	</div>
-
-	{#if transferError}
-		<p class="error transfer-msg">{transferError}</p>
-	{:else if transferNotice}
-		<p class="muted transfer-msg">{transferNotice}</p>
-	{/if}
 
 	{#if viewMode === 'flat'}
 		<div class="card stack">
@@ -624,20 +531,6 @@
 		align-items: center;
 		justify-content: flex-end;
 		gap: 0.6rem;
-	}
-	.transfer {
-		display: flex;
-		align-items: center;
-		gap: 0.4rem;
-	}
-	.transfer-format {
-		width: auto;
-		padding: 0.3rem 0.5rem;
-		font-size: 0.85rem;
-	}
-	.transfer-msg {
-		margin: 0;
-		overflow-wrap: anywhere;
 	}
 	.area-search {
 		width: 100%;

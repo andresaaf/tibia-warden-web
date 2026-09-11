@@ -140,9 +140,13 @@ up your override.
 
 ## Export / import
 
-The Warden List header can **export** your marked wardens to another tracker's
-file format and **import** that tracker's export (import only ever adds marks).
-Formats live in `backend/internal/formats`; currently supported:
+The Warden List's **Import / Export** dialog downloads your marked wardens in
+another tracker's file format, and imports that tracker's export. Import shows
+a preview before anything changes and has two modes: **Add only** (default;
+never unmarks) and **Replace my list** (also unmarks wardens the file doesn't
+list — except ones the format can't represent, which stay marked). Imports only
+touch your own list; other players' scores and announcement stats are
+unaffected. Formats live in `backend/internal/formats`; currently supported:
 
 - **TibiaDraptor** — `{"version":1,"sections":{"echo_wardens":[{"id":381}, ...]}}`.
   The IDs are TibiaDraptor's own (not Tibia race IDs), so the backend matches by

@@ -20,6 +20,10 @@ type Format struct {
 	// Import parses a file into our creature names. unknown counts entries in
 	// the file that could not be mapped to a creature name.
 	Import func(data []byte) (names []string, unknown int, err error)
+	// Covers reports whether the format has an identifier for a creature, i.e.
+	// whether a file in this format could list it at all. A replacing import
+	// must not unmark creatures the format can't represent.
+	Covers func(name string) bool
 }
 
 // Export is a rendered file ready to download.

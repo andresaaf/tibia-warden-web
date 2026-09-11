@@ -112,6 +112,29 @@ type CreatureSighting struct {
 	LastSeen    *time.Time `json:"lastSeen"`
 }
 
+// Warden List import modes.
+const (
+	ImportModeAdd     = "add"     // only add marks
+	ImportModeReplace = "replace" // also unmark wardens missing from the file
+)
+
+// WardenImportResult describes the changes a Warden List import makes (or, for
+// a dry run, would make). Name lists are sorted and never null.
+type WardenImportResult struct {
+	Mode          string `json:"mode"`
+	DryRun        bool   `json:"dryRun"`
+	Added         int64  `json:"added"`
+	AlreadyMarked int    `json:"alreadyMarked"`
+	Removed       int64  `json:"removed"`
+	// KeptUnsupported counts marked wardens a replace leaves alone because the
+	// file's format has no identifier for them (so the file can't list them).
+	KeptUnsupported int `json:"keptUnsupported"`
+	// Unknown counts entries in the file that match no creature on our list.
+	Unknown      int      `json:"unknown"`
+	AddedNames   []string `json:"addedNames"`
+	RemovedNames []string `json:"removedNames"`
+}
+
 type Group struct {
 	ID          int64     `json:"id"`
 	Name        string    `json:"name"`

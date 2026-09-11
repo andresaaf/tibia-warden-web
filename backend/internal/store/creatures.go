@@ -78,18 +78,36 @@ func (s *CreatureStore) SetKilled(ctx context.Context, userID, creatureID int64)
 	return err
 }
 
-// SetKilledMany marks several creatures as killed for a user in one statement.
-// It only ever adds marks (existing ones are left alone, unknown IDs ignored)
-// and returns how many were newly marked.
-func (s *CreatureStore) SetKilledMany(ctx context.Context, userID int64, creatureIDs []int64) (int64, error) {
-	tag, err := s.pool.Exec(ctx, `
-		INSERT INTO warden_kills (user_id, creature_id)
-		SELECT $1, id FROM creatures WHERE id = ANY($2)
-		ON CONFLICT (user_id, creature_id) DO NOTHING`, userID, creatureIDs)
+// ApplyImport applies a Warden List import for a user in one transaction:
+// unmarks the remove IDs and marks the add IDs (either may be empty; existing
+// marks and unknown IDs are ignored). Returns how many marks were actually
+// added and removed.
+func (s *CreatureStore) ApplyImport(ctx context.Context, userID int64, add, remove []int64) (added, removed int64, err error) {
+	tx, err := s.pool.Begin(ctx)
 	if err != nil {
-		return 0, err
+		return 0, 0, err
 	}
-	return tag.RowsAffected(), nil
+	defer tx.Rollback(ctx)
+
+	if len(remove) > 0 {
+		tag, err := tx.Exec(ctx, `
+			DELETE FROM warden_kills WHERE user_id = $1 AND creature_id = ANY($2)`, userID, remove)
+		if err != nil {
+			return 0, 0, err
+		}
+		removed = tag.RowsAffected()
+	}
+	if len(add) > 0 {
+		tag, err := tx.Exec(ctx, `
+			INSERT INTO warden_kills (user_id, creature_id)
+			SELECT $1, id FROM creatures WHERE id = ANY($2)
+			ON CONFLICT (user_id, creature_id) DO NOTHING`, userID, add)
+		if err != nil {
+			return 0, 0, err
+		}
+		added = tag.RowsAffected()
+	}
+	return added, removed, tx.Commit(ctx)
 }
 
 // UnsetKilled removes a creature's killed mark for a user.
