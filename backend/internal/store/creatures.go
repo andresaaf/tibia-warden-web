@@ -78,6 +78,20 @@ func (s *CreatureStore) SetKilled(ctx context.Context, userID, creatureID int64)
 	return err
 }
 
+// SetKilledMany marks several creatures as killed for a user in one statement.
+// It only ever adds marks (existing ones are left alone, unknown IDs ignored)
+// and returns how many were newly marked.
+func (s *CreatureStore) SetKilledMany(ctx context.Context, userID int64, creatureIDs []int64) (int64, error) {
+	tag, err := s.pool.Exec(ctx, `
+		INSERT INTO warden_kills (user_id, creature_id)
+		SELECT $1, id FROM creatures WHERE id = ANY($2)
+		ON CONFLICT (user_id, creature_id) DO NOTHING`, userID, creatureIDs)
+	if err != nil {
+		return 0, err
+	}
+	return tag.RowsAffected(), nil
+}
+
 // UnsetKilled removes a creature's killed mark for a user.
 func (s *CreatureStore) UnsetKilled(ctx context.Context, userID, creatureID int64) error {
 	_, err := s.pool.Exec(ctx, `

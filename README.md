@@ -15,7 +15,8 @@ and coordinate live reveal announcements within groups.
 - **Groups** — public (discoverable) or private (join via one-time invite codes).
   Roles: owner, admin, member.
 - **Warden List** — personal, global list of every creature; mark/unmark killed,
-  search, and filter by difficulty (Harmless → Challenging).
+  search, and filter by difficulty (Harmless → Challenging). Export/import to
+  other trackers (TibiaDraptor) — see [Export / import](#export--import).
 - **Announcement room** — announce a reveal (creature, location, note); members
   respond **Coming** / **Ready** live; the author marks it **Killed**; then each
   present player clicks **I got it** to tick the creature on their own warden list
@@ -136,6 +137,24 @@ area tree from the file.
 file, drop a `data/areas.local.json` (gitignored). When present, the seeder uses
 it instead of `data/areas.json` — so `-areas .../areas.json` transparently picks
 up your override.
+
+## Export / import
+
+The Warden List header can **export** your marked wardens to another tracker's
+file format and **import** that tracker's export (import only ever adds marks).
+Formats live in `backend/internal/formats`; currently supported:
+
+- **TibiaDraptor** — `{"version":1,"sections":{"echo_wardens":[{"id":381}, ...]}}`.
+  The IDs are TibiaDraptor's own (not Tibia race IDs), so the backend embeds
+  their ID table (`internal/formats/tibiadraptor_ids.json`) and matches by
+  creature name, with a few aliases where TibiaWiki's naming differs. After a
+  Tibia update adds creatures (an export will say some wardens couldn't be
+  mapped), regenerate the table and commit it:
+
+  ```sh
+  cd backend
+  go run ./cmd/draptorids
+  ```
 
 ## Production (Docker Compose)
 

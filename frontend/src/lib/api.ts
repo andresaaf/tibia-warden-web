@@ -10,7 +10,10 @@ import type {
 	InviteCode,
 	ResponseStatus,
 	RosterPeriod,
-	User
+	User,
+	WardenExport,
+	WardenFormat,
+	WardenImportResult
 } from './types';
 
 /** Error thrown for non-2xx API responses, carrying the HTTP status. */
@@ -65,6 +68,32 @@ export const api = {
 	markKilled: (creatureId: number) => request<void>('PUT', `/api/wardens/${creatureId}`),
 	unmarkKilled: (creatureId: number) => request<void>('DELETE', `/api/wardens/${creatureId}`),
 	killedCreatures: () => request<number[]>('GET', '/api/wardens'),
+	exportWardens: async (format: WardenFormat): Promise<WardenExport> => {
+		const res = await fetch(`/api/wardens/export?format=${encodeURIComponent(format)}`, {
+			credentials: 'same-origin'
+		});
+		if (!res.ok) {
+			let message = res.statusText;
+			try {
+				const data = await res.json();
+				if (data && typeof data.error === 'string') message = data.error;
+			} catch {
+				// ignore JSON parse failures
+			}
+			throw new ApiError(res.status, message);
+		}
+		const disposition = res.headers.get('Content-Disposition') ?? '';
+		const filename = /filename="?([^";]+)"?/.exec(disposition)?.[1] ?? `wardens-${format}.json`;
+		const unmappedHeader = res.headers.get('X-Export-Unmapped');
+		const unmapped = unmappedHeader ? unmappedHeader.split(',').map(decodeURIComponent) : [];
+		return { blob: await res.blob(), filename, unmapped };
+	},
+	importWardens: (format: WardenFormat, file: unknown) =>
+		request<WardenImportResult>(
+			'POST',
+			`/api/wardens/import?format=${encodeURIComponent(format)}`,
+			file
+		),
 	areas: () => request<Area[]>('GET', '/api/areas'),
 
 	// Statistics

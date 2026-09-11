@@ -70,6 +70,8 @@ func NewRouter(cfg *config.Config, stores *store.Stores, oauth *auth.DiscordProv
 			// Warden list.
 			r.Get("/creatures", s.handleListCreatures)
 			r.Get("/wardens", s.handleListKilled)
+			r.Get("/wardens/export", s.handleExportWardens)
+			r.Post("/wardens/import", s.handleImportWardens)
 			r.Put("/wardens/{creatureID}", s.handleMarkKilled)
 			r.Delete("/wardens/{creatureID}", s.handleUnmarkKilled)
 			r.Get("/areas", s.handleListAreas)

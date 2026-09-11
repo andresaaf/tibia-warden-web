@@ -39,6 +39,26 @@ export interface Creature {
 	killed: boolean;
 }
 
+/** Other trackers' file formats the Warden List can be exported to / imported
+ * from. Ids match backend/internal/formats. */
+export const WARDEN_FORMATS = [{ id: 'tibiadraptor', label: 'TibiaDraptor' }] as const;
+
+export type WardenFormat = (typeof WARDEN_FORMATS)[number]['id'];
+
+export interface WardenExport {
+	blob: Blob;
+	filename: string;
+	/** Killed creatures the format has no identifier for (left out of the file). */
+	unmapped: string[];
+}
+
+export interface WardenImportResult {
+	added: number;
+	alreadyMarked: number;
+	/** Entries in the file that don't match any creature on our list. */
+	unknown: number;
+}
+
 export interface Subarea {
 	id: number;
 	name: string;
