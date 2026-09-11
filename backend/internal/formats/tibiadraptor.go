@@ -7,12 +7,14 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
 // tibiadraptorIDs is TibiaDraptor's Echo Warden table ({id, name}), keyed by
-// their own database IDs rather than Tibia race IDs. Regenerate it with
-// `go run ./cmd/draptorids`.
+// their own database IDs rather than Tibia race IDs. It is only the fallback:
+// the server replaces it with a live copy at startup (see RefreshTibiaDraptor).
+// `go run ./cmd/draptorids` refreshes the fallback.
 //
 //go:embed tibiadraptor_ids.json
 var tibiadraptorIDs []byte
@@ -35,14 +37,32 @@ type draptorTable struct {
 	alias  map[string]string // lower-cased our name -> TibiaDraptor name
 }
 
-var loadDraptorTable = sync.OnceValue(func() draptorTable {
-	var entries []struct {
-		ID   int    `json:"id"`
-		Name string `json:"name"`
-	}
+var embeddedDraptorEntries = sync.OnceValue(func() []DraptorEntry {
+	var entries []DraptorEntry
 	if err := json.Unmarshal(tibiadraptorIDs, &entries); err != nil {
 		panic(fmt.Sprintf("formats: bad tibiadraptor_ids.json: %v", err))
 	}
+	return entries
+})
+
+var embeddedDraptorTable = sync.OnceValue(func() draptorTable {
+	return buildDraptorTable(embeddedDraptorEntries())
+})
+
+// liveDraptorTable holds the most recent successfully refreshed table, or nil
+// until a refresh succeeds.
+var liveDraptorTable atomic.Pointer[draptorTable]
+
+// loadDraptorTable returns the live table when one has been fetched, otherwise
+// the one built into the binary.
+func loadDraptorTable() draptorTable {
+	if t := liveDraptorTable.Load(); t != nil {
+		return *t
+	}
+	return embeddedDraptorTable()
+}
+
+func buildDraptorTable(entries []DraptorEntry) draptorTable {
 	draptorToWiki := make(map[string]string, len(wikiToDraptor))
 	alias := make(map[string]string, len(wikiToDraptor))
 	for wiki, draptor := range wikiToDraptor {
@@ -63,7 +83,7 @@ var loadDraptorTable = sync.OnceValue(func() draptorTable {
 		t.byID[e.ID] = name
 	}
 	return t
-})
+}
 
 // draptorID returns TibiaDraptor's ID for one of our creature names.
 func draptorID(name string) (int, bool) {
@@ -76,7 +96,7 @@ func draptorID(name string) (int, bool) {
 	return id, ok
 }
 
-type draptorEntry struct {
+type draptorFileEntry struct {
 	ID int `json:"id"`
 }
 
@@ -84,7 +104,7 @@ type draptorFile struct {
 	Version    *int   `json:"version"`
 	ExportedAt string `json:"exported_at,omitempty"`
 	Sections   struct {
-		EchoWardens *[]draptorEntry `json:"echo_wardens"`
+		EchoWardens *[]draptorFileEntry `json:"echo_wardens"`
 	} `json:"sections"`
 }
 
@@ -106,9 +126,9 @@ func exportTibiaDraptor(names []string, character string, now time.Time) (Export
 		}
 	}
 	sort.Ints(ids)
-	entries := make([]draptorEntry, len(ids))
+	entries := make([]draptorFileEntry, len(ids))
 	for i, id := range ids {
-		entries[i] = draptorEntry{ID: id}
+		entries[i] = draptorFileEntry{ID: id}
 	}
 
 	version := 1

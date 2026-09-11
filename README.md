@@ -145,11 +145,14 @@ file format and **import** that tracker's export (import only ever adds marks).
 Formats live in `backend/internal/formats`; currently supported:
 
 - **TibiaDraptor** — `{"version":1,"sections":{"echo_wardens":[{"id":381}, ...]}}`.
-  The IDs are TibiaDraptor's own (not Tibia race IDs), so the backend embeds
-  their ID table (`internal/formats/tibiadraptor_ids.json`) and matches by
-  creature name, with a few aliases where TibiaWiki's naming differs. After a
-  Tibia update adds creatures (an export will say some wardens couldn't be
-  mapped), regenerate the table and commit it:
+  The IDs are TibiaDraptor's own (not Tibia race IDs), so the backend matches by
+  creature name against their ID table, with a few aliases where TibiaWiki's
+  naming differs. The server fetches that table from TibiaDraptor in the
+  background at startup (`TIBIADRAPTOR_URL`), so like the creature list, a
+  restart picks up new creatures without any manual step. A copy built into
+  the binary (`internal/formats/tibiadraptor_ids.json`) is used until that
+  fetch succeeds, or if TibiaDraptor is unreachable. Refreshing that fallback
+  is optional upkeep:
 
   ```sh
   cd backend

@@ -22,6 +22,11 @@ type Config struct {
 	// Set to empty to disable and rely solely on manual seeding.
 	CreaturesAPIURL string
 
+	// TibiaDraptorURL, when set, is TibiaDraptor's base URL; the server fetches
+	// its Echo Warden ID table (used by the TibiaDraptor export/import format)
+	// at startup. Set to empty to use only the table built into the binary.
+	TibiaDraptorURL string
+
 	// SessionSecret is used to sign session cookies. Must be stable across restarts.
 	SessionSecret string
 
@@ -49,6 +54,7 @@ func Load() (*Config, error) {
 		DiscordRedirectURL:  os.Getenv("DISCORD_REDIRECT_URL"),
 		DiscordBotToken:     os.Getenv("DISCORD_BOT_TOKEN"),
 		CreaturesAPIURL:     getEnv("CREATURES_API_URL", "https://tibiawiki.dev/api/creatures?expand=true"),
+		TibiaDraptorURL:     getEnv("TIBIADRAPTOR_URL", "https://tibiadraptor.com"),
 		SessionSecret:       os.Getenv("SESSION_SECRET"),
 		PublicBaseURL:       getEnv("PUBLIC_BASE_URL", "http://localhost:5173"),
 		StaticDir:           os.Getenv("STATIC_DIR"),

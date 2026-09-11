@@ -17,6 +17,7 @@ import (
 	"github.com/andresaaf/tibia-warden-web/backend/internal/creatures"
 	"github.com/andresaaf/tibia-warden-web/backend/internal/database"
 	"github.com/andresaaf/tibia-warden-web/backend/internal/discord"
+	"github.com/andresaaf/tibia-warden-web/backend/internal/formats"
 	"github.com/andresaaf/tibia-warden-web/backend/internal/store"
 	"github.com/andresaaf/tibia-warden-web/backend/internal/ws"
 )
@@ -57,6 +58,21 @@ func main() {
 		} else {
 			slog.Info("synced creatures from api", "imported", imported, "pruned", pruned)
 		}
+	}
+
+	// In the background so startup never waits on TibiaDraptor; exports use the
+	// built-in ID table until it lands (or for good, if it fails).
+	if cfg.TibiaDraptorURL != "" {
+		go func() {
+			refreshCtx, cancel := context.WithTimeout(ctx, 2*time.Minute)
+			defer cancel()
+			n, err := formats.RefreshTibiaDraptor(refreshCtx, cfg.TibiaDraptorURL)
+			if err != nil {
+				slog.Warn("tibiadraptor id refresh failed; using built-in table", "error", err)
+				return
+			}
+			slog.Info("refreshed tibiadraptor ids", "wardens", n)
+		}()
 	}
 
 	oauth := auth.NewDiscordProvider(cfg)
