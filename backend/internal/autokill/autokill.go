@@ -21,21 +21,29 @@ import (
 	"github.com/andresaaf/tibia-warden-web/backend/internal/ws"
 )
 
-// interval is how often the sweeper looks for stale announcements. Frequent
-// enough that a kill lands close to its deadline, cheap enough to ignore.
-const interval = time.Minute
+const (
+	// gracePeriod is how long after a reveal an announcement is auto-killed when
+	// no one did so manually. An Echo Warden despawns 10 minutes after it spawns,
+	// and a reveal never lands the very second it spawns, so 10 minutes past the
+	// reveal is comfortably past the point where the hunt is over.
+	gracePeriod = 10 * time.Minute
 
-// Sweeper periodically closes out announcements left open past their grace period.
+	// interval is how often the sweeper looks for stale announcements. Frequent
+	// enough that a kill lands close to its deadline, cheap enough to ignore.
+	interval = time.Minute
+)
+
+// Sweeper periodically closes out announcements left open past the grace period.
 type Sweeper struct {
 	stores *store.Stores
 	hub    *ws.Hub
 	bot    *discord.Bot // may be nil; its methods are nil-safe
-	after  time.Duration
 }
 
-// New builds a Sweeper that kills announcements still open `after` their reveal.
-func New(stores *store.Stores, hub *ws.Hub, bot *discord.Bot, after time.Duration) *Sweeper {
-	return &Sweeper{stores: stores, hub: hub, bot: bot, after: after}
+// New builds a Sweeper that kills announcements still open a grace period after
+// their reveal.
+func New(stores *store.Stores, hub *ws.Hub, bot *discord.Bot) *Sweeper {
+	return &Sweeper{stores: stores, hub: hub, bot: bot}
 }
 
 // Run sweeps once immediately (catching anything left open across a restart)
@@ -55,7 +63,7 @@ func (s *Sweeper) Run(ctx context.Context) {
 }
 
 func (s *Sweeper) sweep(ctx context.Context) {
-	ids, err := s.stores.Announcements.ExpiredOpen(ctx, time.Now().Add(-s.after))
+	ids, err := s.stores.Announcements.ExpiredOpen(ctx, time.Now().Add(-gracePeriod))
 	if err != nil {
 		slog.Error("autokill: failed to query expired announcements", "error", err)
 		return

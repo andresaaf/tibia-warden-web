@@ -77,11 +77,7 @@ func main() {
 		slog.Info("discord bot enabled")
 	}
 
-	if cfg.AutoKillMinutes > 0 {
-		killer := autokill.New(stores, hub, bot, time.Duration(cfg.AutoKillMinutes)*time.Minute)
-		go killer.Run(ctx)
-		slog.Info("auto-kill sweeper enabled", "minutes", cfg.AutoKillMinutes)
-	}
+	go autokill.New(stores, hub, bot).Run(ctx)
 
 	router := api.NewRouter(cfg, stores, oauth, hub, bot)
 
