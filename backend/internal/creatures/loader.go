@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"strings"
@@ -72,7 +73,8 @@ func Sync(ctx context.Context, creatures *store.CreatureStore, apiURL string) (i
 		return 0, 0, fmt.Errorf("parse creatures: %w", err)
 	}
 
-	kept := make([]string, 0, len(list))
+	type entry struct{ name, difficulty, rarity string }
+	var entries []entry
 	for _, c := range list {
 		name := strings.TrimSpace(c.Name)
 		difficulty, ok := difficulties[strings.ToLower(strings.TrimSpace(c.BestiaryLevel))]
@@ -83,10 +85,30 @@ func Sync(ctx context.Context, creatures *store.CreatureStore, apiURL string) (i
 		if !ok {
 			continue
 		}
-		if err := creatures.Upsert(ctx, name, difficulty, rarity, imageURL(name)); err != nil {
-			return imported, 0, fmt.Errorf("upsert %q: %w", name, err)
+		entries = append(entries, entry{name, difficulty, rarity})
+	}
+
+	names := make([]string, len(entries))
+	for i, e := range entries {
+		names[i] = e.name
+	}
+	images, err := resolveImages(ctx, client, wikiAPIURL, names)
+	if err != nil {
+		// Not fatal: fall back to computed URLs, which cover every creature
+		// whose image file isn't a redirect to another creature's.
+		slog.Warn("resolving creature images failed; using computed URLs", "error", err)
+	}
+
+	kept := make([]string, 0, len(entries))
+	for _, e := range entries {
+		img := images[e.name]
+		if img == "" {
+			img = imageURL(e.name)
 		}
-		kept = append(kept, name)
+		if err := creatures.Upsert(ctx, e.name, e.difficulty, e.rarity, img); err != nil {
+			return imported, 0, fmt.Errorf("upsert %q: %w", e.name, err)
+		}
+		kept = append(kept, e.name)
 		imported++
 	}
 
@@ -100,7 +122,9 @@ func Sync(ctx context.Context, creatures *store.CreatureStore, apiURL string) (i
 	return imported, pruned, nil
 }
 
-// imageURL builds the direct Fandom CDN URL of a creature's TibiaWiki image.
+// imageURL computes the direct Fandom CDN URL of a creature's TibiaWiki image,
+// the fallback when resolveImages has no answer. It misses creatures whose
+// file page redirects to another creature's image (Hot Dog -> Dog).
 // MediaWiki stores a file under /<h[0]>/<h[0:2]>/ where h is the hex MD5 of
 // its name (spaces as underscores). We link the CDN directly rather than
 // tibia.fandom.com's Special:FilePath redirect: that host sits behind a
