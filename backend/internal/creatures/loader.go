@@ -3,6 +3,7 @@ package creatures
 
 import (
 	"context"
+	"crypto/md5"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -99,8 +100,15 @@ func Sync(ctx context.Context, creatures *store.CreatureStore, apiURL string) (i
 	return imported, pruned, nil
 }
 
-// imageURL builds a TibiaWiki image URL for a creature via Fandom's Special:FilePath,
-// which resolves to the creature's default image.
+// imageURL builds the direct Fandom CDN URL of a creature's TibiaWiki image.
+// MediaWiki stores a file under /<h[0]>/<h[0:2]>/ where h is the hex MD5 of
+// its name (spaces as underscores). We link the CDN directly rather than
+// tibia.fandom.com's Special:FilePath redirect: that host sits behind a
+// Cloudflare challenge which answers cross-site <img> loads with an HTML 403,
+// so browsers (Firefox's OpaqueResponseBlocking in particular) refuse it.
 func imageURL(name string) string {
-	return "https://tibia.fandom.com/wiki/Special:FilePath/" + url.PathEscape(name) + ".gif"
+	file := strings.ReplaceAll(name, " ", "_") + ".gif"
+	h := fmt.Sprintf("%x", md5.Sum([]byte(file)))
+	return "https://static.wikia.nocookie.net/tibia/images/" + h[:1] + "/" + h[:2] + "/" +
+		url.PathEscape(file) + "/revision/latest?path-prefix=en"
 }
