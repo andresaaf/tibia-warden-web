@@ -105,7 +105,15 @@ export interface Group {
 	discordRoleId?: string;
 	discordRoleName?: string;
 	discordAutodeleteSeconds?: number;
+	/** Pay-to-attend: attendees pay attendPrices[difficulty] gold per Warden
+	 *  (× uncommonMultiplier for Uncommon creatures), in-game after the kill.
+	 *  Prices are kept while the mode is free. */
+	accessMode?: AccessMode;
+	attendPrices?: Partial<Record<Difficulty, number>>;
+	uncommonMultiplier?: number;
 }
+
+export type AccessMode = 'free' | 'pay_to_attend';
 
 export interface DiscordRole {
 	id: string;
@@ -204,7 +212,9 @@ export interface Announcement {
 	mapY?: number | null;
 	mapZ?: number | null;
 	note: string;
-	goldCost: number;
+	/** Pay-to-attend price (gold per attendee) computed from the group's
+	 *  pricing when posted; 0 = free. */
+	attendPrice: number;
 	status: AnnouncementStatus;
 	killedAt?: string | null;
 	createdAt: string;

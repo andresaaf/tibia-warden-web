@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/andresaaf/tibia-warden-web/backend/internal/config"
+	"github.com/andresaaf/tibia-warden-web/backend/internal/gold"
 	"github.com/andresaaf/tibia-warden-web/backend/internal/models"
 	"github.com/andresaaf/tibia-warden-web/backend/internal/store"
 	"github.com/andresaaf/tibia-warden-web/backend/internal/ws"
@@ -543,6 +544,12 @@ func (b *Bot) buildEmbed(a *models.Announcement, guildID string) *discordgo.Mess
 	}
 
 	var fields []*discordgo.MessageEmbedField
+	if a.AttendPrice > 0 {
+		fields = append(fields, &discordgo.MessageEmbedField{
+			Name:  "💰 Price",
+			Value: gold.Format(a.AttendPrice) + " to attend · pay in-game after the kill",
+		})
+	}
 	if a.Location != "" {
 		fields = append(fields, &discordgo.MessageEmbedField{Name: "📍 Location", Value: a.Location})
 	}

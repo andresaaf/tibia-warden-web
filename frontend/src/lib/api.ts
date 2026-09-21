@@ -1,4 +1,5 @@
 import type {
+	AccessMode,
 	Announcement,
 	Area,
 	Creature,
@@ -135,6 +136,12 @@ export const api = {
 	clearDiscordRole: (id: number) => request<void>('DELETE', `/api/groups/${id}/discord/role`),
 	setDiscordAutodelete: (id: number, seconds: number) =>
 		request<void>('PUT', `/api/groups/${id}/discord/autodelete`, { seconds }),
+	setAccessMode: (
+		id: number,
+		mode: AccessMode,
+		prices: Record<string, string> = {},
+		uncommonMultiplier = ''
+	) => request<Group>('PUT', `/api/groups/${id}/access`, { mode, prices, uncommonMultiplier }),
 
 	// Announcements
 	announcements: (groupId: number) =>
@@ -143,7 +150,6 @@ export const api = {
 	broadcastAnnouncement: (payload: {
 		creatureId: number;
 		note: string;
-		goldCost: number;
 		groupIds?: number[];
 		mapX?: number | null;
 		mapY?: number | null;
@@ -155,7 +161,6 @@ export const api = {
 			creatureId: number;
 			location: string;
 			note: string;
-			goldCost: number;
 			mapX?: number | null;
 			mapY?: number | null;
 			mapZ?: number | null;

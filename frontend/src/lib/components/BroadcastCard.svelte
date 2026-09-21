@@ -2,6 +2,8 @@
 	import { api, ApiError } from '$lib/api';
 	import { copyText } from '$lib/clipboard';
 	import AnnouncementMap from '$lib/components/AnnouncementMap.svelte';
+	import PricePill from '$lib/components/PricePill.svelte';
+	import { formatK } from '$lib/format';
 	import type { Announcement } from '$lib/types';
 
 	let {
@@ -20,6 +22,11 @@
 
 	let primary = $derived(announcements[0]);
 	let killed = $derived(announcements.some((a) => a.status === 'killed'));
+	// Each sibling carries its own group's price. When they all agree, one pill
+	// in the header; otherwise the price is shown per group section.
+	let uniformPrice = $derived(
+		announcements.every((a) => a.attendPrice === primary.attendPrice) ? primary.attendPrice : null
+	);
 	let sorted = $derived(
 		[...announcements].sort((a, b) => (a.groupName ?? '').localeCompare(b.groupName ?? ''))
 	);
@@ -120,6 +127,7 @@
 					<span class="badge status-open">Open</span>
 				{/if}
 				<span class="badge diff" data-diff={primary.difficulty} title="Difficulty · charm points">{primary.difficulty} ★ {primary.charmPoints}</span>
+				{#if uniformPrice !== null}<PricePill price={uniformPrice} />{/if}
 				<span class="badge group-badge">{announcements.length} groups</span>
 				{#if alreadyKilled}
 					<span class="badge mine" title="You've already killed this Echo Warden">✓ In your list</span>
@@ -182,7 +190,9 @@
 		<div class="groups">
 			{#each sorted as a (a.id)}
 				<div class="group-section">
-					<div class="group-name">{a.groupName || 'Group'}</div>
+					<div class="group-name">
+						{a.groupName || 'Group'}{#if uniformPrice === null}<span class="group-price">{a.attendPrice > 0 ? ` · 💰 ${formatK(a.attendPrice)} to attend` : ' · free'}</span>{/if}
+					</div>
 					{#if namesByStatus(a, 'coming').length}
 						<div class="muted small">Coming: {namesByStatus(a, 'coming').join(', ')}</div>
 					{/if}
@@ -204,7 +214,9 @@
 		<div class="groups">
 			{#each sorted as a (a.id)}
 				<div class="group-section">
-					<div class="group-name">{a.groupName || 'Group'}</div>
+					<div class="group-name">
+						{a.groupName || 'Group'}{#if uniformPrice === null}<span class="group-price">{a.attendPrice > 0 ? ` · 💰 ${formatK(a.attendPrice)} to attend` : ' · free'}</span>{/if}
+					</div>
 					{#if claimNames(a).length}
 						<div class="muted small">Got the kill: {claimNames(a).join(', ')}</div>
 					{:else}
@@ -217,6 +229,10 @@
 </div>
 
 <style>
+	.group-price {
+		font-weight: 400;
+		color: var(--accent);
+	}
 	.announcement.killed {
 		opacity: 0.92;
 	}

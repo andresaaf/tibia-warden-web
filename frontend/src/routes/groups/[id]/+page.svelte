@@ -5,13 +5,18 @@
 	import { api, ApiError } from '$lib/api';
 	import { currentUser, authLoading } from '$lib/stores';
 	import { GroupRoom, type RoomEvent } from '$lib/ws';
-	import { formatK } from '$lib/format';
+	import { formatGoldInput, formatK } from '$lib/format';
+	import { attendPriceFor } from '$lib/pricing';
+	import { DIFFICULTIES } from '$lib/types';
 	import { copyText } from '$lib/clipboard';
 	import TibiaMap from '$lib/components/TibiaMap.svelte';
 	import AnnouncementMap from '$lib/components/AnnouncementMap.svelte';
+	import PricePill from '$lib/components/PricePill.svelte';
 	import type {
+		AccessMode,
 		Announcement,
 		Creature,
+		Difficulty,
 		DiscordRole,
 		Group,
 		GroupMember,
@@ -68,6 +73,36 @@
 	$effect(() => {
 		autodelete = group?.discordAutodeleteSeconds ?? -1;
 	});
+
+	// Access mode settings, seeded from the group whenever it (re)loads.
+	let accessMode = $state<AccessMode>('free');
+	let priceInputs = $state<Record<Difficulty, string>>(emptyPriceInputs());
+	let multiplierInput = $state('');
+	let accessBusy = $state(false);
+	let accessError = $state('');
+	let accessSaved = $state(false);
+	$effect(() => {
+		accessMode = group?.accessMode ?? 'free';
+		const inputs = emptyPriceInputs();
+		for (const d of DIFFICULTIES) {
+			const v = group?.attendPrices?.[d];
+			if (v) inputs[d] = formatGoldInput(v);
+		}
+		priceInputs = inputs;
+		multiplierInput = String(group?.uncommonMultiplier ?? 1);
+	});
+	function emptyPriceInputs(): Record<Difficulty, string> {
+		return Object.fromEntries(DIFFICULTIES.map((d) => [d, ''])) as Record<Difficulty, string>;
+	}
+
+	// Price the selected creature would carry if posted now (post-form hint).
+	let isPaid = $derived(group?.accessMode === 'pay_to_attend');
+	let selectedCreature = $derived(creatures.find((c) => c.id === creatureId) ?? null);
+	let selectedPrice = $derived(
+		group && selectedCreature
+			? attendPriceFor(group, selectedCreature.difficulty, selectedCreature.rarity)
+			: 0
+	);
 
 	let me = $derived($currentUser);
 	let isManager = $derived(group?.role === 'owner' || group?.role === 'admin');
@@ -279,7 +314,6 @@
 				creatureId: Number(creatureId),
 				location: '',
 				note: note.trim(),
-				goldCost: 0,
 				mapX: mapTouched ? mapX : null,
 				mapY: mapTouched ? mapY : null,
 				mapZ: mapTouched ? mapZ : null
@@ -546,6 +580,24 @@
 			error = err instanceof ApiError ? err.message : 'Failed to update setting.';
 		} finally {
 			discordBusy = false;
+		}
+	}
+
+	async function saveAccessMode(mode: AccessMode) {
+		accessMode = mode;
+		accessError = '';
+		accessSaved = false;
+		accessBusy = true;
+		try {
+			group =
+				mode === 'free'
+					? await api.setAccessMode(groupId, mode)
+					: await api.setAccessMode(groupId, mode, priceInputs, multiplierInput);
+			accessSaved = true;
+		} catch (err) {
+			accessError = err instanceof ApiError ? err.message : 'Failed to update access mode.';
+		} finally {
+			accessBusy = false;
 		}
 	}
 
@@ -844,20 +896,86 @@
 
 				<div class="access-section">
 					<h3>Access mode</h3>
-					<p class="muted small">
-						How members join your hunts. <span class="badge">Coming soon</span>
-					</p>
+					<p class="muted small">How members join your hunts.</p>
 					<div class="access-opts">
-						<label class="access-opt">
-							<input type="radio" name="access-mode" checked disabled /> Free to attend
+						<label class="access-opt" class:active={accessMode === 'free'}>
+							<input
+								type="radio"
+								name="access-mode"
+								checked={accessMode === 'free'}
+								disabled={accessBusy}
+								onchange={() => saveAccessMode('free')}
+							/> Free to attend
 						</label>
-						<label class="access-opt">
-							<input type="radio" name="access-mode" disabled /> Pay to attend
+						<label class="access-opt" class:active={accessMode === 'pay_to_attend'}>
+							<input
+								type="radio"
+								name="access-mode"
+								checked={accessMode === 'pay_to_attend'}
+								disabled={accessBusy}
+								onchange={() => {
+									// Reveal the price table; it's saved with the button.
+									accessMode = 'pay_to_attend';
+									accessSaved = false;
+									accessError = '';
+								}}
+							/> Pay to attend
 						</label>
+						{#if accessMode === 'pay_to_attend'}
+							<form
+								class="price-form"
+								onsubmit={(e) => {
+									e.preventDefault();
+									saveAccessMode('pay_to_attend');
+								}}
+							>
+								<div class="price-grid">
+									{#each DIFFICULTIES as d (d)}
+										<label class="price-row">
+											<span class="badge diff" data-diff={d}>{d}</span>
+											<input
+												type="text"
+												placeholder="free"
+												aria-label={`Price for ${d} Wardens`}
+												bind:value={priceInputs[d]}
+												oninput={() => (accessSaved = false)}
+												disabled={accessBusy}
+											/>
+										</label>
+									{/each}
+									<label class="price-row">
+										<span class="badge">Uncommon ×</span>
+										<input
+											type="text"
+											placeholder="1"
+											aria-label="Multiplier for Uncommon creatures"
+											bind:value={multiplierInput}
+											oninput={() => (accessSaved = false)}
+											disabled={accessBusy}
+										/>
+									</label>
+								</div>
+								<button class="btn btn-sm btn-primary" type="submit" disabled={accessBusy}>
+									{accessBusy ? 'Saving…' : 'Save prices'}
+								</button>
+							</form>
+							<p class="muted small price-help">
+								Gold each attendee pays per Warden, by difficulty (e.g. <code>30k</code>, blank =
+								free). Uncommon creatures cost the price × the multiplier. Paid in-game after the
+								kill; changes apply to new announcements.
+							</p>
+						{/if}
 						<label class="access-opt">
 							<input type="radio" name="access-mode" disabled /> Pay for monthly access
+							<span class="badge">Coming soon</span>
 						</label>
 					</div>
+					{#if accessError}<p class="error small">{accessError}</p>{/if}
+					{#if accessSaved && !accessError}
+						<p class="muted small">
+							Saved — {group.accessMode === 'pay_to_attend' ? 'pay to attend.' : 'free to attend.'}
+						</p>
+					{/if}
 				</div>
 
 				{#if group.role === 'owner'}
@@ -909,6 +1027,19 @@
 				{/if}
 			</div>
 			<input type="text" placeholder="Note (optional)" bind:value={note} />
+			{#if isPaid}
+				<p class="muted small price-hint">
+					{#if selectedCreature && selectedPrice > 0}
+						💰 Attendees pay {formatK(selectedPrice)} each for this
+						{selectedCreature.rarity === 'Uncommon' ? 'Uncommon ' : ''}{selectedCreature.difficulty}
+						Warden, in-game after the kill.
+					{:else if selectedCreature}
+						💰 Free to attend — no price set for {selectedCreature.difficulty}.
+					{:else}
+						💰 Pay to attend — the price depends on the Warden's difficulty.
+					{/if}
+				</p>
+			{/if}
 			<div class="map-picker">
 				{#if showMapPicker}
 					<TibiaMap
@@ -957,6 +1088,7 @@
 									<span class="badge status-open">Open</span>
 								{/if}
 								<span class="badge diff" data-diff={a.difficulty} title="Difficulty · charm points">{a.difficulty} ★ {a.charmPoints}</span>
+								<PricePill price={a.attendPrice} />
 								{#if killedIds.includes(a.creatureId)}
 									<span class="badge mine" title="You've already killed this Echo Warden">✓ In your list</span>
 								{/if}
@@ -1327,6 +1459,37 @@
 	}
 	.access-opt input {
 		width: auto;
+	}
+	.access-opt.active {
+		color: var(--text);
+	}
+	.price-form {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 0.5rem;
+		margin-left: 1.5rem;
+	}
+	.price-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
+		gap: 0.35rem 0.75rem;
+		width: 100%;
+	}
+	.price-row {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.5rem;
+	}
+	.price-row input {
+		width: 7rem;
+	}
+	.price-help {
+		margin: 0 0 0 1.5rem;
+	}
+	.price-hint {
+		margin: 0;
 	}
 	.settings > .discord-section:first-child {
 		border-top: none;

@@ -124,7 +124,6 @@
 			await api.broadcastAnnouncement({
 				creatureId: Number(creatureId),
 				note: note.trim(),
-				goldCost: 0,
 				groupIds: target === 'all' ? undefined : [Number(target)],
 				mapX: mapTouched ? mapX : null,
 				mapY: mapTouched ? mapY : null,

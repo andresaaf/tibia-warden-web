@@ -13,6 +13,15 @@ export function formatK(n: number): string {
 	return String(rounded) + suffix;
 }
 
+/** Exact gold amount in the short form players type, for prefilling inputs:
+ *  30000 → "30k", 1500 → "1.5k", 2500000 → "2.5kk", 1234 → "1234". Unlike
+ *  formatK it never rounds, so saving the value back round-trips unchanged. */
+export function formatGoldInput(n: number): string {
+	if (n >= 1_000_000 && n % 100_000 === 0) return `${n / 1_000_000}kk`;
+	if (n >= 1000 && n % 100 === 0) return `${n / 1000}k`;
+	return String(n);
+}
+
 /** Compact "time since" label for a timestamp: "just now", "5m", "3h", "12d",
  *  "8mo", "2y". Meant for dense table cells — pair it with a title showing the
  *  full local date. */

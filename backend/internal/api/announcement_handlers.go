@@ -57,7 +57,6 @@ func (s *Server) handleCreateAnnouncement(w http.ResponseWriter, r *http.Request
 		MapY       *int   `json:"mapY"`
 		MapZ       *int   `json:"mapZ"`
 		Note       string `json:"note"`
-		GoldCost   int    `json:"goldCost"`
 	}
 	if err := decodeJSON(r, &body); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request body")
@@ -76,14 +75,11 @@ func (s *Server) handleCreateAnnouncement(w http.ResponseWriter, r *http.Request
 		writeError(w, http.StatusBadRequest, "unknown creature")
 		return
 	}
-	if body.GoldCost < 0 {
-		body.GoldCost = 0
-	}
 	mapX, mapY, mapZ := normalizeMapCoord(body.MapX, body.MapY, body.MapZ)
 
 	announcement, err := s.stores.Announcements.Create(
 		r.Context(), groupID, body.CreatureID, userID(r),
-		strings.TrimSpace(body.Location), strings.TrimSpace(body.Note), body.GoldCost, nil, mapX, mapY, mapZ)
+		strings.TrimSpace(body.Location), strings.TrimSpace(body.Note), nil, mapX, mapY, mapZ)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "failed to create announcement")
 		return
@@ -116,7 +112,6 @@ func (s *Server) handleBroadcastAnnouncement(w http.ResponseWriter, r *http.Requ
 		MapY       *int    `json:"mapY"`
 		MapZ       *int    `json:"mapZ"`
 		Note       string  `json:"note"`
-		GoldCost   int     `json:"goldCost"`
 		GroupIDs   []int64 `json:"groupIds"`
 	}
 	if err := decodeJSON(r, &body); err != nil {
@@ -135,9 +130,6 @@ func (s *Server) handleBroadcastAnnouncement(w http.ResponseWriter, r *http.Requ
 	if !exists {
 		writeError(w, http.StatusBadRequest, "unknown creature")
 		return
-	}
-	if body.GoldCost < 0 {
-		body.GoldCost = 0
 	}
 
 	uid := userID(r)
@@ -172,7 +164,7 @@ func (s *Server) handleBroadcastAnnouncement(w http.ResponseWriter, r *http.Requ
 		}
 	}
 	for _, gid := range targets {
-		ann, err := s.stores.Announcements.Create(r.Context(), gid, body.CreatureID, uid, "", note, body.GoldCost, broadcastID, mapX, mapY, mapZ)
+		ann, err := s.stores.Announcements.Create(r.Context(), gid, body.CreatureID, uid, "", note, broadcastID, mapX, mapY, mapZ)
 		if err != nil {
 			continue
 		}

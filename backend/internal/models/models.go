@@ -12,6 +12,12 @@ const (
 	DifficultyChallenging = "Challenging"
 )
 
+// Difficulties lists the difficulty classes from easiest to hardest.
+var Difficulties = []string{
+	DifficultyHarmless, DifficultyTrivial, DifficultyEasy,
+	DifficultyMedium, DifficultyHard, DifficultyChallenging,
+}
+
 // Rarity enumerates the creature occurrences we track (from TibiaWiki).
 const (
 	RarityCommon   = "Common"
@@ -22,6 +28,14 @@ const (
 const (
 	VisibilityPublic  = "public"
 	VisibilityPrivate = "private"
+)
+
+// Group access modes. Pay-to-attend attendees pay a per-difficulty price per
+// Warden (× the uncommon multiplier for Uncommon creatures), in-game after the
+// kill (payment isn't handled by the app).
+const (
+	AccessFree        = "free"
+	AccessPayToAttend = "pay_to_attend"
 )
 
 // Group member roles.
@@ -152,6 +166,13 @@ type Group struct {
 	DiscordRoleName  string `json:"discordRoleName,omitempty"`
 	// DiscordAutodeleteSeconds: -1 Never, 0 immediately on kill, else seconds after kill.
 	DiscordAutodeleteSeconds int `json:"discordAutodeleteSeconds"`
+	// AccessMode is AccessFree or AccessPayToAttend. AttendPrices maps a creature
+	// difficulty to the gold each attendee pays per Warden (missing = free);
+	// Uncommon creatures cost UncommonMultiplier times that. Prices are kept
+	// while the mode is free so they return when it's re-enabled.
+	AccessMode         string           `json:"accessMode"`
+	AttendPrices       map[string]int64 `json:"attendPrices"`
+	UncommonMultiplier float64          `json:"uncommonMultiplier"`
 }
 
 type GroupMember struct {
@@ -205,16 +226,18 @@ type Announcement struct {
 	Location    string `json:"location"`
 	// MapX, MapY, MapZ are the optional marked map spot (absolute Tibia world
 	// coordinates and floor). All nil together when no spot was marked.
-	MapX      *int                   `json:"mapX,omitempty"`
-	MapY      *int                   `json:"mapY,omitempty"`
-	MapZ      *int                   `json:"mapZ,omitempty"`
-	Note      string                 `json:"note"`
-	GoldCost  int                    `json:"goldCost"`
-	Status    string                 `json:"status"`
-	KilledAt  *time.Time             `json:"killedAt,omitempty"`
-	CreatedAt time.Time              `json:"createdAt"`
-	Responses []AnnouncementResponse `json:"responses"`
-	Claims    []AnnouncementClaim    `json:"claims"`
+	MapX *int   `json:"mapX,omitempty"`
+	MapY *int   `json:"mapY,omitempty"`
+	MapZ *int   `json:"mapZ,omitempty"`
+	Note string `json:"note"`
+	// AttendPrice is the pay-to-attend price (gold per attendee) for this
+	// Warden, computed from the group's pricing when posted. 0 = free.
+	AttendPrice int64                  `json:"attendPrice"`
+	Status      string                 `json:"status"`
+	KilledAt    *time.Time             `json:"killedAt,omitempty"`
+	CreatedAt   time.Time              `json:"createdAt"`
+	Responses   []AnnouncementResponse `json:"responses"`
+	Claims      []AnnouncementClaim    `json:"claims"`
 	// DiscordMessageID is the mirrored Discord message, when the group is linked.
 	DiscordMessageID string `json:"-"` // GroupName and ViewerRole are populated for the aggregated home feed.
 	GroupName        string `json:"groupName,omitempty"`

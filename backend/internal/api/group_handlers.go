@@ -4,11 +4,15 @@ import (
 	"crypto/rand"
 	"encoding/base32"
 	"errors"
+	"fmt"
+	"math"
 	"net/http"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/andresaaf/tibia-warden-web/backend/internal/gold"
 	"github.com/andresaaf/tibia-warden-web/backend/internal/models"
 	"github.com/andresaaf/tibia-warden-web/backend/internal/store"
 )
@@ -606,4 +610,99 @@ func (s *Server) handleSetDiscordAutodelete(w http.ResponseWriter, r *http.Reque
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]int{"seconds": body.Seconds})
+}
+
+// maxUncommonMultiplier caps the pay-to-attend multiplier for Uncommon creatures.
+const maxUncommonMultiplier = 100
+
+// parseAttendPricing validates pay-to-attend pricing as typed in the settings
+// form: a gold amount per difficulty ("30k", "1.5kk"; blank = free for that
+// difficulty) and the Uncommon multiplier ("1.5", "x2"; blank = 1). At least
+// one difficulty must have a price. The multiplier is rounded to 2 decimals.
+func parseAttendPricing(prices map[string]string, multiplier string) (map[string]int64, float64, error) {
+	out := map[string]int64{}
+	for key, raw := range prices {
+		if !slices.Contains(models.Difficulties, key) {
+			return nil, 0, fmt.Errorf("unknown difficulty %q", key)
+		}
+		if strings.TrimSpace(raw) == "" {
+			continue
+		}
+		v, err := gold.Parse(raw)
+		if err != nil {
+			return nil, 0, fmt.Errorf("%s: enter a price like 30k", key)
+		}
+		if v > 0 {
+			out[key] = v
+		}
+	}
+	if len(out) == 0 {
+		return nil, 0, errors.New("set a price for at least one difficulty")
+	}
+	m := strings.TrimSpace(strings.ToLower(multiplier))
+	m = strings.TrimSpace(strings.Trim(m, "x×"))
+	mult := 1.0
+	if m != "" {
+		f, err := strconv.ParseFloat(m, 64)
+		if err != nil || math.IsNaN(f) || f <= 0 || f > maxUncommonMultiplier {
+			return nil, 0, errors.New("uncommon multiplier must be a number like 1.5")
+		}
+		mult = math.Round(f*100) / 100
+		if mult <= 0 {
+			return nil, 0, errors.New("uncommon multiplier must be a number like 1.5")
+		}
+	}
+	return out, mult, nil
+}
+
+// handleSetAccessMode sets the group's access mode (owner/admin only).
+// Switching to free keeps the stored pricing; pay-to-attend replaces it with
+// the submitted per-difficulty prices and Uncommon multiplier.
+func (s *Server) handleSetAccessMode(w http.ResponseWriter, r *http.Request) {
+	groupID, ok := parseID(w, r, "groupID")
+	if !ok {
+		return
+	}
+	role, err := s.requireMembership(r, groupID)
+	if err != nil {
+		writeMembershipError(w, err)
+		return
+	}
+	if role != models.RoleOwner && role != models.RoleAdmin {
+		writeError(w, http.StatusForbidden, "only owners and admins can change the access mode")
+		return
+	}
+	var body struct {
+		Mode               string            `json:"mode"`
+		Prices             map[string]string `json:"prices"`
+		UncommonMultiplier string            `json:"uncommonMultiplier"`
+	}
+	if err := decodeJSON(r, &body); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	var prices map[string]int64
+	var mult float64
+	switch body.Mode {
+	case models.AccessFree:
+	case models.AccessPayToAttend:
+		prices, mult, err = parseAttendPricing(body.Prices, body.UncommonMultiplier)
+		if err != nil {
+			writeError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+	default:
+		writeError(w, http.StatusBadRequest, "invalid access mode")
+		return
+	}
+	if err := s.stores.Groups.SetAccessMode(r.Context(), groupID, body.Mode, prices, mult); err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to update access mode")
+		return
+	}
+	group, err := s.stores.Groups.GetByID(r.Context(), groupID, userID(r))
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to load group")
+		return
+	}
+	writeJSON(w, http.StatusOK, group)
 }

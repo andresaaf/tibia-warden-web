@@ -2,6 +2,7 @@
 	import { api, ApiError } from '$lib/api';
 	import { copyText } from '$lib/clipboard';
 	import AnnouncementMap from '$lib/components/AnnouncementMap.svelte';
+	import PricePill from '$lib/components/PricePill.svelte';
 	import type { Announcement } from '$lib/types';
 
 	let {
@@ -103,6 +104,7 @@
 					<span class="badge status-open">Open</span>
 				{/if}
 				<span class="badge diff" data-diff={a.difficulty} title="Difficulty · charm points">{a.difficulty} ★ {a.charmPoints}</span>
+				<PricePill price={a.attendPrice} />
 				{#if showGroup && a.groupName}
 					<a class="badge group-badge" href={`/groups/${a.groupId}`}>{a.groupName}</a>
 				{/if}
