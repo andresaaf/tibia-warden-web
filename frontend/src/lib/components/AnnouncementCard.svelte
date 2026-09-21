@@ -2,7 +2,7 @@
 	import { api, ApiError } from '$lib/api';
 	import { copyText } from '$lib/clipboard';
 	import AnnouncementMap from '$lib/components/AnnouncementMap.svelte';
-	import PricePill from '$lib/components/PricePill.svelte';
+	import PriceLine from '$lib/components/PriceLine.svelte';
 	import type { Announcement } from '$lib/types';
 
 	let {
@@ -104,7 +104,6 @@
 					<span class="badge status-open">Open</span>
 				{/if}
 				<span class="badge diff" data-diff={a.difficulty} title="Difficulty · charm points">{a.difficulty} ★ {a.charmPoints}</span>
-				<PricePill price={a.attendPrice} />
 				{#if showGroup && a.groupName}
 					<a class="badge group-badge" href={`/groups/${a.groupId}`}>{a.groupName}</a>
 				{/if}
@@ -112,6 +111,7 @@
 					<span class="badge mine" title="You've already killed this Echo Warden">✓ In your list</span>
 				{/if}
 			</div>
+			<PriceLine price={a.attendPrice} />
 			{#if editingNote}
 				<form class="note-edit" onsubmit={(e) => { e.preventDefault(); saveNote(); }}>
 					<!-- svelte-ignore a11y_autofocus -->
@@ -140,9 +140,6 @@
 					</button>
 				{/if}
 			{/if}
-			{#if a.status !== 'killed' && a.mapX != null && a.mapY != null && a.mapZ != null}
-				<AnnouncementMap id={a.id} x={a.mapX} y={a.mapY} z={a.mapZ} />
-			{/if}
 			<div class="muted small">
 				by {a.authorName}<button
 					type="button"
@@ -151,6 +148,9 @@
 					aria-label={`Copy exiva command for ${a.authorName}`}
 					onclick={() => copyText(`exiva "${a.authorName}`)}>🔍</button> · {new Date(a.createdAt).toLocaleTimeString()}
 			</div>
+			{#if a.status !== 'killed' && a.mapX != null && a.mapY != null && a.mapZ != null}
+				<AnnouncementMap id={a.id} x={a.mapX} y={a.mapY} z={a.mapZ} />
+			{/if}
 		</div>
 	</div>
 

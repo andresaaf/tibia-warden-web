@@ -2,7 +2,7 @@
 	import { api, ApiError } from '$lib/api';
 	import { copyText } from '$lib/clipboard';
 	import AnnouncementMap from '$lib/components/AnnouncementMap.svelte';
-	import PricePill from '$lib/components/PricePill.svelte';
+	import PriceLine from '$lib/components/PriceLine.svelte';
 	import { formatK } from '$lib/format';
 	import type { Announcement } from '$lib/types';
 
@@ -127,12 +127,12 @@
 					<span class="badge status-open">Open</span>
 				{/if}
 				<span class="badge diff" data-diff={primary.difficulty} title="Difficulty · charm points">{primary.difficulty} ★ {primary.charmPoints}</span>
-				{#if uniformPrice !== null}<PricePill price={uniformPrice} />{/if}
 				<span class="badge group-badge">{announcements.length} groups</span>
 				{#if alreadyKilled}
 					<span class="badge mine" title="You've already killed this Echo Warden">✓ In your list</span>
 				{/if}
 			</div>
+			{#if uniformPrice !== null}<PriceLine price={uniformPrice} />{/if}
 			{#if editingNote}
 				<form class="note-edit" onsubmit={(e) => { e.preventDefault(); saveNote(); }}>
 					<!-- svelte-ignore a11y_autofocus -->
@@ -161,9 +161,6 @@
 					</button>
 				{/if}
 			{/if}
-			{#if !killed && primary.mapX != null && primary.mapY != null && primary.mapZ != null}
-				<AnnouncementMap id={primary.id} x={primary.mapX} y={primary.mapY} z={primary.mapZ} />
-			{/if}
 			<div class="muted small">
 				by {primary.authorName}<button
 					type="button"
@@ -172,6 +169,9 @@
 					aria-label={`Copy exiva command for ${primary.authorName}`}
 					onclick={() => copyText(`exiva "${primary.authorName}`)}>🔍</button> · {new Date(primary.createdAt).toLocaleTimeString()}
 			</div>
+			{#if !killed && primary.mapX != null && primary.mapY != null && primary.mapZ != null}
+				<AnnouncementMap id={primary.id} x={primary.mapX} y={primary.mapY} z={primary.mapZ} />
+			{/if}
 		</div>
 	</div>
 
@@ -191,7 +191,7 @@
 			{#each sorted as a (a.id)}
 				<div class="group-section">
 					<div class="group-name">
-						{a.groupName || 'Group'}{#if uniformPrice === null}<span class="group-price">{a.attendPrice > 0 ? ` · 💰 ${formatK(a.attendPrice)} to attend` : ' · free'}</span>{/if}
+						{a.groupName || 'Group'}{#if uniformPrice === null}<span class="group-price">{a.attendPrice > 0 ? ` · 💰 ${formatK(a.attendPrice)}` : ' · free'}</span>{/if}
 					</div>
 					{#if namesByStatus(a, 'coming').length}
 						<div class="muted small">Coming: {namesByStatus(a, 'coming').join(', ')}</div>
@@ -215,7 +215,7 @@
 			{#each sorted as a (a.id)}
 				<div class="group-section">
 					<div class="group-name">
-						{a.groupName || 'Group'}{#if uniformPrice === null}<span class="group-price">{a.attendPrice > 0 ? ` · 💰 ${formatK(a.attendPrice)} to attend` : ' · free'}</span>{/if}
+						{a.groupName || 'Group'}{#if uniformPrice === null}<span class="group-price">{a.attendPrice > 0 ? ` · 💰 ${formatK(a.attendPrice)}` : ' · free'}</span>{/if}
 					</div>
 					{#if claimNames(a).length}
 						<div class="muted small">Got the kill: {claimNames(a).join(', ')}</div>
