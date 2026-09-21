@@ -547,7 +547,7 @@ func (b *Bot) buildEmbed(a *models.Announcement, guildID string) *discordgo.Mess
 	if a.AttendPrice > 0 {
 		fields = append(fields, &discordgo.MessageEmbedField{
 			Name:  "💰 Price",
-			Value: gold.Format(a.AttendPrice) + " to attend · pay in-game after the kill",
+			Value: gold.Format(a.AttendPrice) + " · parcel after kill",
 		})
 	}
 	if a.Location != "" {
