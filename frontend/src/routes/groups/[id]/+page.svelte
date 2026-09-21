@@ -1470,20 +1470,22 @@
 		gap: 0.5rem;
 		margin-left: 1.5rem;
 	}
+	/* One label/input pair per line: a fixed label column keeps every input
+	   directly beside its own difficulty, never next to the following one. */
 	.price-grid {
 		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
-		gap: 0.35rem 0.75rem;
-		width: 100%;
+		grid-template-columns: 7.5rem 7rem;
+		gap: 0.35rem 0.5rem;
+		align-items: center;
 	}
 	.price-row {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		gap: 0.5rem;
+		display: contents;
+	}
+	.price-row .badge {
+		justify-self: start;
 	}
 	.price-row input {
-		width: 7rem;
+		width: 100%;
 	}
 	.price-help {
 		margin: 0 0 0 1.5rem;
