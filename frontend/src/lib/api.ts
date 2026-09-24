@@ -139,9 +139,8 @@ export const api = {
 	setAccessMode: (
 		id: number,
 		mode: AccessMode,
-		prices: Record<string, string> = {},
-		uncommonMultiplier = ''
-	) => request<Group>('PUT', `/api/groups/${id}/access`, { mode, prices, uncommonMultiplier }),
+		prices: Record<string, Record<string, string>> = {}
+	) => request<Group>('PUT', `/api/groups/${id}/access`, { mode, prices }),
 
 	// Announcements
 	announcements: (groupId: number) =>

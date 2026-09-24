@@ -3,46 +3,46 @@ package api
 import "testing"
 
 func TestParseAttendPricing(t *testing.T) {
-	prices, mult, err := parseAttendPricing(map[string]string{
-		"Easy": "5k", "Medium": "", "Hard": "30,000", "Challenging": "0.1kk",
-	}, " x1.5 ")
+	got, err := parseAttendPricing(map[string]map[string]string{
+		"Common":   {"Easy": "5k", "Medium": "", "Hard": "30,000"},
+		"Uncommon": {"Hard": "0.1kk"},
+	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := map[string]int64{"Easy": 5000, "Hard": 30000, "Challenging": 100000}
-	if len(prices) != len(want) {
-		t.Fatalf("prices = %v; want %v", prices, want)
+	want := map[string]map[string]int64{
+		"Common":   {"Easy": 5000, "Hard": 30000},
+		"Uncommon": {"Hard": 100000},
 	}
-	for k, v := range want {
-		if prices[k] != v {
-			t.Errorf("prices[%s] = %d; want %d", k, prices[k], v)
+	for rarity, prices := range want {
+		if len(got[rarity]) != len(prices) {
+			t.Fatalf("%s = %v; want %v", rarity, got[rarity], prices)
+		}
+		for d, v := range prices {
+			if got[rarity][d] != v {
+				t.Errorf("%s %s = %d; want %d", rarity, d, got[rarity][d], v)
+			}
 		}
 	}
-	if mult != 1.5 {
-		t.Errorf("mult = %v; want 1.5", mult)
+
+	// Uncommon-only pricing is fine, and Common is still present but empty.
+	only, err := parseAttendPricing(map[string]map[string]string{"Uncommon": {"Hard": "30k"}})
+	if err != nil || len(only["Common"]) != 0 || only["Uncommon"]["Hard"] != 30000 {
+		t.Errorf("uncommon-only = %v, %v", only, err)
 	}
 
-	if _, mult, err := parseAttendPricing(map[string]string{"Hard": "30k"}, ""); err != nil || mult != 1 {
-		t.Errorf("blank multiplier = %v, %v; want 1, nil", mult, err)
-	}
-
-	bad := []struct {
-		prices map[string]string
-		mult   string
-	}{
-		{map[string]string{}, "1"},                        // no prices
-		{map[string]string{"Hard": "", "Easy": "0"}, "1"}, // all free
-		{map[string]string{"Hard": "abc"}, "1"},           // bad price
-		{map[string]string{"Epic": "5k"}, "1"},            // unknown difficulty
-		{map[string]string{"Hard": "5k"}, "0"},            // zero multiplier
-		{map[string]string{"Hard": "5k"}, "-2"},           // negative
-		{map[string]string{"Hard": "5k"}, "101"},          // too big
-		{map[string]string{"Hard": "5k"}, "0.001"},        // rounds to 0
-		{map[string]string{"Hard": "5k"}, "two"},          // junk
+	bad := []map[string]map[string]string{
+		{},                                          // nothing set
+		{"Common": {"Hard": "", "Easy": "0"}},       // all free
+		{"Common": {"Hard": "abc"}},                 // bad price
+		{"Common": {"Epic": "5k"}},                  // unknown difficulty
+		{"Rare": {"Hard": "5k"}},                    // unknown rarity
+		{"Common": {"Hard": "5k"}, "Rare": {}},      // unknown rarity, empty
+		{"Uncommon": {"Hard": "5k", "Easy": "-1k"}}, // negative
 	}
 	for _, c := range bad {
-		if _, _, err := parseAttendPricing(c.prices, c.mult); err == nil {
-			t.Errorf("parseAttendPricing(%v, %q) succeeded; want error", c.prices, c.mult)
+		if _, err := parseAttendPricing(c); err == nil {
+			t.Errorf("parseAttendPricing(%v) succeeded; want error", c)
 		}
 	}
 }

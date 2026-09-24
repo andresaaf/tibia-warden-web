@@ -16,17 +16,17 @@ type AnnouncementStore struct {
 
 // Create inserts a new announcement and returns the fully hydrated record.
 // broadcastID links announcements from one multi-group broadcast (nil = single).
-// The pay-to-attend price is computed from the group's current pricing (the
-// creature's difficulty price, × the uncommon multiplier for Uncommon
-// creatures) and snapshotted onto the row.
+// The group's current pay-to-attend price for the creature's rarity and
+// difficulty is snapshotted onto the row.
 func (s *AnnouncementStore) Create(ctx context.Context, groupID, creatureID, authorID int64, location, note string, broadcastID *string, mapX, mapY, mapZ *int) (*models.Announcement, error) {
 	var id int64
 	err := s.pool.QueryRow(ctx, `
 		INSERT INTO announcements (group_id, creature_id, author_id, location, note, broadcast_id, map_x, map_y, map_z, attend_price)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9,
 		        (SELECT CASE WHEN g.access_mode = 'pay_to_attend' THEN
-		                    ROUND(COALESCE((g.attend_prices ->> c.difficulty)::bigint, 0)
-		                          * CASE WHEN c.rarity = 'Uncommon' THEN g.uncommon_multiplier ELSE 1 END)::bigint
+		                    COALESCE((g.attend_prices
+		                              -> (CASE WHEN c.rarity = 'Uncommon' THEN 'Uncommon' ELSE 'Common' END)
+		                              ->> c.difficulty)::bigint, 0)
 		                ELSE 0 END
 		         FROM groups g, creatures c WHERE g.id = $1 AND c.id = $2))
 		RETURNING id`,

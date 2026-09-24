@@ -30,9 +30,8 @@ const (
 	VisibilityPrivate = "private"
 )
 
-// Group access modes. Pay-to-attend attendees pay a per-difficulty price per
-// Warden (× the uncommon multiplier for Uncommon creatures), in-game after the
-// kill (payment isn't handled by the app).
+// Group access modes. Pay-to-attend attendees pay a price per Warden set per
+// difficulty and rarity, in-game after the kill (payment isn't handled here).
 const (
 	AccessFree        = "free"
 	AccessPayToAttend = "pay_to_attend"
@@ -166,13 +165,11 @@ type Group struct {
 	DiscordRoleName  string `json:"discordRoleName,omitempty"`
 	// DiscordAutodeleteSeconds: -1 Never, 0 immediately on kill, else seconds after kill.
 	DiscordAutodeleteSeconds int `json:"discordAutodeleteSeconds"`
-	// AccessMode is AccessFree or AccessPayToAttend. AttendPrices maps a creature
-	// difficulty to the gold each attendee pays per Warden (missing = free);
-	// Uncommon creatures cost UncommonMultiplier times that. Prices are kept
-	// while the mode is free so they return when it's re-enabled.
-	AccessMode         string           `json:"accessMode"`
-	AttendPrices       map[string]int64 `json:"attendPrices"`
-	UncommonMultiplier float64          `json:"uncommonMultiplier"`
+	// AccessMode is AccessFree or AccessPayToAttend. AttendPrices maps rarity →
+	// difficulty → the gold each attendee pays per Warden (missing = free).
+	// Prices are kept while the mode is free so they return when re-enabled.
+	AccessMode   string                      `json:"accessMode"`
+	AttendPrices map[string]map[string]int64 `json:"attendPrices"`
 }
 
 type GroupMember struct {

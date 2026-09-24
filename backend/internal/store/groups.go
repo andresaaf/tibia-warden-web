@@ -67,13 +67,13 @@ func (s *GroupStore) GetByID(ctx context.Context, groupID, viewerID int64) (*mod
 	err := s.pool.QueryRow(ctx, `
 		SELECT g.id, g.name, g.description, g.visibility, g.owner_id, g.created_at,
 		       g.discord_guild_id, g.discord_channel_id, g.discord_role_id, g.discord_role_name,
-		       g.discord_autodelete_seconds, g.access_mode, g.attend_prices, g.uncommon_multiplier::float8,
+		       g.discord_autodelete_seconds, g.access_mode, g.attend_prices,
 		       (SELECT COUNT(*) FROM group_members m WHERE m.group_id = g.id) AS member_count,
 		       (SELECT m.role FROM group_members m WHERE m.group_id = g.id AND m.user_id = $2) AS role
 		FROM groups g WHERE g.id = $1`, groupID, viewerID,
 	).Scan(&g.ID, &g.Name, &g.Description, &g.Visibility, &g.OwnerID, &g.CreatedAt,
 		&g.DiscordGuildID, &g.DiscordChannelID, &g.DiscordRoleID, &g.DiscordRoleName,
-		&g.DiscordAutodeleteSeconds, &g.AccessMode, &g.AttendPrices, &g.UncommonMultiplier, &g.MemberCount, &role)
+		&g.DiscordAutodeleteSeconds, &g.AccessMode, &g.AttendPrices, &g.MemberCount, &role)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, ErrNotFound
 	}
@@ -497,19 +497,18 @@ func (s *GroupStore) SetDiscordAutodelete(ctx context.Context, groupID int64, se
 }
 
 // SetAccessMode sets a group's access mode. A nil prices map changes only the
-// mode (keeping any stored pricing); otherwise the per-difficulty prices and
-// uncommon multiplier are replaced too. Only new announcements pick it up.
-func (s *GroupStore) SetAccessMode(ctx context.Context, groupID int64, mode string, prices map[string]int64, uncommonMultiplier float64) error {
-	var pricesArg, multArg any // NULL keeps the stored pricing
+// mode (keeping any stored pricing); otherwise the per-rarity, per-difficulty
+// prices are replaced too. Only new announcements pick it up.
+func (s *GroupStore) SetAccessMode(ctx context.Context, groupID int64, mode string, prices map[string]map[string]int64) error {
+	var pricesArg any // NULL keeps the stored pricing
 	if prices != nil {
-		pricesArg, multArg = prices, uncommonMultiplier
+		pricesArg = prices
 	}
 	tag, err := s.pool.Exec(ctx, `
 		UPDATE groups
 		SET access_mode = $2,
-		    attend_prices = COALESCE($3::jsonb, attend_prices),
-		    uncommon_multiplier = COALESCE($4::numeric, uncommon_multiplier)
-		WHERE id = $1`, groupID, mode, pricesArg, multArg)
+		    attend_prices = COALESCE($3::jsonb, attend_prices)
+		WHERE id = $1`, groupID, mode, pricesArg)
 	if err != nil {
 		return err
 	}

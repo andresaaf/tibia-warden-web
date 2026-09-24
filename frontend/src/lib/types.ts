@@ -105,12 +105,10 @@ export interface Group {
 	discordRoleId?: string;
 	discordRoleName?: string;
 	discordAutodeleteSeconds?: number;
-	/** Pay-to-attend: attendees pay attendPrices[difficulty] gold per Warden
-	 *  (× uncommonMultiplier for Uncommon creatures), in-game after the kill.
-	 *  Prices are kept while the mode is free. */
+	/** Pay-to-attend: attendees pay attendPrices[rarity][difficulty] gold per
+	 *  Warden, in-game after the kill. Prices are kept while the mode is free. */
 	accessMode?: AccessMode;
-	attendPrices?: Partial<Record<Difficulty, number>>;
-	uncommonMultiplier?: number;
+	attendPrices?: Partial<Record<Rarity, Partial<Record<Difficulty, number>>>>;
 }
 
 export type AccessMode = 'free' | 'pay_to_attend';

@@ -7,7 +7,7 @@
 	import { GroupRoom, type RoomEvent } from '$lib/ws';
 	import { formatGoldInput, formatK } from '$lib/format';
 	import { attendPriceFor } from '$lib/pricing';
-	import { DIFFICULTIES } from '$lib/types';
+	import { DIFFICULTIES, RARITIES } from '$lib/types';
 	import { copyText } from '$lib/clipboard';
 	import TibiaMap from '$lib/components/TibiaMap.svelte';
 	import AnnouncementMap from '$lib/components/AnnouncementMap.svelte';
@@ -18,6 +18,7 @@
 		Creature,
 		Difficulty,
 		DiscordRole,
+		Rarity,
 		Group,
 		GroupMember,
 		InviteCode,
@@ -76,23 +77,27 @@
 
 	// Access mode settings, seeded from the group whenever it (re)loads.
 	let accessMode = $state<AccessMode>('free');
-	let priceInputs = $state<Record<Difficulty, string>>(emptyPriceInputs());
-	let multiplierInput = $state('');
+	let priceInputs = $state<PriceInputs>(emptyPriceInputs());
 	let accessBusy = $state(false);
 	let accessError = $state('');
 	let accessSaved = $state(false);
 	$effect(() => {
 		accessMode = group?.accessMode ?? 'free';
 		const inputs = emptyPriceInputs();
-		for (const d of DIFFICULTIES) {
-			const v = group?.attendPrices?.[d];
-			if (v) inputs[d] = formatGoldInput(v);
+		for (const r of RARITIES) {
+			for (const d of DIFFICULTIES) {
+				const v = group?.attendPrices?.[r]?.[d];
+				if (v) inputs[r][d] = formatGoldInput(v);
+			}
 		}
 		priceInputs = inputs;
-		multiplierInput = String(group?.uncommonMultiplier ?? 1);
 	});
-	function emptyPriceInputs(): Record<Difficulty, string> {
-		return Object.fromEntries(DIFFICULTIES.map((d) => [d, ''])) as Record<Difficulty, string>;
+	// One price box per rarity × difficulty, blank meaning free.
+	type PriceInputs = Record<Rarity, Record<Difficulty, string>>;
+	function emptyPriceInputs(): PriceInputs {
+		return Object.fromEntries(
+			RARITIES.map((r) => [r, Object.fromEntries(DIFFICULTIES.map((d) => [d, '']))])
+		) as PriceInputs;
 	}
 
 	// Price the selected creature would carry if posted now (post-form hint).
@@ -592,7 +597,7 @@
 			group =
 				mode === 'free'
 					? await api.setAccessMode(groupId, mode)
-					: await api.setAccessMode(groupId, mode, priceInputs, multiplierInput);
+					: await api.setAccessMode(groupId, mode, priceInputs);
 			accessSaved = true;
 		} catch (err) {
 			accessError = err instanceof ApiError ? err.message : 'Failed to update access mode.';
@@ -930,39 +935,31 @@
 								}}
 							>
 								<div class="price-grid">
+									<span></span>
+									{#each RARITIES as r (r)}
+										<span class="price-head">{r}</span>
+									{/each}
 									{#each DIFFICULTIES as d (d)}
-										<label class="price-row">
-											<span class="badge diff" data-diff={d}>{d}</span>
+										<span class="badge diff" data-diff={d}>{d}</span>
+										{#each RARITIES as r (r)}
 											<input
 												type="text"
 												placeholder="free"
-												aria-label={`Price for ${d} Wardens`}
-												bind:value={priceInputs[d]}
+												aria-label={`Price for ${r} ${d} Wardens`}
+												bind:value={priceInputs[r][d]}
 												oninput={() => (accessSaved = false)}
 												disabled={accessBusy}
 											/>
-										</label>
+										{/each}
 									{/each}
-									<label class="price-row">
-										<span class="badge">Uncommon ×</span>
-										<input
-											type="text"
-											placeholder="1"
-											aria-label="Multiplier for Uncommon creatures"
-											bind:value={multiplierInput}
-											oninput={() => (accessSaved = false)}
-											disabled={accessBusy}
-										/>
-									</label>
 								</div>
 								<button class="btn btn-sm btn-primary" type="submit" disabled={accessBusy}>
 									{accessBusy ? 'Saving…' : 'Save prices'}
 								</button>
 							</form>
 							<p class="muted small price-help">
-								Gold each attendee pays per Warden, by difficulty (e.g. <code>30k</code>, blank =
-								free). Uncommon creatures cost the price × the multiplier. Paid in-game after the
-								kill; changes apply to new announcements.
+								Gold each attendee pays per Warden, by difficulty and rarity (e.g. <code>30k</code>,
+								blank = free). Paid in-game after the kill; changes apply to new announcements.
 							</p>
 						{/if}
 						<label class="access-opt">
@@ -1470,21 +1467,26 @@
 		gap: 0.5rem;
 		margin-left: 1.5rem;
 	}
-	/* One label/input pair per line: a fixed label column keeps every input
-	   directly beside its own difficulty, never next to the following one. */
+	/* Difficulty label + one price box per rarity, one row each. */
 	.price-grid {
 		display: grid;
-		grid-template-columns: 7.5rem 7rem;
+		grid-template-columns: 7.5rem 7rem 7rem;
 		gap: 0.35rem 0.5rem;
 		align-items: center;
 	}
-	.price-row {
-		display: contents;
-	}
-	.price-row .badge {
+	.price-grid .badge {
 		justify-self: start;
 	}
-	.price-row input {
+	.price-head {
+		font-size: 0.7rem;
+		font-weight: 700;
+		letter-spacing: 0.04em;
+		text-transform: uppercase;
+		color: var(--text-dim);
+		padding-bottom: 0.1rem;
+		border-bottom: 1px solid var(--border);
+	}
+	.price-grid input {
 		width: 100%;
 	}
 	.price-help {
