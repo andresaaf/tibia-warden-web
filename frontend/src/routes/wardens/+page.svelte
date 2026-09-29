@@ -38,17 +38,41 @@
 	let areasLoaded = $state(false);
 	let areasLoading = $state(false);
 	let areasError = $state('');
-	/** Completed areas the user has manually expanded (see areaOpen). */
-	let expandedAreas = $state<Set<number>>(new Set());
-	/** Completed subareas the user has manually expanded (see subareaOpen). */
-	let expandedSubareas = $state<Set<number>>(new Set());
+	/** Explicit per-area open/closed choices, remembered in localStorage. Absent =
+	 * follow the default (open while incomplete, collapsed once complete). This lets
+	 * incomplete areas be minimized too, with the choice persisted across reloads. */
+	let areaOpenOverride = $state<Map<number, boolean>>(new Map());
+	let subareaOpenOverride = $state<Map<number, boolean>>(new Map());
 	let areaSearch = $state('');
+
+	const AREA_OPEN_KEY = 'wardens:areaOpen';
+	const SUBAREA_OPEN_KEY = 'wardens:subareaOpen';
+
+	function loadOpenOverride(key: string): Map<number, boolean> {
+		try {
+			const raw = localStorage.getItem(key);
+			if (raw) return new Map(JSON.parse(raw) as [number, boolean][]);
+		} catch {
+			// ignore malformed or unavailable storage
+		}
+		return new Map();
+	}
+
+	function saveOpenOverride(key: string, map: Map<number, boolean>) {
+		try {
+			localStorage.setItem(key, JSON.stringify([...map]));
+		} catch {
+			// ignore quota or unavailable storage
+		}
+	}
 
 	$effect(() => {
 		if (!$authLoading && !$currentUser) goto('/', { replaceState: true });
 	});
 
 	onMount(() => {
+		areaOpenOverride = loadOpenOverride(AREA_OPEN_KEY);
+		subareaOpenOverride = loadOpenOverride(SUBAREA_OPEN_KEY);
 		loadKilled();
 		load();
 	});
@@ -179,18 +203,20 @@
 		return area.creatures.length > 0 && areaKilledCount(area) === area.creatures.length;
 	}
 
-	/** Completed areas collapse by default; the arrow expands them. Incomplete
-	 * areas are always open (their monsters are what you still need to hunt). */
+	/** Open by default while incomplete, collapsed once complete; a remembered
+	 * override flips that for a specific area (minimize an incomplete area, or
+	 * re-open a completed one). */
 	function areaOpen(area: Area): boolean {
-		return !areaComplete(area) || expandedAreas.has(area.id);
+		const explicit = areaOpenOverride.get(area.id);
+		return explicit !== undefined ? explicit : !areaComplete(area);
 	}
 
 	function toggleArea(area: Area) {
-		if (!areaComplete(area)) return; // incomplete areas stay expanded
-		const next = new Set(expandedAreas);
-		if (next.has(area.id)) next.delete(area.id);
-		else next.add(area.id);
-		expandedAreas = next;
+		if (searching) return; // headers are force-open while searching
+		const next = new Map(areaOpenOverride);
+		next.set(area.id, !areaOpen(area));
+		areaOpenOverride = next;
+		saveOpenOverride(AREA_OPEN_KEY, next);
 	}
 
 	let searching = $derived(areaSearch.trim() !== '');
@@ -230,18 +256,18 @@
 		return sub.creatures.length > 0 && subareaKilledCount(sub) === sub.creatures.length;
 	}
 
-	/** Like areaOpen, one level down: completed subareas collapse by default and
-	 * the arrow expands them; incomplete subareas stay open. */
+	/** Like areaOpen, one level down. */
 	function subareaOpen(sub: Subarea): boolean {
-		return !subareaComplete(sub) || expandedSubareas.has(sub.id);
+		const explicit = subareaOpenOverride.get(sub.id);
+		return explicit !== undefined ? explicit : !subareaComplete(sub);
 	}
 
 	function toggleSubarea(sub: Subarea) {
-		if (!subareaComplete(sub)) return; // incomplete subareas stay expanded
-		const next = new Set(expandedSubareas);
-		if (next.has(sub.id)) next.delete(sub.id);
-		else next.add(sub.id);
-		expandedSubareas = next;
+		if (searching) return;
+		const next = new Map(subareaOpenOverride);
+		next.set(sub.id, !subareaOpen(sub));
+		subareaOpenOverride = next;
+		saveOpenOverride(SUBAREA_OPEN_KEY, next);
 	}
 
 	// Subareas view search, one level deeper than filteredAreas: an area-name match
@@ -445,13 +471,17 @@
 						<div class="area" class:complete={done}>
 							<button
 								class="area-head"
-								class:clickable={done && !searching}
+								class:clickable={!searching}
 								aria-expanded={open}
 								onclick={() => toggleArea(area)}
 							>
-								<span class="arrow" aria-hidden="true">{done ? (open ? '▾' : '▸') : ''}</span>
+								<span class="arrow" aria-hidden="true">{open ? '▾' : '▸'}</span>
 								<span class="area-name">{area.name}</span>
-								{#if done}<span class="area-done" aria-hidden="true">✓</span>{/if}
+								{#if done}
+									<span class="area-done" aria-hidden="true">✓</span>
+								{:else if !open}
+									<span class="area-remaining" title="Incomplete" aria-hidden="true">●</span>
+								{/if}
 								<span class="area-progress">{areaKilledCount(area)} / {area.creatures.length}</span>
 							</button>
 							{#if open}
@@ -472,13 +502,17 @@
 						<div class="area" class:complete={done}>
 							<button
 								class="area-head"
-								class:clickable={done && !searching}
+								class:clickable={!searching}
 								aria-expanded={open}
 								onclick={() => toggleArea(area)}
 							>
-								<span class="arrow" aria-hidden="true">{done ? (open ? '▾' : '▸') : ''}</span>
+								<span class="arrow" aria-hidden="true">{open ? '▾' : '▸'}</span>
 								<span class="area-name">{area.name}</span>
-								{#if done}<span class="area-done" aria-hidden="true">✓</span>{/if}
+								{#if done}
+									<span class="area-done" aria-hidden="true">✓</span>
+								{:else if !open}
+									<span class="area-remaining" title="Incomplete" aria-hidden="true">●</span>
+								{/if}
 								<span class="area-progress">{areaKilledCount(area)} / {area.creatures.length}</span>
 							</button>
 							{#if open}
@@ -492,15 +526,19 @@
 											<div class="subarea" class:complete={subDone}>
 												<button
 													class="subarea-head"
-													class:clickable={subDone && !searching}
+													class:clickable={!searching}
 													aria-expanded={subOpen}
 													onclick={() => toggleSubarea(subarea)}
 												>
 													<span class="arrow" aria-hidden="true"
-														>{subDone ? (subOpen ? '▾' : '▸') : ''}</span
+														>{subOpen ? '▾' : '▸'}</span
 													>
 													<span class="subarea-name">{subarea.name}</span>
-													{#if subDone}<span class="area-done" aria-hidden="true">✓</span>{/if}
+													{#if subDone}
+														<span class="area-done" aria-hidden="true">✓</span>
+													{:else if !subOpen}
+														<span class="area-remaining" title="Incomplete" aria-hidden="true">●</span>
+													{/if}
 													<span class="subarea-progress"
 														>{subareaKilledCount(subarea)} / {subarea.creatures.length}</span
 													>
@@ -635,6 +673,11 @@
 	.area-done {
 		color: var(--success);
 		font-weight: 700;
+	}
+	.area-remaining {
+		color: var(--accent);
+		font-size: 0.7rem;
+		line-height: 1;
 	}
 	.area-progress {
 		color: var(--text-dim);
