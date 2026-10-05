@@ -1,6 +1,15 @@
 # Reverse proxy with automatic HTTPS (Let's Encrypt) for the Echo Warden app.
 # The domain is provided via the APP_DOMAIN environment variable.
+
+# Search engine indexing, picked via SEARCH_INDEXING (index | noindex).
+(index) {
+}
+(noindex) {
+	header X-Robots-Tag "noindex, nofollow"
+}
+
 {$APP_DOMAIN} {
+	import {$SEARCH_INDEXING:index}
 	encode zstd gzip
 	# Proxies REST, the SPA, and WebSocket upgrades to the app container.
 	reverse_proxy app:8080

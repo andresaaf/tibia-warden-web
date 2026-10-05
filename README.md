@@ -177,6 +177,8 @@ On your Linux server:
    - `DISCORD_REDIRECT_URL` — `https://your-domain/api/auth/discord/callback`
      (add this exact URL to your Discord app's OAuth2 redirects).
    - `COOKIE_SECURE=true`.
+   - Optional: `SEARCH_INDEXING=noindex` to keep the site out of search engine
+     results (changing it later needs `docker compose up -d caddy`).
 
 2. Build and start:
 

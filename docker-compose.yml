@@ -50,6 +50,7 @@ services:
       - app
     environment:
       APP_DOMAIN: ${APP_DOMAIN}
+      SEARCH_INDEXING: ${SEARCH_INDEXING:-index}
     ports:
       - "80:80"
       - "443:443"
