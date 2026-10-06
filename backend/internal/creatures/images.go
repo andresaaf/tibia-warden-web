@@ -87,7 +87,7 @@ func resolveImageBatch(ctx context.Context, client *http.Client, apiURL string, 
 	urls := make(map[string]string, len(r.Query.Pages))
 	for _, p := range r.Query.Pages {
 		if len(p.ImageInfo) > 0 && p.ImageInfo[0].URL != "" {
-			urls[p.Title] = p.ImageInfo[0].URL
+			urls[p.Title] = dropCacheBuster(p.ImageInfo[0].URL)
 		}
 	}
 	normalized := toMap(r.Query.Normalized)
@@ -109,6 +109,26 @@ func resolveImageBatch(ctx context.Context, client *http.Client, apiURL string, 
 		}
 	}
 	return nil
+}
+
+// dropCacheBuster removes the cb (cache buster) query parameter the wiki pins
+// to a file's current revision. The image resolves without it, and dropping it
+// changes the CDN cache key: some Fandom edge nodes have a stale "file not
+// found" response cached against the cb-pinned URL and keep serving it, which
+// leaves those visitors with no creature images. path-prefix is required and
+// kept. Returns the URL unchanged if it can't be parsed.
+func dropCacheBuster(raw string) string {
+	u, err := url.Parse(raw)
+	if err != nil {
+		return raw
+	}
+	q := u.Query()
+	if !q.Has("cb") {
+		return raw
+	}
+	q.Del("cb")
+	u.RawQuery = q.Encode()
+	return u.String()
 }
 
 func toMap(ms []titleMapping) map[string]string {

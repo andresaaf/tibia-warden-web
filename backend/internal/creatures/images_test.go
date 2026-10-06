@@ -14,8 +14,8 @@ func TestResolveImages(t *testing.T) {
 		"normalized":[{"from":"File:Hot_Dog.gif","to":"File:Hot Dog.gif"}],
 		"redirects":[{"from":"File:Hot Dog.gif","to":"File:Dog.gif"}],
 		"pages":{
-			"1317":{"pageid":1317,"ns":6,"title":"File:Dragon.gif","imageinfo":[{"url":"https://cdn/e/e0/Dragon.gif"}]},
-			"828":{"pageid":828,"ns":6,"title":"File:Dog.gif","imageinfo":[{"url":"https://cdn/9/99/Dog.gif"}]},
+			"1317":{"pageid":1317,"ns":6,"title":"File:Dragon.gif","imageinfo":[{"url":"https://cdn/e/e0/Dragon.gif/revision/latest?cb=20140823213526&path-prefix=en"}]},
+			"828":{"pageid":828,"ns":6,"title":"File:Dog.gif","imageinfo":[{"url":"https://cdn/9/99/Dog.gif/revision/latest?cb=20150416141602&path-prefix=en"}]},
 			"-1":{"ns":6,"title":"File:Nobody.gif","missing":""}}}}`
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(body))
@@ -26,7 +26,11 @@ func TestResolveImages(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := map[string]string{"Dragon": "https://cdn/e/e0/Dragon.gif", "Hot_Dog": "https://cdn/9/99/Dog.gif"}
+	// The cb cache buster is dropped; path-prefix is kept.
+	want := map[string]string{
+		"Dragon":  "https://cdn/e/e0/Dragon.gif/revision/latest?path-prefix=en",
+		"Hot_Dog": "https://cdn/9/99/Dog.gif/revision/latest?path-prefix=en",
+	}
 	if len(got) != len(want) {
 		t.Fatalf("got %v, want %v", got, want)
 	}
