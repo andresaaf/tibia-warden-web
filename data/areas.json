@@ -1,141 +1,5688 @@
 [
-  { "name": "Gnomebase Alpha", "subareas": [
-    { "name": "Warzone 1", "creatures": ["Humongous Fungus", "Hideous Fungus", "Armadile", "Stone Devourer"] },
-    { "name": "Warzone 2", "creatures": ["Lost Berserker", "Magma Crawler", "Weeper", "Infected Weeper", "Lava Golem"] },
-    { "name": "Warzone 3", "creatures": ["Lost Berserker", "Ironblight", "Orewalker", "Cliff Strider"] },
-    { "name": "Tasks", "creatures": ["Damaged Crystal Golem", "Enraged Crystal Golem", "Vulcongra", "Massive Fire Elemental", "Dragon Lord", "Mutated Rat", "Wyvern", "Wiggler", "Giant Spider", "Massive Earth Elemental", "Crystalcrusher", "Crystal Spider"] }
-  ]},
-  { "name": "Gnome Deep Hub", "subareas": [
-    { "name": "Warzone 4", "creatures": ["Mole", "Drillworm", "Elder Wyrm", "Lava Lurker", "Chasm Spawn"] },
-    { "name": "Warzone 5", "creatures": ["High Voltage Elemental", "Cave Devourer", "Tunnel Tyrant"] },
-    { "name": "Warzone 6", "creatures": ["Mole", "Spit Nettle", "Deepworm", "Diremaw", "Humongous Fungus"] }
-  ]},
-  { "name": "Too Hot to Handle", "subareas": [
-    { "name": "Warzone 7", "creatures": ["Afflicted Strider", "Blemished Spawn", "Eyeless Devourer"] },
-    { "name": "Warzone 8", "creatures": ["Lavafungus", "Lavaworm", "Streaked Devourer"] },
-    { "name": "Warzone 9", "creatures": ["Cave Chimera", "Tremendous Tyrant", "Varnished Diremaw"] }
-  ]},
-  { "name": "Ingol", "subareas": [
-    { "name": "Surface/-1/-2", "creatures": ["Harpy", "Carnivostrich", "Liodile", "Rhindeer", "Crape Man", "Boar Man"] },
-    { "name": "-3/-4/-5", "creatures": ["Harpy", "Carnivostrich", "Liodile", "Rhindeer", "Crape Man", "Boar Man"] }
-  ]},
-  { "name": "Isle of Evil", "creatures": ["Berserker Chicken", "Demon Parrot", "Doom Deer", "Evil Sheep", "Evil Sheep Lord", "Hot Dog", "Infernal Frog", "Killer Rabbit", "Vampire Pig"] },
-  { "name": "Spirit Grounds", "creatures": ["Ghost", "Ghoul", "Bonelord", "Mummy", "Nightstalker", "Banshee", "Souleater", "Braindeath", "Nightmare", "Nightmare Scion", "Spectre", "Phantasm"] },
-  { "name": "Bounac", "subareas": [
-    { "name": "Surface", "creatures": ["Agrestic Chicken", "Usurper Knight", "Usurper Archer", "Usurper Warlock"] },
-    { "name": "Underground", "creatures": ["Crypt Warrior"] },
-    { "name": "Forest of Life", "creatures": ["Dark Carnisylvan", "Poisonous Carnisylvan", "Hulking Carnisylvan"] }
-  ]},
-  { "name": "Candia", "subareas": [
-    { "name": "Surface", "creatures": ["Chocolate Blob", "Cream Blob", "Fruit Drop", "Gingerbread Man", "Sugar Cube", "Sugar Cube Worker", "Truffle", "Truffle Cook", "Wafer Paper Butterfly"] },
-    { "name": "West", "creatures": ["Candy Horror", "Nibblemaw"] },
-    { "name": "East", "creatures": ["Angry Sugar Fairy", "Candy Floss Elemental", "Goggle Cake"] }
-  ]},
-  { "name": "Exotic Cave", "creatures": ["Exotic Cave Spider", "Exotic Bat"] },
-  { "name": "Issavi", "subareas": [
-    { "name": "Green Belt", "creatures": ["Young Goanna", "Adult Goanna", "Manticore", "Feral Sphinx"] },
-    { "name": "Central Steppe", "creatures": ["Young Goanna", "Adult Goanna", "Manticore", "Feral Sphinx", "Ogre Sage", "Ogre Rowdy", "Ogre Ruffian", "Lamassu", "Sphinx"] },
-    { "name": "Southern Steppe", "creatures": ["Young Goanna", "Adult Goanna", "Lamassu", "Sphinx", "Feral Sphinx"] },
-    { "name": "Sewers", "creatures": ["Priestess of the Wild Sun", "Black Sphinx Acolyte", "Burning Gladiator"] },
-    { "name": "Catacombs", "creatures": ["Crypt Warden", "Sphinx"] },
-    { "name": "Kilmaresh Mountains", "creatures": ["Priestess of the Wild Sun", "Black Sphinx Acolyte", "Burning Gladiator", "Lamassu", "Gryphon"] },
-    { "name": "Girtablilus", "creatures": ["Venerable Girtablilu", "Girtablilu Warrior"] },
-    { "name": "Bashmu", "creatures": ["Juvenile Bashmu", "Bashmu"] }
-  ]},
-  { "name": "Pirat", "subareas": [
-    { "name": "Pirat Mine", "creatures": ["Pirat Cutthroat", "Pirat Scoundrel", "Pirat Bombardier"] },
-    { "name": "Wreckoning", "creatures": ["Pirat Cutthroat", "Pirat Scoundrel", "Pirat Bombardier", "Pirat Mate"] }
-  ]},
-  { "name": "Secret Library", "subareas": [
-    { "name": "Fire", "creatures": ["Flying Book", "Ink Blob", "Guardian of Tales", "Rage Squid", "Burning Book"] },
-    { "name": "Energy", "creatures": ["Flying Book", "Biting Book", "Knowledge Elemental", "Energuardian of Tales", "Brain Squid", "Energetic Book"] },
-    { "name": "Ice", "creatures": ["Ink Blob", "Animated Feather", "Squid Warden", "Icecold Book"] },
-    { "name": "Earth", "creatures": ["Cursed Book", "Biting Book", "Ink Blob"] }
-  ]},
-  { "name": "Azzilon", "subareas": [
-    { "name": "Castle", "creatures": ["Broodrider Inferniarch", "Gorger Inferniarch", "Sineater Inferniarch"] },
-    { "name": "Catacombs", "creatures": ["Hellhunter Inferniarch", "Spellreaper Inferniarch", "Brinebrute Inferniarch"] }
-  ]},
-  { "name": "Bulltaur Lair", "creatures": ["Bulltaur Brute", "Bulltaur Alchemist", "Bulltaur Forgepriest"] },
-  { "name": "Cobra Bastion", "creatures": ["Cobra Scout", "Cobra Assassin", "Cobra Vizier"] },
-  { "name": "Barren Drift", "creatures": ["Cursed Prospector", "Evil Prospector"] },
-  { "name": "Roshamuul", "subareas": [
-    { "name": "West", "creatures": ["Shock Head", "Silencer", "Frazzlemaw", "Guzzlemaw"] },
-    { "name": "Upper", "creatures": ["Frazzlemaw", "Silencer", "Retching Horror", "Choking Fear", "Guzzlemaw"] },
-    { "name": "Mines", "creatures": ["Feversleep", "Terrorsleep"] },
-    { "name": "Prison", "creatures": ["Betrayed Wraith", "Nightmare", "Lost Soul", "Plaguesmith", "Dark Torturer", "Demon Outcast", "Blightwalker", "Hellhound", "Juggernaut"] }
-  ]},
-  { "name": "Feru", "subareas": [
-    { "name": "Hub", "creatures": ["Demon", "Vexclaw", "Grimeleech", "Hellflayer"] },
-    { "name": "Plagirath", "creatures": ["Plaguesmith", "Defiler", "Grimeleech", "Hellflayer"] },
-    { "name": "Zamulosh", "creatures": ["Nightmare", "Phantasm", "Vexclaw", "Grimeleech"] },
-    { "name": "Mazoran", "creatures": ["Fury", "Hellfire Fighter", "Hellhound", "Vexclaw", "Grimeleech", "Hellflayer"] },
-    { "name": "Razzagorn", "creatures": ["Destroyer", "Fury", "Vexclaw", "Hellflayer", "Juggernaut"] },
-    { "name": "Ragiaz", "creatures": ["Blightwalker", "Undead Dragon", "Vexclaw", "Hellflayer"] },
-    { "name": "Tarbaz", "creatures": ["Spectre", "Hand of Cursed Fate", "Vexclaw", "Grimeleech", "Hellflayer"] },
-    { "name": "Shulgrax", "creatures": ["Dark Torturer", "Vexclaw", "Grimeleech", "Hellflayer"] }
-  ]},
-  { "name": "Buried Cathedral", "creatures": ["Ripper Spectre", "Gazer Spectre", "Burster Spectre", "Arachnophobica"] },
-  { "name": "Isle of Ada", "creatures": ["Raubritter Chastener", "Raubritter Marksman", "Raubritter Skirmisher", "Night Harpy", "Stag"] },
-  { "name": "Marapur", "subareas": [
-    { "name": "Turtles", "creatures": ["Foam Stalker", "Two-Headed Turtle"] },
-    { "name": "Nagas", "creatures": ["Naga Warrior", "Naga Archer", "Makara"] }
-  ]},
-  { "name": "Radiant", "subareas": [
-    { "name": "Ascendancy", "creatures": ["Radiant Templar", "Radiant Inquisitor", "Radiant Zealot", "Devoted Radiant Templar", "Devoted Radiant Inquisitor", "Devoted Radiant Zealot"] },
-    { "name": "Skyhold", "creatures": ["Radiant Warden", "Radiant Paragon", "Radiant Acolyte", "Devoted Radiant Warden", "Devoted Radiant Paragon", "Devoted Radiant Acolyte"] }
-  ]},
-  { "name": "Thalassara", "subareas": [
-    { "name": "Surroundings", "creatures": ["Moonspawn Blightspitter", "Moonspawn Oozecrown"] },
-    { "name": "Moonstone Crater", "creatures": ["Moonstone Excavator", "Moonstone Overseer"] }
-  ]},
-  { "name": "Asura Citadel", "creatures": ["True Midnight Asura", "True Frost Flower Asura", "Winged Jaracal", "Silverfrost Sentinel", "Iceplume Strider"] },
-  { "name": "Medusa Tower", "creatures": ["Gargoyle", "Slime", "Stone Golem", "Clay Guardian", "Omnivora", "Behemoth", "Serpent Spawn", "Medusa"] },
-  { "name": "Nimmersatt", "creatures": ["Dragolisk", "Mega Dragon", "Wardragon"] },
-  { "name": "Norcferatu", "subareas": [
-    { "name": "Dungeons", "creatures": ["Dworc Shadowstalker", "Gloom Maw", "Norcferatu Heartless", "Norcferatu Nightweaver", "Orclops Bloodbreaker", "Varg"] },
-    { "name": "Fortress", "creatures": ["Dworc Shadowstalker", "Gloom Maw", "Norcferatu Heartless", "Norcferatu Nightweaver", "Orclops Bloodbreaker", "Varg"] }
-  ]},
-  { "name": "Podzilla", "subareas": [
-    { "name": "Rootthing", "creatures": ["Rootthing Amber Shaper", "Rootthing Bug Tracker", "Rootthing Nutshell"] },
-    { "name": "Quara", "creatures": ["Quara Raider", "Quara Plunderer", "Quara Looter"] }
-  ]},
-  { "name": "Barkless", "creatures": ["Barkless Devotee", "Barkless Fanatic"] },
-  { "name": "Demonwar", "creatures": ["Askarak Demon", "Shaburak Demon"] },
-  { "name": "Carnivora's Rocks", "creatures": ["Lumbering Carnivor", "Spiky Carnivor", "Menacing Carnivor"] },
-  { "name": "Book World", "creatures": ["Bramble Wyrmling", "Hawk Hopper", "Bluebeak", "Lion Hydra", "Crusader", "Headwalker"] },
-  { "name": "Soul War", "subareas": [
-	  {"name": "Claustrophobic Inferno", "creatures": ["Brachiodemon", "Infernal Demon", "Infernal Phantom"]},
-	  {"name": "Ebb and Flow", "creatures": ["Bony Sea Devil", "Capricious Phantom", "Turbulent Elemental"]},
-	  {"name": "Furious Crater", "creatures": ["Cloak of Terror", "Vibrant Phantom", "Courage Leech"]},
-	  {"name": "Mirrored Nightmare", "creatures": ["Many Faces", "Distorted Phantom", "Druid's Apparition", "Knight's Apparition", "Monk's Apparition", "Paladin's Apparition", "Sorcerer's Apparition"]},
-	  {"name": "Rotten Wasteland", "creatures": ["Branchy Crawler", "Mould Phantom", "Rotten Golem"]}
-  ]},
-  { "name": "Rotten Blood", "subareas": [
-	  {"name": "Jaded Roots", "creatures": ["Sopping Corpus", "Bloated Man-Maggot", "Mycobiontic Beetle", "Oozing Corpus"]},
-	  {"name": "Putrefactory", "creatures": ["Oozing Carcass", "Sopping Carcass", "Rotten Man-Maggot", "Meandering Mushroom"]},
-	  {"name": "Gloom Pillars", "creatures": ["Darklight Emitter", "Darklight Construct", "Wandering Pillar", "Converter"]},
-	  {"name": "Darklight Core", "creatures": ["Walking Pillar", "Darklight Source", "Darklight Striker", "Darklight Matter"]}
-  ]},
-  { "name": "Gnomprona", "subareas": [
-	  {"name": "Monster Graveyard", "creatures": ["Sulphider", "Sulphur Spouter", "Nighthunter", "Stalking Stalk", "Undertaker"]},
-	  {"name": "Crystal Enigma", "creatures": ["Headpecker", "Mantosaurus", "Mercurial Menace", "Noxious Ripptor", "Shrieking Cry-Stal"]},
-	  {"name": "Sparkling Pools", "creatures": ["Emerald Tortoise", "Gore Horn", "Gorerilla", "Hulking Prehemoth", "Sabretooth (Creature)"]}
-  ]},
-  { "name": "Svargrond Surface", "subareas": [
-	  {"name": "Okolnir", "creatures": ["Frost Dragon", "Frost Dragon Hatchling"]},
-	  {"name": "Krimhorn", "creatures": ["Barbarian Brutetamer", "Barbarian Bloodwalker", "Barbarian Headsplitter", "Barbarian Skullhunter", "Ice Witch"]},
-	  {"name": "Ragnir", "creatures": ["Barbarian Brutetamer", "Barbarian Bloodwalker", "Barbarian Headsplitter", "Barbarian Skullhunter", "Winter Wolf", "Mammoth"]},
-	  {"name": "Ice Witch Temple", "creatures": ["Ice Golem", "Ice Witch", "Crystal Spider", "Frost Dragon Hatchling", "Frost Dragon"]},
-	  {"name": "Formogar Glacier", "creatures": ["Ice Golem", "Crystal Spider", "Wyvern", "Silver Rabbit", "Badger", "Frost Troll", "Penguin", "Polar Bear", "Mammoth", "Wyvern"]}
-  ]},
-  { "name": "Svargrond Other", "subareas": [
-	  {"name": "Inukaya", "creatures": ["Chakoya Tribewarden", "Chakoya Toolshaper", "Chakoya Windcaller"]},
-	  {"name": "Grimlund", "creatures": ["Chakoya Tribewarden", "Chakoya Toolshaper", "Chakoya Windcaller"]},
-	  {"name": "Sea Serpent Area", "creatures": ["Deepsea Blood Crab", "Young Sea Serpent", "Sea Serpent"]}
-  ]},
-  { "name": "Formogar Mines", "subareas": [
-	  {"name": "-1", "creatures": ["Frost Troll", "Bandit", "Novice of the Cult", "Gargoyle", "Stone Golem", "Hunter", "Mammoth", "Ghost", "Acolyte of the Cult", "Ice Golem"]},
-	  {"name": "-2/-3/-4", "creatures": ["Ice Golem", "Acolyte of the Cult", "Adept of the Cult", "Enlightened of the Cult", "Ice Witch", "Crystal Spider", "Nightmare Scion", "Nightmare", "Destroyer", "Behemoth", "Hellspawn", "Lost Soul", "Plaguesmith", "Demon", "Juggernaut"]}
-  ]}
+  {
+    "name": "Ab'Dendriel",
+    "subareas": [
+      {
+        "name": "Ab'Dendriel",
+        "creatures": [
+          "Bug",
+          "Butterfly (Blue)",
+          "Butterfly (Purple)",
+          "Elf",
+          "Rat",
+          "Seagull",
+          "Snake"
+        ]
+      },
+      {
+        "name": "Ab'Dendriel Surroundings",
+        "creatures": [
+          "Bear",
+          "Butterfly (Purple)",
+          "Deer",
+          "Elf",
+          "Orc",
+          "Orc Spearman",
+          "Orc Warrior",
+          "Poacher",
+          "Skeleton",
+          "Squirrel",
+          "Wasp",
+          "Wisp",
+          "Wolf"
+        ]
+      },
+      {
+        "name": "Ab'Dendriel Underground",
+        "creatures": [
+          "Barkless Devotee",
+          "Barkless Fanatic",
+          "Bat",
+          "Cyclops Drone",
+          "Elf",
+          "Elf Arcanist",
+          "Elf Scout",
+          "Ghoul",
+          "Poison Spider",
+          "Rat",
+          "Rorc",
+          "Rotworm",
+          "Skeleton",
+          "Slime",
+          "Snake",
+          "Troll",
+          "Troll Champion",
+          "Wasp"
+        ]
+      },
+      {
+        "name": "Barkless Ice Cavern",
+        "creatures": [
+          "Barkless Fanatic"
+        ]
+      },
+      {
+        "name": "Barkless Sulphur Pit",
+        "creatures": [
+          "Barkless Devotee"
+        ]
+      },
+      {
+        "name": "Barkless Tar Pit",
+        "creatures": [
+          "Barkless Devotee"
+        ]
+      },
+      {
+        "name": "Black Sphinx Estate",
+        "creatures": [
+          "Broken Shaper",
+          "Lich",
+          "Necromancer",
+          "Renegade Knight",
+          "Shaper Matriarch",
+          "Spider",
+          "Twisted Shaper",
+          "Undead Gladiator",
+          "Vicious Squire",
+          "Vile Grandmaster",
+          "Warlock"
+        ]
+      },
+      {
+        "name": "Draconia",
+        "creatures": [
+          "Bat",
+          "Carrion Worm",
+          "Demon Skeleton",
+          "Dragon",
+          "Dragon Lord",
+          "Ghoul",
+          "Mummy",
+          "Rotworm",
+          "Scorpion",
+          "Skeleton",
+          "Slime"
+        ]
+      },
+      {
+        "name": "Elvenbane",
+        "creatures": [
+          "Demon Skeleton",
+          "Dragon",
+          "Dwarf",
+          "Elf",
+          "Elf Arcanist",
+          "Hunter",
+          "Minotaur",
+          "Minotaur Archer",
+          "Minotaur Guard",
+          "Minotaur Mage",
+          "Orc",
+          "Orc Berserker",
+          "Orc Shaman",
+          "Orc Spearman",
+          "Orc Warrior",
+          "Troll"
+        ]
+      },
+      {
+        "name": "Forgotten Crypt",
+        "creatures": [
+          "Crypt Construct",
+          "Haunted Hunter",
+          "Walking Dread"
+        ]
+      },
+      {
+        "name": "Forsaken Crypt",
+        "creatures": [
+          "Crypt Mage",
+          "Cyclursus",
+          "Roaming Dread"
+        ]
+      },
+      {
+        "name": "Hellgate",
+        "creatures": [
+          "Bonelord",
+          "Bug",
+          "Carrion Worm",
+          "Demon Skeleton",
+          "Elder Bonelord",
+          "Elf",
+          "Elf Scout",
+          "Furious Fire Elemental",
+          "Gazer",
+          "Ghoul",
+          "Giant Spider",
+          "Poison Spider",
+          "Rat",
+          "Rotworm",
+          "Scorpion",
+          "Skeleton",
+          "Slime",
+          "Spider"
+        ]
+      },
+      {
+        "name": "Unhallowed Crypt",
+        "creatures": [
+          "Creepy Crawler",
+          "Crypt Construct",
+          "Crypt Fiend",
+          "Omnivora"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Carlin",
+    "subareas": [
+      {
+        "name": "Carlin",
+        "creatures": [
+          "Butterfly (Purple)",
+          "Cat",
+          "Chicken",
+          "Pig",
+          "Truffle",
+          "Wafer Paper Butterfly"
+        ]
+      },
+      {
+        "name": "Carlin Surroundings",
+        "creatures": [
+          "Amazon",
+          "Bat",
+          "Bear",
+          "Butterfly (Blue)",
+          "Butterfly (Red)",
+          "Deer",
+          "Dog",
+          "Rabbit",
+          "Seagull",
+          "Sheep",
+          "Troll",
+          "Valkyrie",
+          "Wolf"
+        ]
+      },
+      {
+        "name": "Carlin Underground",
+        "creatures": [
+          "Bat",
+          "Bug",
+          "Carrion Worm",
+          "Cult Believer",
+          "Cult Enforcer",
+          "Cult Scholar",
+          "Poison Spider",
+          "Renegade Knight",
+          "Rotworm",
+          "Slime",
+          "Spider",
+          "Troll",
+          "Vicious Squire",
+          "Vile Grandmaster"
+        ]
+      },
+      {
+        "name": "Demona",
+        "creatures": [
+          "Dragon",
+          "Dwarf Guard",
+          "Elf Arcanist",
+          "Infernalist",
+          "Minotaur Guard",
+          "Stone Golem",
+          "Warlock"
+        ]
+      },
+      {
+        "name": "Fields of Glory",
+        "creatures": [
+          "Amazon",
+          "Bandit",
+          "Bat",
+          "Bear",
+          "Bug",
+          "Butterfly (Purple)",
+          "Chicken",
+          "Deer",
+          "Forest Fury",
+          "Ghoul",
+          "Goblin",
+          "Leaf Golem",
+          "Pirate Buccaneer",
+          "Pirate Cutthroat",
+          "Pirate Ghost",
+          "Pirate Marauder",
+          "Pirate Skeleton",
+          "Poacher",
+          "Poison Spider",
+          "Rabbit",
+          "Rat",
+          "Rotworm",
+          "Seagull",
+          "Smuggler",
+          "Snake",
+          "Spider",
+          "Squirrel",
+          "Troll",
+          "Valkyrie",
+          "Wasp",
+          "Wilting Leaf Golem",
+          "Witch",
+          "Wolf"
+        ]
+      },
+      {
+        "name": "Folda",
+        "creatures": [
+          "Bat",
+          "Bonelord",
+          "Bug",
+          "Deer",
+          "Frost Troll",
+          "Minotaur",
+          "Minotaur Archer",
+          "Minotaur Guard",
+          "Minotaur Mage",
+          "Orc",
+          "Orc Spearman",
+          "Orc Warrior",
+          "Poison Spider",
+          "Polar Bear",
+          "Rabbit",
+          "Rat",
+          "Rotworm",
+          "Scorpion",
+          "Slime",
+          "Snake",
+          "Spider",
+          "Troll",
+          "Wasp",
+          "Water Elemental",
+          "Winter Wolf",
+          "Wyvern"
+        ]
+      },
+      {
+        "name": "Ghostlands",
+        "creatures": [
+          "Banshee",
+          "Bat",
+          "Bonelord",
+          "Cave Rat",
+          "Demon",
+          "Demon Skeleton",
+          "Dragon Lord",
+          "Fire Devil",
+          "Ghost",
+          "Ghoul",
+          "Giant Spider",
+          "Mummy",
+          "Poison Spider",
+          "Rabbit",
+          "Rat",
+          "Rotworm",
+          "Scorpion",
+          "Skeleton",
+          "Skeleton Warrior",
+          "Slime",
+          "Stalker",
+          "Vampire",
+          "Wild Warrior",
+          "Wyvern"
+        ]
+      },
+      {
+        "name": "Ice Islands",
+        "creatures": [
+          "Arctic Faun",
+          "Polar Bear",
+          "Silver Rabbit"
+        ]
+      },
+      {
+        "name": "Isle of the Kings",
+        "creatures": [
+          "Bonelord",
+          "Demon Skeleton",
+          "Dog",
+          "Ghost",
+          "Ghoul",
+          "Giant Spider",
+          "Monk (Creature)",
+          "Mummy",
+          "Pig",
+          "Poison Spider",
+          "Rabbit",
+          "Scorpion",
+          "Skeleton",
+          "Slime",
+          "Stalker",
+          "Witch"
+        ]
+      },
+      {
+        "name": "Maze of the Lost Souls",
+        "creatures": [
+          "Bear",
+          "Bonelord",
+          "Bug",
+          "Cyclops",
+          "Demon Skeleton",
+          "Dragon",
+          "Dragon Lord",
+          "Dwarf",
+          "Dwarf Guard",
+          "Dwarf Soldier",
+          "Elf Scout",
+          "Ghoul",
+          "Giant Spider",
+          "Goblin",
+          "Hunter",
+          "Minotaur",
+          "Minotaur Archer",
+          "Minotaur Guard",
+          "Minotaur Mage",
+          "Monk (Creature)",
+          "Mummy",
+          "Orc Berserker",
+          "Orc Leader",
+          "Orc Shaman",
+          "Orc Spearman",
+          "Orc Warrior",
+          "Poison Spider",
+          "Rat",
+          "Rotworm",
+          "Scorpion",
+          "Skeleton",
+          "Slime",
+          "Snake",
+          "Spider",
+          "Stone Golem",
+          "Troll",
+          "Wasp",
+          "Wild Warrior",
+          "Wolf"
+        ]
+      },
+      {
+        "name": "Senja",
+        "creatures": [
+          "Frost Troll",
+          "Rabbit"
+        ]
+      },
+      {
+        "name": "Vega",
+        "creatures": [
+          "Deer",
+          "Polar Bear",
+          "Rabbit",
+          "Winter Wolf",
+          "Wyvern"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Edron",
+    "subareas": [
+      {
+        "name": "Azzilon Castle",
+        "creatures": [
+          "Broodrider Inferniarch",
+          "Gorger Inferniarch",
+          "Sineater Inferniarch"
+        ]
+      },
+      {
+        "name": "Barren Drift",
+        "creatures": [
+          "Cursed Prospector",
+          "Evil Prospector"
+        ]
+      },
+      {
+        "name": "Book World",
+        "creatures": [
+          "Bluebeak",
+          "Bramble Wyrmling",
+          "Crusader",
+          "Dog",
+          "Hawk Hopper",
+          "Headwalker",
+          "Lion Hydra"
+        ]
+      },
+      {
+        "name": "Brain Grounds",
+        "creatures": [
+          "Flimsy Lost Soul",
+          "Freakish Lost Soul",
+          "Grim Reaper",
+          "Mean Lost Soul"
+        ]
+      },
+      {
+        "name": "Castle Catacombs",
+        "creatures": [
+          "Brinebrute Inferniarch",
+          "Hellhunter Inferniarch",
+          "Spellreaper Inferniarch"
+        ]
+      },
+      {
+        "name": "Cormaya",
+        "creatures": [
+          "Badger",
+          "Bat",
+          "Butterfly (Blue)",
+          "Butterfly (Purple)",
+          "Deer",
+          "Dwarf",
+          "Dwarf Guard",
+          "Dwarf Soldier",
+          "Fox",
+          "Leaf Golem",
+          "Rabbit",
+          "Seagull",
+          "Squirrel",
+          "Wasp"
+        ]
+      },
+      {
+        "name": "Crumbling Caverns",
+        "creatures": [
+          "Cinder Wyrmling",
+          "Shell Drake"
+        ]
+      },
+      {
+        "name": "Crystal Enigma",
+        "creatures": [
+          "Headpecker",
+          "Mantosaurus",
+          "Mercurial Menace",
+          "Noxious Ripptor",
+          "Shrieking Cry-Stal"
+        ]
+      },
+      {
+        "name": "Cyclopolis",
+        "creatures": [
+          "Behemoth",
+          "Cyclops",
+          "Cyclops Drone",
+          "Cyclops Smith",
+          "Dragon",
+          "Dragon Lord",
+          "Dwarf Guard",
+          "Dwarf Soldier",
+          "Elf Arcanist",
+          "Elf Scout",
+          "Fire Elemental",
+          "Minotaur Archer",
+          "Minotaur Guard",
+          "Minotaur Mage",
+          "Orc Berserker",
+          "Orc Leader",
+          "Scorpion",
+          "Wild Warrior"
+        ]
+      },
+      {
+        "name": "Demon Forge",
+        "creatures": [
+          "Ancient Scarab",
+          "Banshee",
+          "Behemoth",
+          "Betrayed Wraith",
+          "Blightwalker",
+          "Bonebeast",
+          "Braindeath",
+          "Crystal Spider",
+          "Dark Torturer",
+          "Defiler",
+          "Demon",
+          "Destroyer",
+          "Diabolic Imp",
+          "Efreet",
+          "Fire Devil",
+          "Fire Elemental",
+          "Fury",
+          "Gargoyle",
+          "Giant Spider",
+          "Hand of Cursed Fate",
+          "Hellfire Fighter",
+          "Hellhound",
+          "Ice Golem",
+          "Juggernaut",
+          "Lich",
+          "Lost Soul",
+          "Massive Fire Elemental",
+          "Massive Water Elemental",
+          "Nightmare",
+          "Phantasm",
+          "Plaguesmith",
+          "Quara Hydromancer",
+          "Quara Pincher",
+          "Quara Predator",
+          "Son of Verminor",
+          "Spectre",
+          "Stone Golem",
+          "Undead Dragon",
+          "Warlock"
+        ]
+      },
+      {
+        "name": "Demonwar Dungeon",
+        "creatures": [
+          "Askarak Demon",
+          "Shaburak Demon"
+        ]
+      },
+      {
+        "name": "Dryad Gardens",
+        "creatures": [
+          "Deer",
+          "Earth Elemental",
+          "Elder Forest Fury",
+          "Emerald Damselfly",
+          "Forest Fury",
+          "Haunted Treeling",
+          "Leaf Golem",
+          "Marsh Stalker",
+          "Rabbit",
+          "Wilting Leaf Golem"
+        ]
+      },
+      {
+        "name": "Edron",
+        "creatures": [
+          "Wyvern"
+        ]
+      },
+      {
+        "name": "Edron Castle",
+        "creatures": [
+          "Bat",
+          "Cave Rat",
+          "Dog",
+          "Fox",
+          "Rabbit",
+          "Rat",
+          "Snake"
+        ]
+      },
+      {
+        "name": "Edron Dragon Lair",
+        "creatures": [
+          "Dragon",
+          "Dragon Hatchling",
+          "Dragon Lord",
+          "Dragon Lord Hatchling"
+        ]
+      },
+      {
+        "name": "Edron Forgotten Tomb",
+        "creatures": [
+          "Bat",
+          "Blue Djinn",
+          "Bonebeast",
+          "Crypt Shambler",
+          "Demon Skeleton",
+          "Gargoyle",
+          "Ghoul",
+          "Mummy",
+          "Scorpion",
+          "Skeleton",
+          "Vampire"
+        ]
+      },
+      {
+        "name": "Edron Goblin Den",
+        "creatures": [
+          "Bug",
+          "Goblin",
+          "Goblin Assassin",
+          "Goblin Scavenger",
+          "Muglex Clan Assassin",
+          "Muglex Clan Footman",
+          "Wasp"
+        ]
+      },
+      {
+        "name": "Edron Hero Fortress",
+        "creatures": [
+          "Blood Priest",
+          "Bonebeast",
+          "Hero",
+          "Lich",
+          "Necromancer",
+          "Renegade Knight",
+          "Undead Gladiator",
+          "Vicious Squire",
+          "Vile Grandmaster",
+          "Wyvern"
+        ]
+      },
+      {
+        "name": "Edron Northern Ruins",
+        "creatures": [
+          "Banshee",
+          "Bat",
+          "Bonelord",
+          "Dark Apprentice",
+          "Dark Magician",
+          "Demon",
+          "Demon Skeleton",
+          "Dragon",
+          "Dragon Hatchling",
+          "Elf Arcanist",
+          "Fire Elemental",
+          "Giant Spider",
+          "Grim Reaper",
+          "Hero",
+          "Hunter",
+          "Infernalist",
+          "Massive Fire Elemental",
+          "Minotaur Guard",
+          "Minotaur Mage",
+          "Monk (Creature)",
+          "Necromancer",
+          "Orc Shaman",
+          "Poison Spider",
+          "Priestess",
+          "Scorpion",
+          "Skeleton",
+          "Slime",
+          "Stalker",
+          "Stone Golem",
+          "Warlock",
+          "Wild Warrior",
+          "Witch"
+        ]
+      },
+      {
+        "name": "Edron Orc Lands",
+        "creatures": [
+          "Badger",
+          "Bat",
+          "Deer",
+          "Fox",
+          "Giant Spider",
+          "Orc",
+          "Orc Berserker",
+          "Orc Cult Fanatic",
+          "Orc Cult Inquisitor",
+          "Orc Cult Minion",
+          "Orc Cult Priest",
+          "Orc Cultist",
+          "Orc Leader",
+          "Orc Shaman",
+          "Orc Spearman",
+          "Orc Warrior",
+          "Orclops Doomhauler",
+          "Poison Spider",
+          "Snake",
+          "Wisp"
+        ]
+      },
+      {
+        "name": "Edron Rotworm Caves",
+        "creatures": [
+          "Bog Raider",
+          "Carrion Worm",
+          "Dwarf Guard",
+          "Rotworm"
+        ]
+      },
+      {
+        "name": "Edron Surroundings",
+        "creatures": [
+          "Badger",
+          "Bat",
+          "Bear",
+          "Bog Raider",
+          "Bug",
+          "Butterfly (Purple)",
+          "Crab",
+          "Deer",
+          "Demon",
+          "Demon Skeleton",
+          "Dwarf Geomancer",
+          "Dwarf Guard",
+          "Dwarf Soldier",
+          "Earth Elemental",
+          "Fox",
+          "Ghoul",
+          "Gnarlhound",
+          "Haunted Treeling",
+          "Hunter",
+          "Leaf Golem",
+          "Modified Gnarlhound",
+          "Muglex Clan Assassin",
+          "Muglex Clan Footman",
+          "Poacher",
+          "Rabbit",
+          "Rat",
+          "Seagull",
+          "Sheep",
+          "Skeleton",
+          "Snake",
+          "Spider",
+          "Squirrel",
+          "Swampling",
+          "Wafer Paper Butterfly",
+          "Werebadger",
+          "Wereboar",
+          "Werefox",
+          "Wild Warrior",
+          "Wilting Leaf Golem",
+          "Wisp",
+          "Witch",
+          "Wolf",
+          "Wyvern"
+        ]
+      },
+      {
+        "name": "Edron Troll Den",
+        "creatures": [
+          "Bear",
+          "Frost Troll",
+          "Rat",
+          "Troll",
+          "Troll Champion"
+        ]
+      },
+      {
+        "name": "Edron Undead Lairs",
+        "creatures": [
+          "Bat",
+          "Bonebeast",
+          "Cave Rat",
+          "Demon Skeleton",
+          "Ghoul",
+          "Necromancer",
+          "Rat",
+          "Skeleton",
+          "Skeleton Warrior",
+          "Snake",
+          "Undead Mine Worker",
+          "Undead Prospector",
+          "Vampire",
+          "Vampire Bride",
+          "Vampire Viscount"
+        ]
+      },
+      {
+        "name": "Fury Hell",
+        "creatures": [
+          "Diabolic Imp",
+          "Dragon Lord",
+          "Dragonling",
+          "Fury",
+          "Hellfire Fighter",
+          "Hellhound",
+          "Infernalist",
+          "Massive Fire Elemental"
+        ]
+      },
+      {
+        "name": "Grimvale",
+        "creatures": [
+          "Badger",
+          "Bandit",
+          "Butterfly (Blue)",
+          "Butterfly (Red)",
+          "Werebadger",
+          "Werebear",
+          "Wereboar",
+          "Werewolf"
+        ]
+      },
+      {
+        "name": "Lycanthrope Grounds",
+        "creatures": [
+          "Werebadger",
+          "Werebear",
+          "Wereboar",
+          "Werefox",
+          "Werewolf"
+        ]
+      },
+      {
+        "name": "Monster Graveyard",
+        "creatures": [
+          "Nighthunter",
+          "Stalking Stalk",
+          "Sulphider",
+          "Sulphur Spouter",
+          "Undertaker"
+        ]
+      },
+      {
+        "name": "Morshabaalfight",
+        "creatures": [
+          "Fire Elemental"
+        ]
+      },
+      {
+        "name": "Netherworld",
+        "creatures": [
+          "Flimsy Lost Soul",
+          "Freakish Lost Soul",
+          "Mean Lost Soul"
+        ]
+      },
+      {
+        "name": "Sparkling Pools",
+        "creatures": [
+          "Emerald Tortoise",
+          "Gore Horn",
+          "Gorerilla",
+          "Hulking Prehemoth",
+          "Sabretooth (Creature)"
+        ]
+      },
+      {
+        "name": "Stonehome",
+        "creatures": [
+          "Bat",
+          "Butterfly (Purple)",
+          "Chicken"
+        ]
+      },
+      {
+        "name": "Zarganash",
+        "creatures": [
+          "Flimsy Lost Soul",
+          "Freakish Lost Soul",
+          "Mean Lost Soul"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Feyrist",
+    "subareas": [
+      {
+        "name": "Candia",
+        "creatures": [
+          "Chocolate Blob",
+          "Cream Blob",
+          "Fruit Drop",
+          "Gingerbread Man",
+          "Sugar Cube",
+          "Sugar Cube Worker",
+          "Truffle",
+          "Truffle Cook",
+          "Wafer Paper Butterfly"
+        ]
+      },
+      {
+        "name": "Chocolate Mines",
+        "creatures": [
+          "Candy Horror",
+          "Fruit Drop",
+          "Nibblemaw",
+          "Sugar Cube Worker"
+        ]
+      },
+      {
+        "name": "Dessert Dungeons",
+        "creatures": [
+          "Angry Sugar Fairy",
+          "Candy Floss Elemental",
+          "Cream Blob",
+          "Fruit Drop",
+          "Goggle Cake",
+          "Truffle",
+          "Truffle Cook"
+        ]
+      },
+      {
+        "name": "Dream Labyrinth",
+        "creatures": [
+          "Arachnophobica",
+          "Crazed Summer Rearguard",
+          "Crazed Summer Vanguard",
+          "Crazed Winter Rearguard",
+          "Crazed Winter Vanguard",
+          "Hibernal Moth",
+          "Insane Siren",
+          "Lacewing Moth",
+          "Soul-Broken Harbinger",
+          "Thanatursus"
+        ]
+      },
+      {
+        "name": "Fae Village",
+        "creatures": [
+          "Dark Faun",
+          "Faun"
+        ]
+      },
+      {
+        "name": "Feyrist Meadows",
+        "creatures": [
+          "Boogy",
+          "Butterfly (Blue)",
+          "Butterfly (Purple)",
+          "Butterfly (Red)",
+          "Dark Faun",
+          "Enfeebled Silencer",
+          "Faun",
+          "Nymph",
+          "Pixie",
+          "Pooka",
+          "Swan Maiden",
+          "Twisted Pooka",
+          "Weakened Frazzlemaw",
+          "Wisp"
+        ]
+      },
+      {
+        "name": "Feyrist Underground",
+        "creatures": [
+          "Boogy",
+          "Dark Faun",
+          "Enfeebled Silencer",
+          "Twisted Pooka",
+          "Weakened Frazzlemaw"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Hrodmir",
+    "subareas": [
+      {
+        "name": "Bittermor",
+        "creatures": [
+          "Badger",
+          "Barbarian Bloodwalker",
+          "Barbarian Brutetamer",
+          "Barbarian Headsplitter",
+          "Barbarian Skullhunter",
+          "Crystal Spider",
+          "Deer",
+          "Frost Dragon",
+          "Frost Dragon Hatchling",
+          "Frost Troll",
+          "Ice Golem",
+          "Ice Witch",
+          "Mammoth",
+          "Polar Bear",
+          "Silver Rabbit",
+          "Winter Wolf",
+          "Wisp"
+        ]
+      },
+      {
+        "name": "Chyllfroest Chakoya Caves",
+        "creatures": [
+          "Chakoya Toolshaper",
+          "Chakoya Tribewarden",
+          "Chakoya Windcaller",
+          "Frost Dragon Hatchling",
+          "Frost Giant",
+          "Frost Giantess",
+          "Mammoth",
+          "Penguin",
+          "Pirate Ghost",
+          "Pirate Skeleton",
+          "Polar Bear"
+        ]
+      },
+      {
+        "name": "Chyllfroest Icefire Caves",
+        "creatures": [
+          "Behemoth",
+          "Demon",
+          "Frost Dragon",
+          "Frost Dragon Hatchling",
+          "Ghastly Dragon",
+          "Hellhound",
+          "Hellspawn",
+          "Undead Dragon",
+          "Wyvern"
+        ]
+      },
+      {
+        "name": "Chyllfroest Lost World",
+        "creatures": [
+          "Brimstone Bug",
+          "Crystal Spider",
+          "Frost Giant",
+          "Giant Spider",
+          "Ice Golem",
+          "Killer Caiman",
+          "Lancer Beetle",
+          "Stampor",
+          "Wailing Widow",
+          "Wyvern"
+        ]
+      },
+      {
+        "name": "Formorgar Glacier",
+        "creatures": [
+          "Badger",
+          "Barbarian Headsplitter",
+          "Crystal Spider",
+          "Frost Dragon",
+          "Frost Dragon Hatchling",
+          "Frost Giant",
+          "Frost Giantess",
+          "Frost Troll",
+          "Gargoyle",
+          "Ice Golem",
+          "Ice Witch",
+          "Mammoth",
+          "Novice of the Cult",
+          "Penguin",
+          "Polar Bear",
+          "Quara Constrictor Scout",
+          "Quara Hydromancer Scout",
+          "Quara Mantassin Scout",
+          "Quara Pincher Scout",
+          "Quara Predator Scout",
+          "Silver Rabbit",
+          "Stone Golem",
+          "Winter Wolf",
+          "Wisp",
+          "Wyvern"
+        ]
+      },
+      {
+        "name": "Formorgar Mines",
+        "creatures": [
+          "Acolyte of the Cult",
+          "Adept of the Cult",
+          "Bandit",
+          "Behemoth",
+          "Broken Shaper",
+          "Crystal Spider",
+          "Demon",
+          "Destroyer",
+          "Enlightened of the Cult",
+          "Frost Dragon",
+          "Frost Troll",
+          "Gargoyle",
+          "Ghost",
+          "Hellspawn",
+          "Hunter",
+          "Ice Golem",
+          "Ice Witch",
+          "Juggernaut",
+          "Lost Soul",
+          "Mammoth",
+          "Nightmare",
+          "Nightmare Scion",
+          "Novice of the Cult",
+          "Plaguesmith",
+          "Polar Bear",
+          "Rat",
+          "Shaper Matriarch",
+          "Silver Rabbit",
+          "Stone Golem",
+          "Twisted Shaper",
+          "Wyvern"
+        ]
+      },
+      {
+        "name": "Frozen Trench",
+        "creatures": [
+          "Massive Water Elemental",
+          "Quara Constrictor",
+          "Quara Hydromancer",
+          "Quara Mantassin",
+          "Quara Pincher",
+          "Quara Predator"
+        ]
+      },
+      {
+        "name": "Grimlund",
+        "creatures": [
+          "Chakoya Toolshaper",
+          "Chakoya Tribewarden",
+          "Chakoya Windcaller",
+          "Penguin",
+          "Polar Bear",
+          "Winter Wolf"
+        ]
+      },
+      {
+        "name": "Helheim",
+        "creatures": [
+          "Betrayed Wraith",
+          "Bonebeast",
+          "Bonelord",
+          "Braindeath",
+          "Crypt Shambler",
+          "Demon Skeleton",
+          "Elder Bonelord",
+          "Ghoul",
+          "Lost Soul",
+          "Mummy",
+          "Penguin",
+          "Skeleton",
+          "Undead Dragon"
+        ]
+      },
+      {
+        "name": "Inukaya",
+        "creatures": [
+          "Chakoya Toolshaper",
+          "Chakoya Tribewarden",
+          "Chakoya Windcaller",
+          "Polar Bear",
+          "Winter Wolf"
+        ]
+      },
+      {
+        "name": "Krimhorn",
+        "creatures": [
+          "Badger",
+          "Barbarian Bloodwalker",
+          "Barbarian Brutetamer",
+          "Barbarian Headsplitter",
+          "Barbarian Skullhunter",
+          "Chicken",
+          "Deer",
+          "Frost Troll",
+          "Ice Witch",
+          "Mammoth",
+          "Polar Bear",
+          "Silver Rabbit",
+          "Stone Golem",
+          "Winter Wolf",
+          "Wisp"
+        ]
+      },
+      {
+        "name": "Nibelor",
+        "creatures": [
+          "Crystal Spider",
+          "Husky",
+          "Ice Golem",
+          "Penguin",
+          "Polar Bear",
+          "Rat",
+          "Silver Rabbit",
+          "Winter Wolf"
+        ]
+      },
+      {
+        "name": "Okolnir",
+        "creatures": [
+          "Frost Dragon",
+          "Frost Dragon Hatchling",
+          "Penguin"
+        ]
+      },
+      {
+        "name": "Ragnir",
+        "creatures": [
+          "Badger",
+          "Barbarian Bloodwalker",
+          "Barbarian Brutetamer",
+          "Barbarian Headsplitter",
+          "Barbarian Skullhunter",
+          "Deer",
+          "Frost Troll",
+          "Mammoth",
+          "Polar Bear",
+          "Silver Rabbit",
+          "Winter Wolf"
+        ]
+      },
+      {
+        "name": "Sea Serpent Caves",
+        "creatures": [
+          "Deepsea Blood Crab",
+          "Sea Serpent",
+          "Young Sea Serpent"
+        ]
+      },
+      {
+        "name": "Svargrond",
+        "creatures": [
+          "Barbarian Bloodwalker"
+        ]
+      },
+      {
+        "name": "Svargrond City",
+        "creatures": [
+          "Husky"
+        ]
+      },
+      {
+        "name": "Svargrond Surroundings",
+        "creatures": [
+          "Badger",
+          "Deer",
+          "Elephant",
+          "Frost Giant",
+          "Frost Giantess",
+          "Husky",
+          "Ice Witch",
+          "Mammoth",
+          "Penguin",
+          "Polar Bear",
+          "Silver Rabbit",
+          "Winter Wolf",
+          "Witch"
+        ]
+      },
+      {
+        "name": "Tyrsung",
+        "creatures": [
+          "Bandit",
+          "Frost Giant",
+          "Frost Giantess",
+          "Hunter",
+          "Mammoth",
+          "Penguin",
+          "Pirate Buccaneer",
+          "Pirate Cutthroat",
+          "Pirate Marauder",
+          "Polar Bear",
+          "Silver Rabbit",
+          "Smuggler",
+          "Winter Wolf"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Kazordoon",
+    "subareas": [
+      {
+        "name": "Abandoned Headquarters",
+        "creatures": [
+          "Pig",
+          "Sheep"
+        ]
+      },
+      {
+        "name": "Antrum of the Fallen",
+        "creatures": [
+          "Afflicted Strider",
+          "Blemished Spawn",
+          "Eyeless Devourer"
+        ]
+      },
+      {
+        "name": "Caves of the Lost",
+        "creatures": [
+          "Enslaved Dwarf",
+          "Lost Basher",
+          "Lost Husher",
+          "Lost Thrower"
+        ]
+      },
+      {
+        "name": "Dwelling of the Forgotten",
+        "creatures": [
+          "Cave Chimera",
+          "Tremendous Tyrant",
+          "Varnished Diremaw"
+        ]
+      },
+      {
+        "name": "Eyes of the Deep",
+        "creatures": [
+          "Deepling Scout"
+        ]
+      },
+      {
+        "name": "Femor Hills",
+        "creatures": [
+          "Bat",
+          "Bear",
+          "Black Sheep",
+          "Blood Crab",
+          "Bug",
+          "Crab",
+          "Cyclops",
+          "Demon Skeleton",
+          "Goblin",
+          "Goblin Assassin",
+          "Goblin Scavenger",
+          "Hunter",
+          "Pig",
+          "Poison Spider",
+          "Rabbit",
+          "Rotworm",
+          "Seagull",
+          "Sheep",
+          "Skeleton",
+          "Snake",
+          "Spider",
+          "Wild Warrior",
+          "Wolf"
+        ]
+      },
+      {
+        "name": "Gnome Deep Hub",
+        "creatures": [
+          "Deepworm",
+          "Diremaw",
+          "Lava Lurker",
+          "Lost Exile",
+          "Ravenous Lava Lurker"
+        ]
+      },
+      {
+        "name": "Gnomegate Crystal Dungeon",
+        "creatures": [
+          "Cliff Strider",
+          "Ironblight",
+          "Lost Berserker",
+          "Orewalker"
+        ]
+      },
+      {
+        "name": "Gnomegate Crystal Grounds",
+        "creatures": [
+          "Crystalcrusher",
+          "Earth Elemental",
+          "Wyvern"
+        ]
+      },
+      {
+        "name": "Gnomegate Fungus Dungeon",
+        "creatures": [
+          "Armadile",
+          "Hideous Fungus",
+          "Humongous Fungus",
+          "Stone Devourer"
+        ]
+      },
+      {
+        "name": "Gnomegate Golem Workshop",
+        "creatures": [
+          "Damaged Crystal Golem",
+          "Enraged Crystal Golem"
+        ]
+      },
+      {
+        "name": "Gnomegate Lava Hot Spot",
+        "creatures": [
+          "Dragon Lord",
+          "Massive Fire Elemental",
+          "Vulcongra"
+        ]
+      },
+      {
+        "name": "Gnomegate Magma Dungeon",
+        "creatures": [
+          "Infected Weeper",
+          "Lava Golem",
+          "Lost Berserker",
+          "Magma Crawler",
+          "Weeper"
+        ]
+      },
+      {
+        "name": "Gnomegate Mushroom Gardens",
+        "creatures": [
+          "Crystal Spider",
+          "Crystalcrusher",
+          "Giant Spider",
+          "Massive Earth Elemental",
+          "Mutated Rat",
+          "Wiggler",
+          "Wyvern"
+        ]
+      },
+      {
+        "name": "Gnomegate Truffels Grounds",
+        "creatures": [
+          "Massive Earth Elemental",
+          "Mushroom Sniffer",
+          "Wiggler",
+          "Wyvern"
+        ]
+      },
+      {
+        "name": "Grotto of the Lost",
+        "creatures": [
+          "Lavafungus",
+          "Lavaworm",
+          "Streaked Devourer"
+        ]
+      },
+      {
+        "name": "Horned Fox Lair",
+        "creatures": [
+          "Bat",
+          "Minotaur",
+          "Minotaur Archer",
+          "Minotaur Guard",
+          "Minotaur Mage"
+        ]
+      },
+      {
+        "name": "Kazordoon",
+        "creatures": [
+          "Bat",
+          "Dwarf",
+          "Dwarf Guard",
+          "Dwarf Soldier",
+          "Rat"
+        ]
+      },
+      {
+        "name": "Kazordoon Dwarf Mines",
+        "creatures": [
+          "Bat",
+          "Carrion Worm",
+          "Corym Charlatan",
+          "Corym Skirmisher",
+          "Corym Vanguard",
+          "Dragon",
+          "Dragon Hatchling",
+          "Dragon Lord",
+          "Dwarf",
+          "Dwarf Geomancer",
+          "Dwarf Guard",
+          "Dwarf Soldier",
+          "Earth Elemental",
+          "Ghost",
+          "Giant Spider",
+          "Poison Spider",
+          "Rotworm",
+          "Slime",
+          "Stone Golem"
+        ]
+      },
+      {
+        "name": "Kazordoon Prison",
+        "creatures": [
+          "Cyclops",
+          "Dwarf",
+          "Dwarf Guard",
+          "Dwarf Soldier",
+          "Minotaur",
+          "Minotaur Archer",
+          "Minotaur Guard",
+          "Minotaur Mage",
+          "Orc Berserker",
+          "Orc Shaman",
+          "Orc Spearman",
+          "Orc Warrior",
+          "Troll"
+        ]
+      },
+      {
+        "name": "Kazordoon Surroundings",
+        "creatures": [
+          "Amazon",
+          "Bear",
+          "Bonelord",
+          "Bug",
+          "Butterfly (Blue)",
+          "Butterfly (Purple)",
+          "Cat",
+          "Cave Rat",
+          "Cyclops",
+          "Dark Magician",
+          "Deer",
+          "Demon Skeleton",
+          "Dragon",
+          "Dwarf",
+          "Dwarf Geomancer",
+          "Dwarf Guard",
+          "Dwarf Soldier",
+          "Fire Devil",
+          "Frost Troll",
+          "Ghoul",
+          "Goblin",
+          "Green Frog",
+          "Hunter",
+          "Minotaur",
+          "Minotaur Archer",
+          "Monk (Creature)",
+          "Poacher",
+          "Poison Spider",
+          "Rabbit",
+          "Rotworm",
+          "Scorpion",
+          "Seagull",
+          "Skeleton",
+          "Slime",
+          "Snake",
+          "Spider",
+          "Squirrel",
+          "Stalker",
+          "Swamp Troll",
+          "Troll",
+          "Wisp",
+          "Witch",
+          "Wolf",
+          "Wyvern"
+        ]
+      },
+      {
+        "name": "Kazordoon Troll Den",
+        "creatures": [
+          "Bat",
+          "Bug",
+          "Minotaur Archer",
+          "Minotaur Mage",
+          "Rat",
+          "Rotworm",
+          "Slime",
+          "Snake",
+          "Troll",
+          "Troll Champion"
+        ]
+      },
+      {
+        "name": "Kazordoon Underground",
+        "creatures": [
+          "Carrion Worm",
+          "Drillworm",
+          "Dwarf",
+          "Dwarf Guard",
+          "Dwarf Henchman",
+          "Dwarf Soldier",
+          "Earth Elemental",
+          "Giant Spider",
+          "Poison Spider",
+          "Rat",
+          "Rotworm",
+          "Slime",
+          "Spider",
+          "Stone Golem",
+          "Witch",
+          "Wyvern"
+        ]
+      },
+      {
+        "name": "Lower Spike",
+        "creatures": [
+          "Behemoth",
+          "Dragon Lord",
+          "Drillworm",
+          "Enslaved Dwarf",
+          "Lost Basher",
+          "Lost Husher",
+          "Lost Thrower",
+          "Massive Earth Elemental",
+          "Nightmare Scion",
+          "Vulcongra",
+          "Wyrm"
+        ]
+      },
+      {
+        "name": "Middle Spike",
+        "creatures": [
+          "Ancient Scarab",
+          "Bonebeast",
+          "Clay Guardian",
+          "Crystalcrusher",
+          "Earth Elemental",
+          "Mutated Bat",
+          "Mutated Rat"
+        ]
+      },
+      {
+        "name": "Orc Lands",
+        "creatures": [
+          "Bug",
+          "Deer",
+          "Orc",
+          "Orc Berserker",
+          "Orc Leader",
+          "Orc Rider",
+          "Orc Shaman",
+          "Orc Spearman",
+          "Orc Warrior",
+          "Pig",
+          "Rabbit",
+          "Seagull",
+          "Snake",
+          "War Wolf",
+          "Wolf"
+        ]
+      },
+      {
+        "name": "Poacher Lair",
+        "creatures": [
+          "Boar",
+          "Gloom Wolf",
+          "War Wolf",
+          "Wolf",
+          "Wyvern"
+        ]
+      },
+      {
+        "name": "Rorc Plains",
+        "creatures": [
+          "Deer",
+          "Orc Shaman",
+          "Orc Spearman",
+          "Orc Warrior",
+          "Poacher",
+          "Rorc",
+          "Scorpion",
+          "Seagull",
+          "War Wolf",
+          "Wasp",
+          "Wolf",
+          "Wyvern"
+        ]
+      },
+      {
+        "name": "Too Hot To Handle",
+        "creatures": [
+          "Diremaw"
+        ]
+      },
+      {
+        "name": "Ulderek's Rock",
+        "creatures": [
+          "Bear",
+          "Bonelord",
+          "Chicken",
+          "Cyclops",
+          "Dragon",
+          "Orc",
+          "Orc Berserker",
+          "Orc Leader",
+          "Orc Rider",
+          "Orc Shaman",
+          "Orc Spearman",
+          "Orc Warlord",
+          "Orc Warrior",
+          "Pig",
+          "Slime",
+          "Stone Golem",
+          "War Wolf",
+          "Wolf"
+        ]
+      },
+      {
+        "name": "Upper Spike",
+        "creatures": [
+          "Corym Charlatan",
+          "Corym Skirmisher",
+          "Crypt Shambler",
+          "Demon Skeleton",
+          "Gargoyle",
+          "Ghost",
+          "Mummy",
+          "Zombie"
+        ]
+      },
+      {
+        "name": "Warzone Five",
+        "creatures": [
+          "Cave Devourer",
+          "High Voltage Elemental",
+          "Tunnel Tyrant"
+        ]
+      },
+      {
+        "name": "Warzone Four",
+        "creatures": [
+          "Chasm Spawn",
+          "Drillworm",
+          "Elder Wyrm",
+          "Lava Lurker",
+          "Mole"
+        ]
+      },
+      {
+        "name": "Warzone Six",
+        "creatures": [
+          "Deepworm",
+          "Diremaw",
+          "Humongous Fungus",
+          "Mole",
+          "Spit Nettle"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Kilmaresh",
+    "subareas": [
+      {
+        "name": "Central Steppe",
+        "creatures": [
+          "Adult Goanna",
+          "Clomp",
+          "Cobra",
+          "Crab",
+          "Feral Sphinx",
+          "Flamingo",
+          "Hyaena",
+          "Lamassu",
+          "Lion",
+          "Manticore",
+          "Ogre Rowdy",
+          "Ogre Ruffian",
+          "Ogre Sage",
+          "Scorpion",
+          "Seagull",
+          "Sphinx",
+          "Young Goanna"
+        ]
+      },
+      {
+        "name": "Claustrophobic Inferno",
+        "creatures": [
+          "Brachiodemon",
+          "Infernal Demon",
+          "Infernal Phantom"
+        ]
+      },
+      {
+        "name": "Ebb and Flow",
+        "creatures": [
+          "Bony Sea Devil",
+          "Capricious Phantom",
+          "Turbulent Elemental"
+        ]
+      },
+      {
+        "name": "Furious Crater",
+        "creatures": [
+          "Cloak of Terror",
+          "Courage Leech",
+          "Vibrant Phantom"
+        ]
+      },
+      {
+        "name": "Green Belt",
+        "creatures": [
+          "Adult Goanna",
+          "Cobra",
+          "Crocodile",
+          "Feral Sphinx",
+          "Flamingo",
+          "Hyaena",
+          "Lion",
+          "Manticore",
+          "Scorpion",
+          "Young Goanna"
+        ]
+      },
+      {
+        "name": "Issavi",
+        "creatures": [
+          "Biting Book",
+          "Butterfly (Blue)",
+          "Butterfly (Purple)",
+          "Cat",
+          "Crab",
+          "Crocodile",
+          "Dog",
+          "Dromedary",
+          "Flamingo",
+          "Seagull"
+        ]
+      },
+      {
+        "name": "Issavi Sewers",
+        "creatures": [
+          "Black Sphinx Acolyte",
+          "Burning Gladiator",
+          "Priestess of the Wild Sun"
+        ]
+      },
+      {
+        "name": "Kilmaresh Catacombs",
+        "creatures": [
+          "Black Sphinx Acolyte",
+          "Burning Gladiator",
+          "Crypt Warden",
+          "Priestess of the Wild Sun",
+          "Sandcrawler",
+          "Scorpion",
+          "Sphinx"
+        ]
+      },
+      {
+        "name": "Kilmaresh Mountains",
+        "creatures": [
+          "Adult Goanna",
+          "Bat",
+          "Black Sphinx Acolyte",
+          "Burning Gladiator",
+          "Clomp",
+          "Gryphon",
+          "Hyaena",
+          "Lamassu",
+          "Mummy",
+          "Ogre Rowdy",
+          "Ogre Ruffian",
+          "Ogre Sage",
+          "Priestess of the Wild Sun",
+          "Scorpion",
+          "Young Goanna"
+        ]
+      },
+      {
+        "name": "Mirrored Nightmare",
+        "creatures": [
+          "Distorted Phantom",
+          "Druid's Apparition",
+          "Knight's Apparition",
+          "Many Faces",
+          "Monk's Apparition",
+          "Paladin's Apparition",
+          "Sorcerer's Apparition"
+        ]
+      },
+      {
+        "name": "Nykri Delta",
+        "creatures": [
+          "Cobra",
+          "Crab",
+          "Crocodile",
+          "Flamingo",
+          "Lamassu",
+          "Sandcrawler",
+          "Scorpion",
+          "Seagull",
+          "Sheep",
+          "Sphinx"
+        ]
+      },
+      {
+        "name": "Rotten Wasteland",
+        "creatures": [
+          "Branchy Crawler",
+          "Mould Phantom",
+          "Rotten Golem"
+        ]
+      },
+      {
+        "name": "Ruins of Nuur",
+        "creatures": [
+          "Girtablilu Warrior",
+          "Venerable Girtablilu"
+        ]
+      },
+      {
+        "name": "Salt Caves",
+        "creatures": [
+          "Bashmu",
+          "Juvenile Bashmu"
+        ]
+      },
+      {
+        "name": "Southern Steppe",
+        "creatures": [
+          "Adult Goanna",
+          "Clomp",
+          "Cobra",
+          "Crab",
+          "Crocodile",
+          "Feral Sphinx",
+          "Flamingo",
+          "Hyaena",
+          "Lamassu",
+          "Lion",
+          "Manticore",
+          "Scorpion",
+          "Sphinx",
+          "Young Goanna"
+        ]
+      },
+      {
+        "name": "Trail to Rascacoon",
+        "creatures": [
+          "Exotic Bat",
+          "Exotic Cave Spider",
+          "Pirat Bombardier",
+          "Pirat Cutthroat",
+          "Pirat Scoundrel"
+        ]
+      },
+      {
+        "name": "Wreckoning",
+        "creatures": [
+          "Pirat Bombardier",
+          "Pirat Cutthroat",
+          "Pirat Mate",
+          "Pirat Scoundrel"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Krailos",
+    "subareas": [
+      {
+        "name": "Krailos Ruins",
+        "creatures": [
+          "Nightmare",
+          "Nightmare Scion",
+          "Ogre Brute",
+          "Ogre Shaman",
+          "Undead Gladiator"
+        ]
+      },
+      {
+        "name": "Krailos Spider Lair",
+        "creatures": [
+          "Brimstone Bug",
+          "Giant Spider",
+          "Wailing Widow"
+        ]
+      },
+      {
+        "name": "Krailos Steppe",
+        "creatures": [
+          "Clomp",
+          "Corym Charlatan",
+          "Dragon",
+          "Dragon Hatchling",
+          "Dragon Lord",
+          "Jellyfish",
+          "Ogre Brute",
+          "Ogre Savage",
+          "Ogre Shaman",
+          "Pirat Bombardier",
+          "Pirat Cutthroat",
+          "Pirat Mate",
+          "Pirat Scoundrel",
+          "Pirate Buccaneer",
+          "Pirate Corsair",
+          "Pirate Cutthroat",
+          "Pirate Marauder",
+          "Shark",
+          "Water Elemental"
+        ]
+      },
+      {
+        "name": "Ogre Village",
+        "creatures": [
+          "Clomp",
+          "Corym Charlatan"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Marapur",
+    "subareas": [
+      {
+        "name": "Asura Citadel",
+        "creatures": [
+          "Iceplume Strider",
+          "Silverfrost Sentinel",
+          "True Frost Flower Asura",
+          "True Midnight Asura",
+          "Winged Jaracal"
+        ]
+      },
+      {
+        "name": "Dead Riverbed",
+        "creatures": [
+          "Moonstone Excavator",
+          "Moonstone Overseer"
+        ]
+      },
+      {
+        "name": "Emerald Gardens",
+        "creatures": [
+          "Azure Frog",
+          "Crocodile",
+          "Jaracal",
+          "Jungle Moa",
+          "Orchid Frog",
+          "Parder"
+        ]
+      },
+      {
+        "name": "Fading Isles",
+        "creatures": [
+          "Azure Frog",
+          "Coral Frog",
+          "Crocodile",
+          "Green Frog",
+          "Jungle Moa",
+          "Orchid Frog",
+          "Parder",
+          "Wasp"
+        ]
+      },
+      {
+        "name": "Forbidden Gardens",
+        "creatures": [
+          "True Dawnfire Asura",
+          "True Feverbloom Asura"
+        ]
+      },
+      {
+        "name": "Funghus Bog",
+        "creatures": [
+          "Moonspawn Blightspitter",
+          "Moonspawn Oozecrown"
+        ]
+      },
+      {
+        "name": "Great Pearl Fan Reef",
+        "creatures": [
+          "Foam Stalker",
+          "Two-Headed Turtle"
+        ]
+      },
+      {
+        "name": "Hounds Head",
+        "creatures": [
+          "Moonstone Excavator",
+          "Moonstone Overseer"
+        ]
+      },
+      {
+        "name": "Moonfall",
+        "creatures": [
+          "Butterfly (Blue)",
+          "Butterfly (Purple)",
+          "Butterfly (Red)",
+          "Parder",
+          "Parrot"
+        ]
+      },
+      {
+        "name": "Moonstone Crater",
+        "creatures": [
+          "Moonstone Excavator",
+          "Moonstone Overseer"
+        ]
+      },
+      {
+        "name": "Murmuring Wilderness",
+        "creatures": [
+          "Azure Frog",
+          "Coral Frog",
+          "Crimson Frog",
+          "Crocodile",
+          "Jungle Moa",
+          "Orchid Frog",
+          "Parder"
+        ]
+      },
+      {
+        "name": "Sapful Plains",
+        "creatures": [
+          "Moonspawn Blightspitter",
+          "Moonspawn Oozecrown",
+          "Tiger",
+          "Wolf"
+        ]
+      },
+      {
+        "name": "Silent Waters",
+        "creatures": [
+          "Crimson Frog",
+          "Green Frog",
+          "Jungle Moa",
+          "Parder",
+          "Wasp"
+        ]
+      },
+      {
+        "name": "Silvertides",
+        "creatures": [
+          "Butterfly (Blue)",
+          "Butterfly (Purple)",
+          "Butterfly (Red)",
+          "Crocodile",
+          "Green Frog",
+          "Parrot"
+        ]
+      },
+      {
+        "name": "Sparkling Lagoon",
+        "creatures": [
+          "Azure Frog",
+          "Butterfly (Blue)",
+          "Butterfly (Purple)",
+          "Crocodile",
+          "Green Frog",
+          "Jungle Moa",
+          "Orchid Frog",
+          "Parder"
+        ]
+      },
+      {
+        "name": "Stardance Mountains",
+        "creatures": [
+          "Bat",
+          "Butterfly (Blue)",
+          "Butterfly (Purple)",
+          "Butterfly (Red)",
+          "Crocodile",
+          "Green Frog",
+          "Jungle Moa",
+          "Parder",
+          "Parrot",
+          "Wasp"
+        ]
+      },
+      {
+        "name": "Temple of the Moon Goddess",
+        "creatures": [
+          "Makara",
+          "Naga Archer",
+          "Naga Warrior"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Northern Darama",
+    "subareas": [
+      {
+        "name": "Ashta'daramai",
+        "creatures": [
+          "Blue Djinn",
+          "Fire Elemental",
+          "Larva",
+          "Lion",
+          "Marid",
+          "Scarab",
+          "Stone Golem"
+        ]
+      },
+      {
+        "name": "Caverna Exanima",
+        "creatures": [
+          "Bonebeast",
+          "Giant Spider",
+          "Putrid Mummy"
+        ]
+      },
+      {
+        "name": "Darama Dragon Lair",
+        "creatures": [
+          "Dragon",
+          "Dragon Hatchling",
+          "Dragon Lord"
+        ]
+      },
+      {
+        "name": "Daramian Minotaur Pyramid",
+        "creatures": [
+          "Minotaur",
+          "Minotaur Archer",
+          "Minotaur Guard",
+          "Minotaur Mage",
+          "Mummy"
+        ]
+      },
+      {
+        "name": "Daramian Rotworm Caves",
+        "creatures": [
+          "Carrion Worm",
+          "Rotworm"
+        ]
+      },
+      {
+        "name": "Darklight Core",
+        "creatures": [
+          "Darklight Matter",
+          "Darklight Source",
+          "Darklight Striker",
+          "Walking Pillar"
+        ]
+      },
+      {
+        "name": "Deep Desert",
+        "creatures": [
+          "Sandcrawler",
+          "Skeleton Elite Warrior",
+          "Undead Elite Gladiator"
+        ]
+      },
+      {
+        "name": "Deeper Drefia",
+        "creatures": [
+          "Bat",
+          "Black Sheep",
+          "Blood Hand",
+          "Blood Priest",
+          "Bog Frog",
+          "Bonelord",
+          "Cave Rat",
+          "Centipede",
+          "Death Blob",
+          "Demon Skeleton",
+          "Flamingo",
+          "Ghost",
+          "Ghoul",
+          "Gravedigger",
+          "Grim Reaper",
+          "Larva",
+          "Lich",
+          "Mummy",
+          "Necromancer",
+          "Nomad (Basic)",
+          "Pig",
+          "Pigeon",
+          "Pirate Ghost",
+          "Pirate Skeleton",
+          "Priestess",
+          "Rabbit",
+          "Rat",
+          "Salamander",
+          "Sandcrawler",
+          "Scorpion",
+          "Shadow Pupil",
+          "Skeleton",
+          "Skeleton Warrior",
+          "Slime",
+          "Snake",
+          "Stalker",
+          "Tarnished Spirit",
+          "Vampire",
+          "White Shade",
+          "Zombie"
+        ]
+      },
+      {
+        "name": "Drefia",
+        "creatures": [
+          "Bat",
+          "Deepsea Blood Crab",
+          "Demon Skeleton",
+          "Ghost",
+          "Ghoul",
+          "Hyaena",
+          "Lich",
+          "Pirate Ghost",
+          "Pirate Skeleton",
+          "Sandcrawler",
+          "Scorpion",
+          "Seagull",
+          "Skeleton",
+          "Skeleton Warrior",
+          "Snake",
+          "Stalker",
+          "Tarnished Spirit",
+          "Wasp",
+          "Wyvern",
+          "Zombie"
+        ]
+      },
+      {
+        "name": "Drefia Grim Reaper Halls",
+        "creatures": [
+          "Banshee",
+          "Cobra",
+          "Demon Skeleton",
+          "Gravedigger",
+          "Grim Reaper",
+          "Mummy",
+          "Scorpion",
+          "Shadow Pupil",
+          "Spectre",
+          "Vampire",
+          "White Shade",
+          "Zombie"
+        ]
+      },
+      {
+        "name": "Drefia Spirit Grounds",
+        "creatures": [
+          "Braindeath",
+          "Nightstalker",
+          "Phantasm",
+          "Souleater",
+          "Spectre"
+        ]
+      },
+      {
+        "name": "Drefia Vampire Crypts",
+        "creatures": [
+          "Banshee",
+          "Bat",
+          "Blood Hand",
+          "Blood Priest",
+          "Demon Skeleton",
+          "Ghoul",
+          "Gravedigger",
+          "Lich",
+          "Vampire",
+          "Vampire Bride",
+          "Vampire Viscount",
+          "White Shade",
+          "Zombie"
+        ]
+      },
+      {
+        "name": "Drefia Wyrm Caves",
+        "creatures": [
+          "Elder Wyrm",
+          "Wyrm"
+        ]
+      },
+      {
+        "name": "Gloom Pillars",
+        "creatures": [
+          "Converter",
+          "Darklight Construct",
+          "Darklight Emitter",
+          "Wandering Pillar"
+        ]
+      },
+      {
+        "name": "Haunted Nexus",
+        "creatures": [
+          "Arachnophobica",
+          "Burster Spectre",
+          "Efreet",
+          "Gazer Spectre",
+          "Marid",
+          "Ripper Spectre",
+          "Thanatursus"
+        ]
+      },
+      {
+        "name": "Hyaena Lairs",
+        "creatures": [
+          "Lich",
+          "Werehyaena",
+          "Werehyaena Shaman"
+        ]
+      },
+      {
+        "name": "Jaded Roots",
+        "creatures": [
+          "Bloated Man-Maggot",
+          "Mycobiontic Beetle",
+          "Oozing Corpus",
+          "Sopping Corpus"
+        ]
+      },
+      {
+        "name": "Lion Sanctum",
+        "creatures": [
+          "Werelion",
+          "Werelioness",
+          "White Lion"
+        ]
+      },
+      {
+        "name": "Lion's Rock",
+        "creatures": [
+          "Ancient Scarab",
+          "Bat",
+          "Bonebeast",
+          "Cobra",
+          "Crypt Shambler",
+          "Demon Skeleton",
+          "Ghoul",
+          "Larva",
+          "Mummy",
+          "Noble Lion",
+          "Roaring Lion",
+          "Scarab",
+          "Scorpion",
+          "Skeleton",
+          "Terramite",
+          "White Lion"
+        ]
+      },
+      {
+        "name": "Northern Darama Desert",
+        "creatures": [
+          "Bat",
+          "Carrion Worm",
+          "Cave Rat",
+          "Cobra",
+          "Crypt Shambler",
+          "Deer",
+          "Dromedary",
+          "Ghoul",
+          "Giant Spider",
+          "Hyaena",
+          "Larva",
+          "Lion",
+          "Nomad (Basic)",
+          "Pirat Bombardier",
+          "Pirat Cutthroat",
+          "Pirat Mate",
+          "Pirat Scoundrel",
+          "Poison Spider",
+          "Rat",
+          "Rotworm",
+          "Sandcrawler",
+          "Scarab",
+          "Scorpion",
+          "Skeleton",
+          "Terramite",
+          "Wasp",
+          "Werehyaena",
+          "Werehyaena Shaman",
+          "Wyrm"
+        ]
+      },
+      {
+        "name": "Northern Terramite Tunnels",
+        "creatures": [
+          "Terramite"
+        ]
+      },
+      {
+        "name": "Putrefactory",
+        "creatures": [
+          "Meandering Mushroom",
+          "Oozing Carcass",
+          "Rotten Man-Maggot",
+          "Sopping Carcass"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Oramond",
+    "subareas": [
+      {
+        "name": "Glooth Factory",
+        "creatures": [
+          "Bog Raider",
+          "Devourer",
+          "Glooth Anemone",
+          "Glooth Bandit",
+          "Glooth Blob",
+          "Glooth Brigand",
+          "Glooth Golem",
+          "Hydra",
+          "Metal Gargoyle",
+          "Rot Elemental",
+          "Rustheap Golem",
+          "Walker",
+          "Warlock"
+        ]
+      },
+      {
+        "name": "Lower Glooth Factory",
+        "creatures": [
+          "Glooth Golem",
+          "Metal Gargoyle",
+          "Rustheap Golem",
+          "War Golem"
+        ]
+      },
+      {
+        "name": "Lower Glooth Factory East",
+        "creatures": [
+          "Blood Beast",
+          "Devourer",
+          "Enslaved Dwarf",
+          "Execowtioner",
+          "Glooth Anemone",
+          "Glooth Blob",
+          "Glooth Golem",
+          "Lost Basher",
+          "Lost Berserker",
+          "Lost Husher",
+          "Lost Thrower",
+          "Metal Gargoyle",
+          "Minotaur Amazon",
+          "Minotaur Hunter",
+          "Mooh'Tah Warrior",
+          "Moohtant",
+          "Rot Elemental",
+          "Rustheap Golem",
+          "Worm Priestess"
+        ]
+      },
+      {
+        "name": "Lower Glooth Factory South",
+        "creatures": [
+          "Glooth Golem",
+          "High Voltage Elemental",
+          "Metal Gargoyle",
+          "Rustheap Golem",
+          "Walker",
+          "War Golem",
+          "Worker Golem"
+        ]
+      },
+      {
+        "name": "Lower Glooth Factory West",
+        "creatures": [
+          "Behemoth",
+          "Blood Beast",
+          "Devourer",
+          "Drillworm",
+          "Elder Wyrm",
+          "Enslaved Dwarf",
+          "Glooth Anemone",
+          "Glooth Golem",
+          "Hellfire Fighter",
+          "Lost Basher",
+          "Lost Berserker",
+          "Lost Husher",
+          "Lost Thrower",
+          "Massive Fire Elemental",
+          "Metal Gargoyle",
+          "Rustheap Golem",
+          "Vulcongra",
+          "Wyrm"
+        ]
+      },
+      {
+        "name": "Oramond",
+        "creatures": [
+          "Execowtioner",
+          "Minotaur Amazon",
+          "Minotaur Hunter",
+          "Moohtant"
+        ]
+      },
+      {
+        "name": "Oramond Catacombs",
+        "creatures": [
+          "Bog Raider",
+          "Brimstone Bug",
+          "Death Blob",
+          "Demon",
+          "Devourer",
+          "Earth Elemental",
+          "Glooth Anemone",
+          "Glooth Blob",
+          "Glooth Golem",
+          "Grim Reaper",
+          "Massive Earth Elemental",
+          "Metal Gargoyle",
+          "Rot Elemental",
+          "Rustheap Golem",
+          "Walker",
+          "Wiggler"
+        ]
+      },
+      {
+        "name": "Oramond Marshes",
+        "creatures": [
+          "Blood Beast",
+          "Minotaur Hunter",
+          "Mooh'Tah Warrior",
+          "Worm Priestess"
+        ]
+      },
+      {
+        "name": "Oramond Minotaur Camp",
+        "creatures": [
+          "Execowtioner",
+          "Minotaur Amazon",
+          "Minotaur Hunter",
+          "Mooh'Tah Warrior",
+          "Moohtant",
+          "Worm Priestess"
+        ]
+      },
+      {
+        "name": "Oramond Mountain Hideout",
+        "creatures": [
+          "Betrayed Wraith",
+          "Dark Torturer",
+          "Fury",
+          "Lost Soul",
+          "Minotaur Amazon",
+          "Nightmare",
+          "Spectre",
+          "Undead Dragon"
+        ]
+      },
+      {
+        "name": "Podzilla Bottom",
+        "creatures": [
+          "Crab",
+          "Quara Looter",
+          "Quara Plunderer",
+          "Quara Raider"
+        ]
+      },
+      {
+        "name": "Podzilla Stalk",
+        "creatures": [
+          "Rootthing Amber Shaper",
+          "Rootthing Bug Tracker",
+          "Rootthing Nutshell"
+        ]
+      },
+      {
+        "name": "Podzilla Underwater",
+        "creatures": [
+          "Calamary",
+          "Fish (Creature)",
+          "Jellyfish",
+          "Northern Pike (Creature)",
+          "Pirate Skeleton",
+          "Quara Looter",
+          "Quara Plunderer",
+          "Quara Raider",
+          "Shark"
+        ]
+      },
+      {
+        "name": "Rathleton Ancient Sewers",
+        "creatures": [
+          "Devourer",
+          "Earth Elemental",
+          "Glooth Anemone",
+          "Glooth Blob",
+          "Glooth Golem",
+          "Massive Earth Elemental",
+          "Mercury Blob",
+          "Metal Gargoyle",
+          "Rot Elemental",
+          "Rustheap Golem",
+          "Walker"
+        ]
+      },
+      {
+        "name": "Rathleton Catacombs",
+        "creatures": [
+          "Dark Torturer",
+          "Demon",
+          "Destroyer",
+          "Execowtioner",
+          "Glooth Golem",
+          "Grim Reaper",
+          "Hellhound",
+          "Hellspawn",
+          "Juggernaut",
+          "Minotaur Amazon",
+          "Moohtant",
+          "Rustheap Golem",
+          "War Golem",
+          "Worker Golem"
+        ]
+      },
+      {
+        "name": "Rathleton Fungi Sewers",
+        "creatures": [
+          "Glooth Anemone",
+          "Hideous Fungus",
+          "Humongous Fungus"
+        ]
+      },
+      {
+        "name": "Rathleton New Sewers",
+        "creatures": [
+          "Devourer",
+          "Glooth Anemone",
+          "Glooth Golem",
+          "Rustheap Golem"
+        ]
+      },
+      {
+        "name": "Rathleton Slime Pits",
+        "creatures": [
+          "Bog Raider",
+          "Hydra"
+        ]
+      },
+      {
+        "name": "Rathleton Slum",
+        "creatures": [
+          "Blood Beast",
+          "Devourer",
+          "Glooth Blob",
+          "Glooth Golem",
+          "Quara Constrictor Scout",
+          "Quara Hydromancer Scout",
+          "Quara Pincher Scout",
+          "Quara Predator Scout",
+          "Rot Elemental",
+          "Rustheap Golem"
+        ]
+      },
+      {
+        "name": "Rathleton Workshops",
+        "creatures": [
+          "Metal Gargoyle",
+          "Rustheap Golem"
+        ]
+      },
+      {
+        "name": "Seacrest Grounds",
+        "creatures": [
+          "Abyssal Calamary",
+          "Deepsea Blood Crab",
+          "Quara Hydromancer",
+          "Quara Mantassin",
+          "Quara Pincher",
+          "Quara Predator",
+          "Sea Serpent",
+          "Shark",
+          "Young Sea Serpent"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Other",
+    "subareas": [
+      {
+        "name": "Isle of Destiny",
+        "creatures": [
+          "Bat",
+          "Bear",
+          "Bug",
+          "Rabbit",
+          "Rotworm",
+          "Skeleton",
+          "Skeleton Warrior",
+          "Spider",
+          "Troll",
+          "Troll Champion",
+          "Wolf"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Otherworld",
+    "subareas": [
+      {
+        "name": "The Void",
+        "creatures": [
+          "Breach Brood",
+          "Dread Intruder",
+          "Instable Breach Brood",
+          "Instable Sparkion",
+          "Reality Reaver",
+          "Sparkion"
+        ]
+      },
+      {
+        "name": "The Void Underground",
+        "creatures": [
+          "Stabilizing Dread Intruder",
+          "Stabilizing Reality Reaver"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Quirefang",
+    "subareas": [
+      {
+        "name": "Ancestorial Grounds",
+        "creatures": [
+          "Deepling Elite",
+          "Deepling Guard",
+          "Deepling Spellsinger",
+          "Deepling Warrior",
+          "Fish (Creature)",
+          "Jellyfish",
+          "Shark"
+        ]
+      },
+      {
+        "name": "Ancient Ancestorial Grounds",
+        "creatures": [
+          "Deathling Scout",
+          "Deathling Spellsinger",
+          "Deepling Scout",
+          "Deepling Warrior"
+        ]
+      },
+      {
+        "name": "Blue Grotto",
+        "creatures": [
+          "Deepling Scout",
+          "Deepling Warrior",
+          "Fish (Creature)",
+          "Jellyfish",
+          "Northern Pike (Creature)",
+          "Shark"
+        ]
+      },
+      {
+        "name": "Blue Valley",
+        "creatures": [
+          "Rat",
+          "Tiger"
+        ]
+      },
+      {
+        "name": "Deepling Mining Area",
+        "creatures": [
+          "Deepling Guard",
+          "Deepling Warrior"
+        ]
+      },
+      {
+        "name": "Deepling Outpost",
+        "creatures": [
+          "Calamary",
+          "Deepling Scout",
+          "Deepling Warrior",
+          "Fish (Creature)",
+          "Jellyfish",
+          "Northern Pike (Creature)",
+          "Shark"
+        ]
+      },
+      {
+        "name": "Deepling Temple Complex",
+        "creatures": [
+          "Badger",
+          "Bear",
+          "Calamary",
+          "Deepling Guard",
+          "Deepling Scout",
+          "Deepling Spellsinger",
+          "Deepling Warrior",
+          "Deepling Worker",
+          "Deer",
+          "Fish (Creature)",
+          "Giant Spider",
+          "Jellyfish",
+          "Northern Pike (Creature)",
+          "Rabbit",
+          "Rotworm",
+          "Shark",
+          "Snake"
+        ]
+      },
+      {
+        "name": "Drowned Library",
+        "creatures": [
+          "Calamary",
+          "Deepling Elite",
+          "Deepling Guard",
+          "Deepling Scout",
+          "Deepling Spellsinger",
+          "Deepling Warrior",
+          "Deepling Worker",
+          "Fish (Creature)",
+          "Jellyfish",
+          "Northern Pike (Creature)",
+          "Shark"
+        ]
+      },
+      {
+        "name": "Gray Beach",
+        "creatures": [
+          "Crab"
+        ]
+      },
+      {
+        "name": "Hatchery",
+        "creatures": [
+          "Deepling Brawler",
+          "Deepling Worker"
+        ]
+      },
+      {
+        "name": "Hive Main Structure",
+        "creatures": [
+          "Crawler",
+          "Insectoid Worker",
+          "Spitter",
+          "Swarmer",
+          "Waspoid"
+        ]
+      },
+      {
+        "name": "Hive Pools",
+        "creatures": [
+          "Crawler",
+          "Insectoid Worker",
+          "Swarmer",
+          "Waspoid"
+        ]
+      },
+      {
+        "name": "Hive Pyramids",
+        "creatures": [
+          "Crawler",
+          "Insectoid Worker",
+          "Spitter",
+          "Swarmer",
+          "Waspoid"
+        ]
+      },
+      {
+        "name": "Hive Secondary Structure",
+        "creatures": [
+          "Crawler",
+          "Insectoid Worker",
+          "Spitter",
+          "Waspoid"
+        ]
+      },
+      {
+        "name": "Lava Grotto",
+        "creatures": [
+          "Calamary",
+          "Deepling Guard",
+          "Deepling Spellsinger",
+          "Deepling Warrior",
+          "Fish (Creature)",
+          "Jellyfish",
+          "Northern Pike (Creature)",
+          "Shark"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Roshamuul",
+    "subareas": [
+      {
+        "name": "Adaean Crystal Mines",
+        "creatures": [
+          "Raubritter Chastener",
+          "Raubritter Marksman",
+          "Raubritter Skirmisher"
+        ]
+      },
+      {
+        "name": "Adaean Landing",
+        "creatures": [
+          "Rat"
+        ]
+      },
+      {
+        "name": "Adaean Shore",
+        "creatures": [
+          "Raubritter Chastener",
+          "Raubritter Marksman",
+          "Raubritter Skirmisher"
+        ]
+      },
+      {
+        "name": "Adaean Silver Mines",
+        "creatures": [
+          "Raubritter Chastener",
+          "Raubritter Marksman",
+          "Raubritter Skirmisher"
+        ]
+      },
+      {
+        "name": "Arean Outskirts",
+        "creatures": [
+          "Deer",
+          "Night Harpy",
+          "Raubritter Chastener",
+          "Raubritter Marksman",
+          "Raubritter Skirmisher",
+          "Stag"
+        ]
+      },
+      {
+        "name": "Bloodfire Gorge",
+        "creatures": [
+          "Raubritter Chastener",
+          "Raubritter Marksman",
+          "Raubritter Skirmisher"
+        ]
+      },
+      {
+        "name": "Buried Cathedral",
+        "creatures": [
+          "Arachnophobica",
+          "Burster Spectre",
+          "Gazer Spectre",
+          "Ripper Spectre"
+        ]
+      },
+      {
+        "name": "Deeper Ingol",
+        "creatures": [
+          "Berserker Chicken",
+          "Boar Man",
+          "Carnivostrich",
+          "Corym Charlatan",
+          "Crape Man",
+          "Harpy",
+          "Liodile",
+          "Minotaur",
+          "Mutated Human",
+          "Rhindeer",
+          "Werewolf"
+        ]
+      },
+      {
+        "name": "Grounds of Damnation",
+        "creatures": [
+          "Dark Torturer",
+          "Grimeleech",
+          "Hellflayer",
+          "Vexclaw"
+        ]
+      },
+      {
+        "name": "Grounds of Deceit",
+        "creatures": [
+          "Grimeleech",
+          "Nightmare",
+          "Phantasm",
+          "Vexclaw"
+        ]
+      },
+      {
+        "name": "Grounds of Despair",
+        "creatures": [
+          "Grimeleech",
+          "Hand of Cursed Fate",
+          "Hellflayer",
+          "Spectre",
+          "Vexclaw"
+        ]
+      },
+      {
+        "name": "Grounds of Destruction",
+        "creatures": [
+          "Fury",
+          "Hellflayer",
+          "Juggernaut",
+          "Vexclaw"
+        ]
+      },
+      {
+        "name": "Grounds of Fire",
+        "creatures": [
+          "Fury",
+          "Hellfire Fighter",
+          "Hellflayer",
+          "Hellhound",
+          "Vexclaw"
+        ]
+      },
+      {
+        "name": "Grounds of Undeath",
+        "creatures": [
+          "Blightwalker",
+          "Hellflayer",
+          "Undead Dragon",
+          "Vexclaw"
+        ]
+      },
+      {
+        "name": "Hell Hub",
+        "creatures": [
+          "Demon",
+          "Grimeleech",
+          "Hellflayer",
+          "Vexclaw"
+        ]
+      },
+      {
+        "name": "Ingol",
+        "creatures": [
+          "Boar Man",
+          "Carnivostrich",
+          "Cave Rat",
+          "Chicken",
+          "Crab",
+          "Crape Man",
+          "Harpy",
+          "Liodile",
+          "Rhindeer",
+          "Terrorsleep"
+        ]
+      },
+      {
+        "name": "Isle of Ada",
+        "creatures": [
+          "Night Harpy",
+          "Raubritter Chastener",
+          "Raubritter Marksman",
+          "Raubritter Skirmisher"
+        ]
+      },
+      {
+        "name": "Lower Roshamuul",
+        "creatures": [
+          "Frazzlemaw",
+          "Guzzlemaw",
+          "Shock Head",
+          "Silencer"
+        ]
+      },
+      {
+        "name": "Nightmare Isles",
+        "creatures": [
+          "Choking Fear",
+          "Retching Horror",
+          "Silencer",
+          "Terrorsleep"
+        ]
+      },
+      {
+        "name": "Roshamuul Cistern",
+        "creatures": [
+          "Feversleep",
+          "Terrorsleep"
+        ]
+      },
+      {
+        "name": "Roshamuul Mines",
+        "creatures": [
+          "Feversleep",
+          "Terrorsleep"
+        ]
+      },
+      {
+        "name": "Roshamuul Mountains",
+        "creatures": [
+          "Sight of Surrender"
+        ]
+      },
+      {
+        "name": "Roshamuul Prison",
+        "creatures": [
+          "Betrayed Wraith",
+          "Blightwalker",
+          "Dark Torturer",
+          "Demon Outcast",
+          "Hellhound",
+          "Juggernaut",
+          "Lost Soul",
+          "Nightmare",
+          "Plaguesmith"
+        ]
+      },
+      {
+        "name": "Stag Bastion",
+        "creatures": [
+          "Night Harpy",
+          "Raubritter Chastener",
+          "Raubritter Marksman",
+          "Raubritter Skirmisher"
+        ]
+      },
+      {
+        "name": "Upper Roshamuul",
+        "creatures": [
+          "Choking Fear",
+          "Frazzlemaw",
+          "Guzzlemaw",
+          "Retching Horror",
+          "Silencer"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Southern Darama",
+    "subareas": [
+      {
+        "name": "Ankrahmun City",
+        "creatures": [
+          "Behemoth",
+          "Fire Elemental",
+          "Green Djinn",
+          "Vampire"
+        ]
+      },
+      {
+        "name": "Ankrahmun Pharaoh Tombs",
+        "creatures": [
+          "Amazon",
+          "Ancient Scarab",
+          "Banshee",
+          "Behemoth",
+          "Bonebeast",
+          "Bonelord",
+          "Cave Rat",
+          "Clay Guardian",
+          "Cobra",
+          "Crypt Shambler",
+          "Dark Apprentice",
+          "Demon Skeleton",
+          "Dragon",
+          "Dragon Lord",
+          "Dwarf",
+          "Elf",
+          "Fire Devil",
+          "Fire Elemental",
+          "Gargoyle",
+          "Ghost",
+          "Ghoul",
+          "Giant Spider",
+          "Green Djinn",
+          "Hyaena",
+          "Insect Swarm",
+          "Larva",
+          "Lich",
+          "Lion",
+          "Mummy",
+          "Necromancer",
+          "Nomad (Basic)",
+          "Poison Spider",
+          "Priestess",
+          "Scarab",
+          "Scorpion",
+          "Skeleton",
+          "Slime",
+          "Snake",
+          "Stalker",
+          "Stone Golem",
+          "Vampire",
+          "Warlock"
+        ]
+      },
+      {
+        "name": "Ankrahmun Underground",
+        "creatures": [
+          "Cave Rat"
+        ]
+      },
+      {
+        "name": "Cobra Bastion",
+        "creatures": [
+          "Cobra Assassin",
+          "Cobra Scout",
+          "Cobra Vizier",
+          "Spider"
+        ]
+      },
+      {
+        "name": "Daramian Mountain Scarab Lair",
+        "creatures": [
+          "Ancient Scarab",
+          "Larva",
+          "Scarab"
+        ]
+      },
+      {
+        "name": "Daramian Scarab Caves",
+        "creatures": [
+          "Ancient Scarab",
+          "Larva",
+          "Scarab"
+        ]
+      },
+      {
+        "name": "Daramian Scarab Lairs",
+        "creatures": [
+          "Ancient Scarab",
+          "Bonebeast",
+          "Larva",
+          "Mummy",
+          "Necromancer",
+          "Scarab"
+        ]
+      },
+      {
+        "name": "Forbidden Temple",
+        "creatures": [
+          "Acolyte of the Cult",
+          "Adept of the Cult",
+          "Cobra",
+          "Enlightened of the Cult",
+          "Lizard Sentinel",
+          "Lizard Snakecharmer",
+          "Lizard Templar",
+          "Novice of the Cult"
+        ]
+      },
+      {
+        "name": "Kha'zeel Dragon Lairs",
+        "creatures": [
+          "Dragon",
+          "Dragon Hatchling",
+          "Dragon Lord",
+          "Dragon Lord Hatchling",
+          "Fire Elemental"
+        ]
+      },
+      {
+        "name": "Mal'ouquah",
+        "creatures": [
+          "Efreet",
+          "Gargoyle",
+          "Green Djinn",
+          "Hyaena",
+          "Mummy",
+          "Scorpion",
+          "Stalker"
+        ]
+      },
+      {
+        "name": "Southern Darama Desert",
+        "creatures": [
+          "Bat",
+          "Deer",
+          "Dog",
+          "Dromedary",
+          "Giant Spider",
+          "Husky",
+          "Hyaena",
+          "Jellyfish",
+          "Nomad (Basic)",
+          "Nomad (Blue)",
+          "Nomad (Female)",
+          "Northern Pike (Creature)",
+          "Poison Spider",
+          "Sandcrawler",
+          "Tiger"
+        ]
+      },
+      {
+        "name": "Southern Terramite Tunnels",
+        "creatures": [
+          "Terramite"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Thais",
+    "subareas": [
+      {
+        "name": "Aragonia",
+        "creatures": [
+          "Pirate Cook",
+          "Pirate Gunner",
+          "Pirate Navigator",
+          "Pirate Quartermaster"
+        ]
+      },
+      {
+        "name": "Crimson Court",
+        "creatures": [
+          "Infernoid Blob",
+          "Infernoid Hound",
+          "Infernoid Soul",
+          "Infernoid Spiritual"
+        ]
+      },
+      {
+        "name": "Fibula",
+        "creatures": [
+          "Bonelord",
+          "Butterfly (Purple)",
+          "Carrion Worm",
+          "Cave Rat",
+          "Chicken",
+          "Demon Skeleton",
+          "Dragon",
+          "Dragon Lord",
+          "Minotaur",
+          "Minotaur Archer",
+          "Minotaur Guard",
+          "Minotaur Mage",
+          "Orc",
+          "Poison Spider",
+          "Rat",
+          "Rotworm",
+          "Seagull",
+          "Skeleton",
+          "Wolf"
+        ]
+      },
+      {
+        "name": "Greenshore",
+        "creatures": [
+          "Bug",
+          "Chicken",
+          "Poison Spider",
+          "Rat",
+          "Sheep",
+          "Snake",
+          "Spider",
+          "Wolf"
+        ]
+      },
+      {
+        "name": "Hidden Lizard Temple",
+        "creatures": [
+          "Lizard Executioner",
+          "Lizard Henchman",
+          "Lizard Magician",
+          "Lizard Swordmaster"
+        ]
+      },
+      {
+        "name": "Mintwallin",
+        "creatures": [
+          "Dog",
+          "Dragon",
+          "Giant Spider",
+          "Minotaur",
+          "Minotaur Archer",
+          "Minotaur Cult Follower",
+          "Minotaur Cult Prophet",
+          "Minotaur Cult Zealot",
+          "Minotaur Guard",
+          "Minotaur Mage",
+          "Pig",
+          "Poison Spider",
+          "Snake"
+        ]
+      },
+      {
+        "name": "Misguided Hideout",
+        "creatures": [
+          "Misguided Bully",
+          "Misguided Thief"
+        ]
+      },
+      {
+        "name": "Mount Sternum",
+        "creatures": [
+          "Bat",
+          "Bonelord",
+          "Cave Rat",
+          "Crypt Shambler",
+          "Cyclops",
+          "Cyclops Drone",
+          "Cyclops Smith",
+          "Dark Apprentice",
+          "Dark Magician",
+          "Demon Skeleton",
+          "Dragon",
+          "Dwarf Geomancer",
+          "Dwarf Guard",
+          "Fire Devil",
+          "Ghost",
+          "Ghoul",
+          "Giant Spider",
+          "Mummy",
+          "Poison Spider",
+          "Rat",
+          "Skeleton",
+          "Slime",
+          "Spider",
+          "War Wolf"
+        ]
+      },
+      {
+        "name": "Thais",
+        "creatures": [
+          "Chicken",
+          "Cream Blob",
+          "Dog",
+          "Pig",
+          "Sheep",
+          "Wafer Paper Butterfly"
+        ]
+      },
+      {
+        "name": "Thais Northern Dungeon",
+        "creatures": [
+          "Bat",
+          "Bonelord",
+          "Bug",
+          "Carrion Worm",
+          "Cave Rat",
+          "Cyclops",
+          "Deer",
+          "Demon Skeleton",
+          "Dragon",
+          "Dragon Hatchling",
+          "Dragon Lord",
+          "Dragon Lord Hatchling",
+          "Fire Devil",
+          "Ghoul",
+          "Giant Spider",
+          "Minotaur",
+          "Minotaur Archer",
+          "Minotaur Guard",
+          "Minotaur Mage",
+          "Orc",
+          "Orc Berserker",
+          "Orc Shaman",
+          "Orc Spearman",
+          "Orc Warrior",
+          "Poison Spider",
+          "Rat",
+          "Rotworm",
+          "Scorpion",
+          "Skeleton",
+          "Slime",
+          "Snake",
+          "Spider",
+          "Troll"
+        ]
+      },
+      {
+        "name": "Thais Surroundings",
+        "creatures": [
+          "Bat",
+          "Bear",
+          "Blood Crab",
+          "Bug",
+          "Butterfly (Purple)",
+          "Cat",
+          "Cave Rat",
+          "Crab",
+          "Cyclops",
+          "Deer",
+          "Demon Skeleton",
+          "Dog",
+          "Elf",
+          "Elf Arcanist",
+          "Elf Scout",
+          "Ghoul",
+          "Goldhanded Cultist",
+          "Goldhanded Cultist Bride",
+          "Horse (Brown)",
+          "Horse (Grey)",
+          "Minotaur",
+          "Orc Berserker",
+          "Orc Rider",
+          "Orc Shaman",
+          "Orc Spearman",
+          "Orc Warrior",
+          "Pirat Bombardier",
+          "Pirat Cutthroat",
+          "Pirat Mate",
+          "Pirat Scoundrel",
+          "Poison Spider",
+          "Rabbit",
+          "Rat",
+          "Rotworm",
+          "Seagull",
+          "Skeleton",
+          "Skunk",
+          "Slime",
+          "Snake",
+          "Spider",
+          "Troll",
+          "Valkyrie",
+          "War Wolf",
+          "Wasp",
+          "Wild Warrior",
+          "Wisp",
+          "Wolf"
+        ]
+      },
+      {
+        "name": "Thais Trolls' Cave",
+        "creatures": [
+          "Carrion Worm",
+          "Orc",
+          "Orc Warrior",
+          "Rabbit",
+          "Rat",
+          "Rotworm",
+          "Scorpion",
+          "Skeleton",
+          "Slime",
+          "Troll",
+          "Troll Champion",
+          "Wasp"
+        ]
+      },
+      {
+        "name": "Thais Underground",
+        "creatures": [
+          "Bandit",
+          "Banshee",
+          "Bat",
+          "Bonelord",
+          "Cave Rat",
+          "Cyclops",
+          "Cyclops Smith",
+          "Demon Skeleton",
+          "Dragon",
+          "Ghoul",
+          "Orc",
+          "Orc Spearman",
+          "Orc Warrior",
+          "Poison Spider",
+          "Rat",
+          "Skeleton",
+          "Spider",
+          "Stalker",
+          "Swamp Troll",
+          "Tarantula",
+          "War Wolf",
+          "Wasp",
+          "Wolf"
+        ]
+      },
+      {
+        "name": "Thais Wolf Den",
+        "creatures": [
+          "Rabid Wolf",
+          "Ragged Rabid Wolf"
+        ]
+      },
+      {
+        "name": "The Extension Site",
+        "creatures": [
+          "Demon",
+          "Floating Savant",
+          "Fury",
+          "Hellhound",
+          "Lava Golem",
+          "Retching Horror"
+        ]
+      },
+      {
+        "name": "Underground Isle",
+        "creatures": [
+          "Banshee",
+          "Bog Raider",
+          "Bonebeast",
+          "Earth Elemental",
+          "Giant Spider",
+          "Mutated Human",
+          "Mutated Rat",
+          "Nightmare Scion",
+          "Nightstalker",
+          "Tarantula"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Tiquanda",
+    "subareas": [
+      {
+        "name": "Astral Shaper Ruins",
+        "creatures": [
+          "Broken Shaper",
+          "Iron Servant Replica",
+          "Shaper Matriarch",
+          "Stone Rhino",
+          "Twisted Shaper"
+        ]
+      },
+      {
+        "name": "Asura Palace",
+        "creatures": [
+          "Dawnfire Asura",
+          "Frost Flower Asura",
+          "Hellspawn",
+          "Midnight Asura",
+          "Parrot",
+          "True Dawnfire Asura",
+          "True Frost Flower Asura",
+          "True Midnight Asura"
+        ]
+      },
+      {
+        "name": "Asura Vaults",
+        "creatures": [
+          "Frost Flower Asura",
+          "Hellhound",
+          "Hellspawn",
+          "Midnight Asura",
+          "True Dawnfire Asura",
+          "True Frost Flower Asura",
+          "True Midnight Asura"
+        ]
+      },
+      {
+        "name": "Banuta",
+        "creatures": [
+          "Acid Blob",
+          "Bat",
+          "Behemoth",
+          "Bonebeast",
+          "Bonelord",
+          "Butterfly (Red)",
+          "Carniphila",
+          "Centipede",
+          "Earth Elemental",
+          "Efreet",
+          "Elder Bonelord",
+          "Eternal Guardian",
+          "Fire Elemental",
+          "Frost Dragon",
+          "Gargoyle",
+          "Ghastly Dragon",
+          "Giant Spider",
+          "Green Djinn",
+          "Hellspawn",
+          "Hydra",
+          "Ice Golem",
+          "Kongra",
+          "Massive Fire Elemental",
+          "Medusa",
+          "Merlkin",
+          "Nightmare",
+          "Parrot",
+          "Phantasm",
+          "Serpent Spawn",
+          "Sibang",
+          "Slime",
+          "Souleater",
+          "Stone Golem",
+          "Water Elemental"
+        ]
+      },
+      {
+        "name": "Carnivora's Rocks",
+        "creatures": [
+          "Lumbering Carnivor",
+          "Menacing Carnivor",
+          "Spiky Carnivor"
+        ]
+      },
+      {
+        "name": "Chor",
+        "creatures": [
+          "Centipede",
+          "Cobra",
+          "Crocodile",
+          "Hydra",
+          "Lizard Sentinel",
+          "Lizard Snakecharmer",
+          "Lizard Templar",
+          "Poison Spider",
+          "Spit Nettle"
+        ]
+      },
+      {
+        "name": "Forbidden Lands of Tiquanda",
+        "creatures": [
+          "Behemoth",
+          "Carniphila",
+          "Centipede",
+          "Cobra",
+          "Crab",
+          "Elephant",
+          "Giant Spider",
+          "Hydra",
+          "Massive Earth Elemental",
+          "Slime",
+          "Spit Nettle",
+          "Stone Golem",
+          "Tarantula",
+          "Terror Bird",
+          "Tiger"
+        ]
+      },
+      {
+        "name": "Haunted Nexus",
+        "creatures": [
+          "Arachnophobica",
+          "Burster Spectre",
+          "Efreet",
+          "Gazer Spectre",
+          "Marid",
+          "Ripper Spectre",
+          "Thanatursus"
+        ]
+      },
+      {
+        "name": "Iksupan",
+        "creatures": [
+          "Cursed Ape",
+          "Iks Aucar",
+          "Iks Chuka",
+          "Iks Pututu"
+        ]
+      },
+      {
+        "name": "Iksupan Last Stand",
+        "creatures": [
+          "Iks Yapunac",
+          "Mitmah Scout",
+          "Mitmah Seer"
+        ]
+      },
+      {
+        "name": "Iksupan Occupied Sanctuary",
+        "creatures": [
+          "Iks Yapunac",
+          "Mitmah Scout",
+          "Mitmah Seer"
+        ]
+      },
+      {
+        "name": "Iksupan Undercity",
+        "creatures": [
+          "Cursed Ape",
+          "Iks Yapunac",
+          "Mitmah Scout",
+          "Mitmah Seer"
+        ]
+      },
+      {
+        "name": "Iksupan Waterways",
+        "creatures": [
+          "Cursed Ape",
+          "Iks Yapunac",
+          "Mitmah Scout",
+          "Mitmah Seer"
+        ]
+      },
+      {
+        "name": "Kha'zeel Hydra Falls",
+        "creatures": [
+          "Hydra",
+          "Stone Golem"
+        ]
+      },
+      {
+        "name": "Kha'zeel Mountains",
+        "creatures": [
+          "Bandit",
+          "Bat",
+          "Cobra",
+          "Dwarf",
+          "Dwarf Geomancer",
+          "Dwarf Guard",
+          "Dwarf Soldier",
+          "Energy Elemental",
+          "Hyaena",
+          "Larva",
+          "Lion",
+          "Lizard Sentinel",
+          "Lizard Templar",
+          "Massive Energy Elemental",
+          "Nomad (Basic)",
+          "Scarab",
+          "Scorpion",
+          "Stone Golem",
+          "Werehyaena",
+          "Werehyaena Shaman",
+          "Wyvern"
+        ]
+      },
+      {
+        "name": "Medusa Tower",
+        "creatures": [
+          "Behemoth",
+          "Clay Guardian",
+          "Gargoyle",
+          "Medusa",
+          "Omnivora",
+          "Serpent Spawn",
+          "Slime",
+          "Stone Golem"
+        ]
+      },
+      {
+        "name": "Murky Caverns",
+        "creatures": [
+          "Feral Werecrocodile",
+          "Werecrocodile",
+          "Werepanther"
+        ]
+      },
+      {
+        "name": "Oskayaat",
+        "creatures": [
+          "Butterfly (Blue)",
+          "Butterfly (Red)",
+          "Cobra",
+          "Crocodile",
+          "Cunning Werepanther",
+          "Feral Werecrocodile",
+          "Flamingo",
+          "Killer Caiman",
+          "Parrot",
+          "Scorpion",
+          "Tiger",
+          "Werecrocodile",
+          "Werepanther",
+          "Weretiger",
+          "White Tiger",
+          "White Weretiger"
+        ]
+      },
+      {
+        "name": "Oskayaat Undercity",
+        "creatures": [
+          "Cunning Werepanther",
+          "Weretiger",
+          "White Weretiger"
+        ]
+      },
+      {
+        "name": "Port Hope City",
+        "creatures": [
+          "Tiger",
+          "Wolf"
+        ]
+      },
+      {
+        "name": "Port Hope Corym Dungeons",
+        "creatures": [
+          "Corym Charlatan",
+          "Corym Skirmisher",
+          "Corym Vanguard"
+        ]
+      },
+      {
+        "name": "Port Hope Surroundings",
+        "creatures": [
+          "Bandit",
+          "Bat",
+          "Blood Crab",
+          "Bug",
+          "Butterfly (Blue)",
+          "Butterfly (Purple)",
+          "Butterfly (Red)",
+          "Carniphila",
+          "Carrion Worm",
+          "Cave Rat",
+          "Centipede",
+          "Chicken",
+          "Cobra",
+          "Crab",
+          "Crocodile",
+          "Crypt Shambler",
+          "Dwarf",
+          "Dwarf Guard",
+          "Dwarf Soldier",
+          "Dworc Fleshhunter",
+          "Dworc Venomsniper",
+          "Dworc Voodoomaster",
+          "Elephant",
+          "Filth Toad",
+          "Flamingo",
+          "Giant Spider",
+          "Green Frog",
+          "Haunted Treeling",
+          "Hideous Fungus",
+          "Humongous Fungus",
+          "Hunter",
+          "Hydra",
+          "Kongra",
+          "Larva",
+          "Lizard Executioner",
+          "Lizard Henchman",
+          "Lizard Magician",
+          "Lizard Sentinel",
+          "Lizard Swordmaster",
+          "Lizard Templar",
+          "Mad Scientist",
+          "Merlkin",
+          "Mutated Human",
+          "Panda",
+          "Parrot",
+          "Pirat Bombardier",
+          "Pirat Cutthroat",
+          "Pirat Mate",
+          "Pirat Scoundrel",
+          "Poacher",
+          "Poison Spider",
+          "Quara Mantassin Scout",
+          "Scarab",
+          "Scorpion",
+          "Seagull",
+          "Sibang",
+          "Skeleton",
+          "Skunk",
+          "Slime",
+          "Smuggler",
+          "Snake",
+          "Spider",
+          "Spit Nettle",
+          "Swamp Troll",
+          "Swampling",
+          "Tarantula",
+          "Terrified Elephant",
+          "Terror Bird",
+          "Tiger",
+          "Toad",
+          "Tortoise",
+          "Wasp",
+          "Water Elemental",
+          "Wisp",
+          "Wolf",
+          "Wyvern"
+        ]
+      },
+      {
+        "name": "Port Hope Swamp Troll Den",
+        "creatures": [
+          "Bonelord",
+          "Bug",
+          "Cave Rat",
+          "Crab",
+          "Poison Spider",
+          "Skeleton",
+          "Spider",
+          "Swamp Troll"
+        ]
+      },
+      {
+        "name": "Sunken Temple",
+        "creatures": [
+          "Deathling Scout",
+          "Deathling Spellsinger",
+          "Deepling Guard",
+          "Deepling Warrior"
+        ]
+      },
+      {
+        "name": "Tiquanda Spider Caves",
+        "creatures": [
+          "Giant Spider",
+          "Poison Spider",
+          "Tarantula"
+        ]
+      },
+      {
+        "name": "Trapwood",
+        "creatures": [
+          "Centipede",
+          "Crypt Shambler",
+          "Dworc Fleshhunter",
+          "Dworc Venomsniper",
+          "Dworc Voodoomaster",
+          "Poison Spider",
+          "Tarantula"
+        ]
+      },
+      {
+        "name": "Water Elemental Caverns",
+        "creatures": [
+          "Massive Water Elemental",
+          "Quara Hydromancer Scout",
+          "Quara Mantassin Scout",
+          "Quara Pincher Scout",
+          "Water Elemental"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Vandura",
+    "subareas": [
+      {
+        "name": "Bounac",
+        "creatures": [
+          "Agrestic Chicken",
+          "Bat",
+          "Bear",
+          "Cat",
+          "Crypt Warrior",
+          "Deer",
+          "Dog",
+          "Pig",
+          "Skeleton",
+          "Skeleton Warrior",
+          "Usurper Archer",
+          "Usurper Knight",
+          "Usurper Warlock"
+        ]
+      },
+      {
+        "name": "Bounacean Lion",
+        "creatures": [
+          "Crypt Warrior"
+        ]
+      },
+      {
+        "name": "Calassa",
+        "creatures": [
+          "Massive Water Elemental",
+          "Quara Constrictor",
+          "Quara Hydromancer",
+          "Quara Mantassin",
+          "Quara Pincher",
+          "Quara Predator"
+        ]
+      },
+      {
+        "name": "Corym Black Market",
+        "creatures": [
+          "Amazon",
+          "Bat",
+          "Cave Rat",
+          "Corym Charlatan",
+          "Corym Skirmisher",
+          "Corym Vanguard",
+          "Forest Fury",
+          "Kongra",
+          "Lizard Sentinel",
+          "Minotaur Archer",
+          "Minotaur Guard",
+          "Minotaur Mage",
+          "Orc Berserker",
+          "Priestess",
+          "Tarantula",
+          "Wild Warrior",
+          "Witch"
+        ]
+      },
+      {
+        "name": "Deathling Menace",
+        "creatures": [
+          "Deathling Scout"
+        ]
+      },
+      {
+        "name": "Forest of Life",
+        "creatures": [
+          "Dark Carnisylvan",
+          "Hulking Carnisylvan",
+          "Poisonous Carnisylvan"
+        ]
+      },
+      {
+        "name": "Goroma",
+        "creatures": [
+          "Blood Crab",
+          "Cobra",
+          "Crab",
+          "Ghost",
+          "Island Troll",
+          "Pirate Cook",
+          "Pirate Ghost",
+          "Pirate Gunner",
+          "Pirate Navigator",
+          "Pirate Quartermaster",
+          "Pirate Skeleton",
+          "Scorpion",
+          "Seagull",
+          "Skeleton"
+        ]
+      },
+      {
+        "name": "Hellgorge",
+        "creatures": [
+          "Acolyte of the Cult",
+          "Adept of the Cult",
+          "Demon",
+          "Demon Skeleton",
+          "Diabolic Imp",
+          "Dragon",
+          "Dragon Hatchling",
+          "Dragon Lord",
+          "Dragon Lord Hatchling",
+          "Dragonling",
+          "Efreet",
+          "Elder Bonelord",
+          "Enlightened of the Cult",
+          "Fire Devil",
+          "Fire Elemental",
+          "Hellfire Fighter",
+          "Hellhound",
+          "Massive Fire Elemental",
+          "Priestess",
+          "Stone Golem",
+          "Witch"
+        ]
+      },
+      {
+        "name": "Kharos",
+        "creatures": [
+          "Behemoth",
+          "Demon",
+          "Dragon Lord",
+          "Fire Elemental",
+          "Hydra",
+          "Lich",
+          "Poison Spider",
+          "Serpent Spawn",
+          "Warlock"
+        ]
+      },
+      {
+        "name": "Laguna Islands",
+        "creatures": [
+          "Amazon",
+          "Azure Frog",
+          "Blood Crab",
+          "Coral Frog",
+          "Crab",
+          "Crimson Frog",
+          "Crocodile",
+          "Green Frog",
+          "Orchid Frog",
+          "Seagull",
+          "Thornback Tortoise",
+          "Toad",
+          "Tortoise"
+        ]
+      },
+      {
+        "name": "Liberty Bay City",
+        "creatures": [
+          "Butterfly (Blue)",
+          "Butterfly (Red)",
+          "Demon",
+          "Dog",
+          "Pig",
+          "Rat",
+          "Seagull"
+        ]
+      },
+      {
+        "name": "Liberty Bay Surroundings",
+        "creatures": [
+          "Bug",
+          "Butterfly (Blue)",
+          "Butterfly (Red)",
+          "Centipede",
+          "Flamingo",
+          "Parrot",
+          "Pirat Bombardier",
+          "Pirat Cutthroat",
+          "Pirat Mate",
+          "Pirat Scoundrel",
+          "Poison Spider",
+          "Rat",
+          "Seagull",
+          "Skunk",
+          "Spider",
+          "Tarantula",
+          "Tortoise",
+          "Wasp"
+        ]
+      },
+      {
+        "name": "Malada",
+        "creatures": [
+          "Bog Raider",
+          "Crocodile",
+          "Giant Spider",
+          "Hydra",
+          "Quara Constrictor Scout",
+          "Quara Hydromancer Scout",
+          "Quara Mantassin Scout",
+          "Quara Pincher Scout",
+          "Quara Predator Scout",
+          "Seagull",
+          "Spider",
+          "Tarantula",
+          "Water Elemental"
+        ]
+      },
+      {
+        "name": "Meriana",
+        "creatures": [
+          "Azure Frog",
+          "Bat",
+          "Blood Crab",
+          "Butterfly (Blue)",
+          "Butterfly (Purple)",
+          "Butterfly (Red)",
+          "Centipede",
+          "Chicken",
+          "Cobra",
+          "Crab",
+          "Crimson Frog",
+          "Crocodile",
+          "Flamingo",
+          "Gargoyle",
+          "Green Frog",
+          "Parrot",
+          "Rat",
+          "Seagull",
+          "Snake",
+          "Spider",
+          "Stone Golem",
+          "Tarantula",
+          "Thornback Tortoise",
+          "Tiger",
+          "Wasp"
+        ]
+      },
+      {
+        "name": "Nargor",
+        "creatures": [
+          "Crab",
+          "Crystal Spider",
+          "Crystalcrusher",
+          "Drillworm",
+          "Frost Dragon",
+          "Frost Dragon Hatchling",
+          "Ghoul",
+          "Pig",
+          "Pirate Buccaneer",
+          "Pirate Corsair",
+          "Pirate Cutthroat",
+          "Pirate Ghost",
+          "Pirate Marauder",
+          "Pirate Skeleton",
+          "Scorpion",
+          "Slime",
+          "Smuggler",
+          "Tarantula",
+          "Thornback Tortoise",
+          "Water Elemental",
+          "Wiggler",
+          "Wyvern"
+        ]
+      },
+      {
+        "name": "Ramoa",
+        "creatures": [
+          "Bog Raider",
+          "Bonebeast",
+          "Crypt Shambler",
+          "Demon Skeleton",
+          "Ghost",
+          "Giant Spider",
+          "Necromancer",
+          "Priestess",
+          "Scorpion",
+          "Vampire",
+          "Water Elemental"
+        ]
+      },
+      {
+        "name": "Secret Library Earth Section",
+        "creatures": [
+          "Biting Book",
+          "Cursed Book",
+          "Ink Blob"
+        ]
+      },
+      {
+        "name": "Secret Library Energy Section",
+        "creatures": [
+          "Biting Book",
+          "Brain Squid",
+          "Energetic Book",
+          "Energuardian of Tales",
+          "Flying Book",
+          "Knowledge Elemental"
+        ]
+      },
+      {
+        "name": "Secret Library Fire Section",
+        "creatures": [
+          "Biting Book",
+          "Burning Book",
+          "Flying Book",
+          "Guardian of Tales",
+          "Ink Blob",
+          "Rage Squid"
+        ]
+      },
+      {
+        "name": "Secret Library Ice Section",
+        "creatures": [
+          "Animated Feather",
+          "Biting Book",
+          "Flying Book",
+          "Icecold Book",
+          "Ink Blob",
+          "Squid Warden"
+        ]
+      },
+      {
+        "name": "Talahu",
+        "creatures": [
+          "Bog Raider",
+          "Bonebeast",
+          "Cobra",
+          "Crocodile",
+          "Demon Skeleton",
+          "Ghost",
+          "Hydra",
+          "Lich",
+          "Medusa",
+          "Mummy",
+          "Necromancer",
+          "Priestess",
+          "Quara Constrictor Scout",
+          "Quara Hydromancer Scout",
+          "Quara Mantassin Scout",
+          "Quara Pincher Scout",
+          "Quara Predator Scout",
+          "Seagull",
+          "Serpent Spawn",
+          "Slime",
+          "Vampire",
+          "Water Elemental"
+        ]
+      },
+      {
+        "name": "Treasure Island",
+        "creatures": [
+          "Blood Crab",
+          "Crab",
+          "Crypt Shambler",
+          "Ghost",
+          "Ghoul",
+          "Larva",
+          "Pirate Ghost",
+          "Pirate Skeleton",
+          "Quara Constrictor Scout",
+          "Scarab",
+          "Scorpion",
+          "Seagull",
+          "Skeleton",
+          "Zombie"
+        ]
+      },
+      {
+        "name": "Vandura Bonelord Dungeons",
+        "creatures": [
+          "Bonelord",
+          "Braindeath",
+          "Elder Bonelord",
+          "Gazer"
+        ]
+      },
+      {
+        "name": "Vandura Cultist Hideout",
+        "creatures": [
+          "Acolyte of the Cult",
+          "Adept of the Cult",
+          "Black Sheep",
+          "Bonelord",
+          "Dark Monk",
+          "Elder Bonelord",
+          "Ghoul",
+          "Novice of the Cult",
+          "Tarantula",
+          "Vampire",
+          "Witch"
+        ]
+      },
+      {
+        "name": "Vandura Hive Outpost",
+        "creatures": [
+          "Crawler"
+        ]
+      },
+      {
+        "name": "Vandura Mountains",
+        "creatures": [
+          "Behemoth",
+          "Bonebeast",
+          "Earth Elemental",
+          "Energy Elemental",
+          "Giant Spider",
+          "Medusa",
+          "Nightstalker",
+          "Wyrm",
+          "Wyvern"
+        ]
+      },
+      {
+        "name": "Vandura Quara Caves",
+        "creatures": [
+          "Crab",
+          "Quara Constrictor",
+          "Quara Constrictor Scout",
+          "Quara Hydromancer",
+          "Quara Hydromancer Scout",
+          "Quara Mantassin",
+          "Quara Mantassin Scout",
+          "Quara Pincher",
+          "Quara Pincher Scout",
+          "Quara Predator",
+          "Quara Predator Scout"
+        ]
+      },
+      {
+        "name": "Vandura Rotworm Caves",
+        "creatures": [
+          "Bug",
+          "Carrion Worm",
+          "Centipede",
+          "Poison Spider",
+          "Rotworm",
+          "Tarantula"
+        ]
+      },
+      {
+        "name": "Vandura Wyrm Lairs",
+        "creatures": [
+          "Elder Wyrm",
+          "Wyrm"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Venore",
+    "subareas": [
+      {
+        "name": "Amazon Camp",
+        "creatures": [
+          "Amazon",
+          "Cave Rat",
+          "Ghoul",
+          "Hunter",
+          "Lion",
+          "Mummy",
+          "Poacher",
+          "Valkyrie",
+          "Witch"
+        ]
+      },
+      {
+        "name": "Black Knight Villa",
+        "creatures": [
+          "Bat",
+          "Bonelord",
+          "Scorpion",
+          "Skeleton",
+          "Slime",
+          "Wyvern"
+        ]
+      },
+      {
+        "name": "Bulltaur Lair",
+        "creatures": [
+          "Bulltaur Alchemist",
+          "Bulltaur Brute",
+          "Bulltaur Forgepriest"
+        ]
+      },
+      {
+        "name": "Dark Cathedral",
+        "creatures": [
+          "Assassin",
+          "Bandit",
+          "Bat",
+          "Bonelord",
+          "Cave Rat",
+          "Centipede",
+          "Dark Apprentice",
+          "Dark Magician",
+          "Dark Monk",
+          "Demon Skeleton",
+          "Ghost",
+          "Ghoul",
+          "Hunter",
+          "Monk (Creature)",
+          "Mummy",
+          "Poison Spider",
+          "Rotworm",
+          "Scorpion",
+          "Skeleton",
+          "Slime",
+          "Smuggler",
+          "Stone Golem",
+          "Tarantula",
+          "Wild Warrior",
+          "Witch"
+        ]
+      },
+      {
+        "name": "Desecrated Glade",
+        "creatures": [
+          "Cave Parrot",
+          "Orclops Doomhauler",
+          "Orclops Ravager"
+        ]
+      },
+      {
+        "name": "Gloom Caverns",
+        "creatures": [
+          "Gloom Wolf",
+          "Green Frog",
+          "Redeemed Soul",
+          "Snake",
+          "Tainted Soul",
+          "Toad",
+          "Wasp",
+          "Witch"
+        ]
+      },
+      {
+        "name": "Green Claw Swamp",
+        "creatures": [
+          "Adventurer",
+          "Amazon",
+          "Bear",
+          "Bonelord",
+          "Bug",
+          "Butterfly (Purple)",
+          "Carrion Worm",
+          "Deer",
+          "Giant Spider",
+          "Mummy",
+          "Poison Spider",
+          "Rabbit",
+          "Rat",
+          "Rotworm",
+          "Scorpion",
+          "Seagull",
+          "Skeleton",
+          "Slime",
+          "Snake",
+          "Spider",
+          "Swamp Troll",
+          "Tarantula",
+          "Wasp",
+          "Witch",
+          "Wolf",
+          "Wyvern"
+        ]
+      },
+      {
+        "name": "Haunted Nexus",
+        "creatures": [
+          "Arachnophobica",
+          "Burster Spectre",
+          "Efreet",
+          "Gazer Spectre",
+          "Marid",
+          "Ripper Spectre",
+          "Thanatursus"
+        ]
+      },
+      {
+        "name": "Jakundaf Desert",
+        "creatures": [
+          "Bat",
+          "Bear",
+          "Bonelord",
+          "Bug",
+          "Fire Devil",
+          "Lion",
+          "Minotaur Archer",
+          "Minotaur Guard",
+          "Minotaur Mage",
+          "Orc",
+          "Orc Berserker",
+          "Orc Warrior",
+          "Poison Spider",
+          "Rat",
+          "Rotworm",
+          "Scorpion",
+          "Slime",
+          "Snake",
+          "Spider"
+        ]
+      },
+      {
+        "name": "Outlaw Camp",
+        "creatures": [
+          "Bandit",
+          "Bat",
+          "Bear",
+          "Boar",
+          "Bonelord",
+          "Bug",
+          "Butterfly (Purple)",
+          "Cave Rat",
+          "Cyclops",
+          "Deer",
+          "Demon Skeleton",
+          "Ghoul",
+          "Giant Spider",
+          "Hunter",
+          "Minotaur",
+          "Minotaur Archer",
+          "Minotaur Guard",
+          "Minotaur Mage",
+          "Orc Berserker",
+          "Orc Shaman",
+          "Orc Spearman",
+          "Orc Warrior",
+          "Poison Spider",
+          "Rabbit",
+          "Rat",
+          "Rotworm",
+          "Scorpion",
+          "Seagull",
+          "Skeleton",
+          "Slime",
+          "Smuggler",
+          "Snake",
+          "Spider",
+          "Troll",
+          "Wasp",
+          "Water Elemental",
+          "Wild Warrior",
+          "Wolf"
+        ]
+      },
+      {
+        "name": "Pits of Inferno",
+        "creatures": [
+          "Banshee",
+          "Betrayed Wraith",
+          "Blightwalker",
+          "Dark Torturer",
+          "Defiler",
+          "Demon",
+          "Demon Skeleton",
+          "Destroyer",
+          "Diabolic Imp",
+          "Dragon",
+          "Dragon Lord",
+          "Fire Devil",
+          "Fury",
+          "Hand of Cursed Fate",
+          "Hellfire Fighter",
+          "Hellhound",
+          "Juggernaut",
+          "Lich",
+          "Lost Soul",
+          "Nightmare",
+          "Phantasm",
+          "Pig",
+          "Plaguesmith",
+          "Scorpion",
+          "Seagull",
+          "Son of Verminor",
+          "Spectre",
+          "Undead Dragon"
+        ]
+      },
+      {
+        "name": "Plains of Havoc",
+        "creatures": [
+          "Bandit",
+          "Bear",
+          "Black Sheep",
+          "Bonelord",
+          "Butterfly (Blue)",
+          "Butterfly (Red)",
+          "Cyclops",
+          "Deer",
+          "Demon Skeleton",
+          "Dragon",
+          "Dragon Lord",
+          "Elf Scout",
+          "Fire Devil",
+          "Ghost",
+          "Ghoul",
+          "Giant Spider",
+          "Hunter",
+          "Minotaur",
+          "Minotaur Archer",
+          "Minotaur Guard",
+          "Minotaur Mage",
+          "Orc",
+          "Orc Berserker",
+          "Orc Leader",
+          "Orc Rider",
+          "Orc Shaman",
+          "Orc Spearman",
+          "Poison Spider",
+          "Rabbit",
+          "Rat",
+          "Rotworm",
+          "Scorpion",
+          "Seagull",
+          "Skeleton",
+          "Slime",
+          "Snake",
+          "Squirrel",
+          "Tarantula",
+          "Vampire",
+          "War Wolf",
+          "Wasp",
+          "Witch",
+          "Wolf",
+          "Wyvern"
+        ]
+      },
+      {
+        "name": "Shadowthorn",
+        "creatures": [
+          "Bog Frog",
+          "Cyclops",
+          "Demon Skeleton",
+          "Dragon",
+          "Elf",
+          "Elf Arcanist",
+          "Elf Scout",
+          "Ghoul",
+          "Toad"
+        ]
+      },
+      {
+        "name": "Venore",
+        "creatures": [
+          "Adventurer",
+          "Bug",
+          "Marsh Stalker",
+          "Pigeon",
+          "Rat"
+        ]
+      },
+      {
+        "name": "Venore Corym Dungeons",
+        "creatures": [
+          "Bat",
+          "Cave Rat",
+          "Corym Charlatan",
+          "Corym Skirmisher",
+          "Corym Vanguard",
+          "Little Corym Charlatan",
+          "Poison Spider",
+          "Rat",
+          "Stonerefiner",
+          "Tarantula"
+        ]
+      },
+      {
+        "name": "Venore Dragon Lair",
+        "creatures": [
+          "Dragon",
+          "Dragon Hatchling",
+          "Dragon Lord",
+          "Dragon Lord Hatchling"
+        ]
+      },
+      {
+        "name": "Venore Southern Swamp",
+        "creatures": [
+          "Adventurer",
+          "Bat",
+          "Bear",
+          "Bug",
+          "Butterfly (Purple)",
+          "Carrion Worm",
+          "Cave Rat",
+          "Deer",
+          "Ghoul",
+          "Marsh Stalker",
+          "Rabbit",
+          "Rotworm",
+          "Scorpion",
+          "Seagull",
+          "Skeleton",
+          "Slug",
+          "Snake",
+          "Swamp Troll",
+          "Swampling",
+          "Wisp",
+          "Wolf"
+        ]
+      },
+      {
+        "name": "Venore Surroundings",
+        "creatures": [
+          "Adventurer",
+          "Bat",
+          "Bug",
+          "Butterfly (Purple)",
+          "Carrion Worm",
+          "Cave Rat",
+          "Centipede",
+          "Marsh Stalker",
+          "Orc",
+          "Orc Shaman",
+          "Orc Spearman",
+          "Pig",
+          "Rabbit",
+          "Rat",
+          "Rotworm",
+          "Scorpion",
+          "Skeleton",
+          "Slime",
+          "Snake",
+          "Swamp Troll",
+          "Swampling",
+          "Wisp"
+        ]
+      },
+      {
+        "name": "Venore Underground",
+        "creatures": [
+          "Bonelord",
+          "Emerald Damselfly",
+          "Marsh Stalker",
+          "Rotworm",
+          "Salamander",
+          "Swampling"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Yalahar",
+    "subareas": [
+      {
+        "name": "Beregar",
+        "creatures": [
+          "Dwarf",
+          "Dwarf Geomancer",
+          "Dwarf Guard",
+          "Dwarf Soldier"
+        ]
+      },
+      {
+        "name": "Beregar Mines",
+        "creatures": [
+          "Ancient Scarab",
+          "Bonebeast",
+          "Bonelord",
+          "Braindeath",
+          "Carrion Worm",
+          "Cyclops Smith",
+          "Diabolic Imp",
+          "Dog",
+          "Dragon",
+          "Dragon Hatchling",
+          "Dragon Lord",
+          "Dragon Lord Hatchling",
+          "Dwarf",
+          "Dwarf Geomancer",
+          "Dwarf Guard",
+          "Dwarf Soldier",
+          "Elder Bonelord",
+          "Fire Devil",
+          "Fire Elemental",
+          "Furious Troll",
+          "Ghoul",
+          "Giant Spider",
+          "Goblin",
+          "Goblin Assassin",
+          "Goblin Scavenger",
+          "Gozzler",
+          "Husky",
+          "Lich",
+          "Necromancer",
+          "Orc Berserker",
+          "Poison Spider",
+          "Rotworm",
+          "Scarab",
+          "Skeleton",
+          "Skeleton Warrior",
+          "Spider",
+          "Stone Golem",
+          "Troll Legionnaire",
+          "Warlock",
+          "Wyrm",
+          "Wyvern",
+          "Zombie"
+        ]
+      },
+      {
+        "name": "Fenrock",
+        "creatures": [
+          "Barbarian Brutetamer",
+          "Barbarian Headsplitter",
+          "Barbarian Skullhunter",
+          "Bat",
+          "Carrion Worm",
+          "Centipede",
+          "Crocodile",
+          "Rotworm",
+          "Tortoise",
+          "War Golem"
+        ]
+      },
+      {
+        "name": "Isle of Evil",
+        "creatures": [
+          "Berserker Chicken",
+          "Dark Magician",
+          "Demon Parrot",
+          "Demon Skeleton",
+          "Doom Deer",
+          "Evil Sheep",
+          "Evil Sheep Lord",
+          "Fire Devil",
+          "Gargoyle",
+          "Goblin Assassin",
+          "Gozzler",
+          "Hot Dog",
+          "Infernal Frog",
+          "Killer Rabbit",
+          "Mad Scientist",
+          "Minotaur Mage",
+          "Pirate Buccaneer",
+          "Pirate Cutthroat",
+          "Pirate Marauder",
+          "Vampire Pig",
+          "Witch",
+          "Zombie"
+        ]
+      },
+      {
+        "name": "Mistrock",
+        "creatures": [
+          "Blood Crab",
+          "Cyclops",
+          "Cyclops Drone",
+          "Cyclops Smith"
+        ]
+      },
+      {
+        "name": "Yalahar Alchemist Quarter",
+        "creatures": [
+          "Acid Blob",
+          "Bog Raider",
+          "Braindeath",
+          "Bug",
+          "Cave Rat",
+          "Death Blob",
+          "Demon",
+          "Destroyer",
+          "Hunter",
+          "Mercury Blob",
+          "Mutated Bat",
+          "Mutated Human",
+          "Mutated Rat",
+          "Mutated Tiger",
+          "Nightmare",
+          "Nightmare Scion",
+          "Orc",
+          "Plaguesmith",
+          "Quara Predator",
+          "Slime",
+          "Spit Nettle"
+        ]
+      },
+      {
+        "name": "Yalahar Arena Quarter",
+        "creatures": [
+          "Ancient Scarab",
+          "Barbarian Bloodwalker",
+          "Bear",
+          "Behemoth",
+          "Bug",
+          "Butterfly (Blue)",
+          "Butterfly (Red)",
+          "Carniphila",
+          "Carrion Worm",
+          "Cave Rat",
+          "Centipede",
+          "Cobra",
+          "Crab",
+          "Crocodile",
+          "Dragon Lord",
+          "Elephant",
+          "Giant Spider",
+          "Gladiator",
+          "Hyaena",
+          "Hydra",
+          "Kongra",
+          "Lion",
+          "Massive Earth Elemental",
+          "Mutated Bat",
+          "Mutated Rat",
+          "Mutated Tiger",
+          "Nightmare Scion",
+          "Panda",
+          "Quara Constrictor",
+          "Quara Constrictor Scout",
+          "Quara Mantassin",
+          "Scarab",
+          "Scorpion",
+          "Snake",
+          "Spider",
+          "Squirrel",
+          "Terror Bird",
+          "Tiger",
+          "Toad",
+          "Tortoise",
+          "Troll",
+          "Troll Champion",
+          "Undead Gladiator",
+          "Wolf",
+          "Wyrm"
+        ]
+      },
+      {
+        "name": "Yalahar Cemetery Quarter",
+        "creatures": [
+          "Banshee",
+          "Bonebeast",
+          "Braindeath",
+          "Corrupted Ghost",
+          "Corrupted Skeleton",
+          "Crypt Shambler",
+          "Demon Skeleton",
+          "Ghoul",
+          "Giant Spider",
+          "Grim Reaper",
+          "Lich",
+          "Mutated Bat",
+          "Necromancer",
+          "Nightmare",
+          "Nightmare Scion",
+          "Nightstalker",
+          "Skeleton",
+          "Tarantula",
+          "Zombie"
+        ]
+      },
+      {
+        "name": "Yalahar Centre",
+        "creatures": [
+          "Bug",
+          "Butterfly (Blue)",
+          "Butterfly (Red)",
+          "Carrion Worm",
+          "Cat",
+          "Cave Rat",
+          "Centipede",
+          "Poison Spider",
+          "Rat",
+          "Rotworm",
+          "Slime",
+          "Spider",
+          "Squirrel",
+          "War Golem"
+        ]
+      },
+      {
+        "name": "Yalahar Factory Quarter",
+        "creatures": [
+          "Amazon",
+          "Assassin",
+          "Badger",
+          "Bandit",
+          "Bug",
+          "Cat",
+          "Centipede",
+          "Chicken",
+          "Crab",
+          "Crazed Beggar",
+          "Damaged Worker Golem",
+          "Dark Apprentice",
+          "Dog",
+          "Dwarf",
+          "Fire Elemental",
+          "Frost Dragon Hatchling",
+          "Gang Member",
+          "Goblin Scavenger",
+          "Larva",
+          "Mad Scientist",
+          "Mutated Human",
+          "Pig",
+          "Pirate Marauder",
+          "Poacher",
+          "Poison Spider",
+          "Rabbit",
+          "Rat",
+          "Seagull",
+          "Slime",
+          "Smuggler",
+          "Snake",
+          "Spider",
+          "War Golem",
+          "Wolf",
+          "Worker Golem"
+        ]
+      },
+      {
+        "name": "Yalahar Foreigner Quarter",
+        "creatures": [
+          "Amazon",
+          "Assassin",
+          "Bandit",
+          "Barbarian Headsplitter",
+          "Cat",
+          "Crazed Beggar",
+          "Cyclops",
+          "Dark Monk",
+          "Dog",
+          "Dragon",
+          "Dwarf Guard",
+          "Dworc Fleshhunter",
+          "Dworc Venomsniper",
+          "Elf",
+          "Elf Arcanist",
+          "Elf Scout",
+          "Gang Member",
+          "Goblin",
+          "Hunter",
+          "Hydra",
+          "Lizard Sentinel",
+          "Lizard Templar",
+          "Minotaur",
+          "Minotaur Archer",
+          "Minotaur Guard",
+          "Minotaur Mage",
+          "Nomad (Basic)",
+          "Orc Berserker",
+          "Orc Shaman",
+          "Orc Spearman",
+          "Orc Warlord",
+          "Orc Warrior",
+          "Pig",
+          "Pirate Buccaneer",
+          "Pirate Corsair",
+          "Pirate Cutthroat",
+          "Pirate Marauder",
+          "Poacher",
+          "Serpent Spawn",
+          "Smuggler",
+          "Stalker",
+          "Swamp Troll",
+          "Troll",
+          "Troll Champion",
+          "Valkyrie",
+          "Wild Warrior"
+        ]
+      },
+      {
+        "name": "Yalahar Magician Quarter",
+        "creatures": [
+          "Acolyte of the Cult",
+          "Adept of the Cult",
+          "Blue Djinn",
+          "Butterfly (Blue)",
+          "Butterfly (Red)",
+          "Cat",
+          "Dark Apprentice",
+          "Dark Magician",
+          "Demon",
+          "Efreet",
+          "Enlightened of the Cult",
+          "Gozzler",
+          "Green Djinn",
+          "Hellspawn",
+          "Hero",
+          "Ice Witch",
+          "Infernalist",
+          "Mad Scientist",
+          "Marid",
+          "Necromancer",
+          "Novice of the Cult",
+          "Plaguesmith",
+          "Priestess",
+          "Rabbit",
+          "Serpent Spawn",
+          "Warlock"
+        ]
+      },
+      {
+        "name": "Yalahar Sunken Quarter",
+        "creatures": [
+          "Quara Constrictor",
+          "Quara Hydromancer",
+          "Quara Mantassin",
+          "Quara Pincher",
+          "Quara Predator",
+          "Rabbit"
+        ]
+      },
+      {
+        "name": "Yalahar Trade Quarter",
+        "creatures": [
+          "Amazon",
+          "Assassin",
+          "Bandit",
+          "Barbarian Headsplitter",
+          "Barbarian Skullhunter",
+          "Centipede",
+          "Crazed Beggar",
+          "Crocodile",
+          "Elf",
+          "Gang Member",
+          "Gladiator",
+          "Goblin Assassin",
+          "Hunter",
+          "Mad Scientist",
+          "Monk (Creature)",
+          "Nomad (Basic)",
+          "Pirate Buccaneer",
+          "Pirate Corsair",
+          "Pirate Cutthroat",
+          "Pirate Marauder",
+          "Poacher",
+          "Slime",
+          "Smuggler",
+          "Stalker",
+          "Tarantula",
+          "Valkyrie",
+          "Wild Warrior",
+          "Witch"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Zao",
+    "subareas": [
+      {
+        "name": "Another Dimension",
+        "creatures": [
+          "Yielothax"
+        ]
+      },
+      {
+        "name": "Black Serpent Dungeon",
+        "creatures": [
+          "Draken Spellweaver",
+          "Ghastly Dragon",
+          "Lizard Chosen",
+          "Lizard Dragon Priest",
+          "Lizard High Guard",
+          "Lizard Legionnaire"
+        ]
+      },
+      {
+        "name": "Chazorai",
+        "creatures": [
+          "Draken Warmaster",
+          "Lizard Dragon Priest",
+          "Lizard High Guard",
+          "Lizard Legionnaire"
+        ]
+      },
+      {
+        "name": "Corrupted Gardens",
+        "creatures": [
+          "Brimstone Bug",
+          "Haunted Treeling",
+          "Lancer Beetle",
+          "Lizard Dragon Priest",
+          "Lizard High Guard",
+          "Lizard Legionnaire",
+          "Mutated Bat",
+          "Wailing Widow"
+        ]
+      },
+      {
+        "name": "Dragonblaze Peaks",
+        "creatures": [
+          "Dragon",
+          "Dragon Hatchling",
+          "Dragon Lord",
+          "Dragon Lord Hatchling",
+          "Draken Spellweaver",
+          "Draken Warmaster",
+          "Frost Dragon",
+          "Frost Dragon Hatchling",
+          "Lizard Dragon Priest",
+          "Lizard High Guard",
+          "Lizard Legionnaire",
+          "Lizard Zaogun",
+          "Sandcrawler"
+        ]
+      },
+      {
+        "name": "Emperor's Castle",
+        "creatures": [
+          "Demon",
+          "Dragon",
+          "Dragon Hatchling",
+          "Dragon Lord",
+          "Dragon Lord Hatchling",
+          "Draken Abomination",
+          "Draken Elite",
+          "Draken Spellweaver",
+          "Draken Warmaster",
+          "Frost Dragon",
+          "Ghastly Dragon",
+          "Lizard Chosen",
+          "Lizard Dragon Priest",
+          "Lizard High Guard",
+          "Lizard Zaogun",
+          "Serpent Spawn",
+          "Undead Dragon",
+          "Wyrm"
+        ]
+      },
+      {
+        "name": "Falcon Bastion",
+        "creatures": [
+          "Falcon Knight",
+          "Falcon Paladin",
+          "Monk (Creature)"
+        ]
+      },
+      {
+        "name": "Farmine City",
+        "creatures": [
+          "Gargoyle",
+          "Gozzler",
+          "Stone Golem"
+        ]
+      },
+      {
+        "name": "Grounds of Plague",
+        "creatures": [
+          "Defiler",
+          "Grimeleech",
+          "Hellflayer",
+          "Plaguesmith"
+        ]
+      },
+      {
+        "name": "Halls of Ascension",
+        "creatures": [
+          "Dark Torturer",
+          "Fury",
+          "Grimeleech",
+          "Hellflayer",
+          "Hellhound",
+          "Juggernaut",
+          "Plaguesmith",
+          "Vexclaw"
+        ]
+      },
+      {
+        "name": "Keeper's Lair",
+        "creatures": [
+          "Brimstone Bug",
+          "Lancer Beetle",
+          "Toad",
+          "Wailing Widow"
+        ]
+      },
+      {
+        "name": "Muggy Plains",
+        "creatures": [
+          "Brimstone Bug",
+          "Death Blob",
+          "Draken Spellweaver",
+          "Draken Warmaster",
+          "Killer Caiman",
+          "Lizard Chosen",
+          "Lizard Dragon Priest",
+          "Lizard High Guard",
+          "Lizard Legionnaire",
+          "Lizard Zaogun",
+          "Mutated Bat",
+          "Mutated Tiger"
+        ]
+      },
+      {
+        "name": "Nimmersatt's Breeding Ground",
+        "creatures": [
+          "Dragolisk",
+          "Mega Dragon",
+          "Wardragon"
+        ]
+      },
+      {
+        "name": "Norcferatu Dungeons",
+        "creatures": [
+          "Dworc Shadowstalker",
+          "Gloom Maw",
+          "Norcferatu Heartless",
+          "Norcferatu Nightweaver",
+          "Orclops Bloodbreaker",
+          "Varg"
+        ]
+      },
+      {
+        "name": "Norcferatu Fortress",
+        "creatures": [
+          "Dworc Shadowstalker",
+          "Gloom Maw",
+          "Norcferatu Heartless",
+          "Norcferatu Nightweaver",
+          "Orclops Bloodbreaker",
+          "Varg"
+        ]
+      },
+      {
+        "name": "Razachai",
+        "creatures": [
+          "Brimstone Bug",
+          "Centipede",
+          "Draken Elite",
+          "Draken Spellweaver",
+          "Draken Warmaster",
+          "Ghastly Dragon",
+          "Lancer Beetle",
+          "Lizard Dragon Priest",
+          "Lizard High Guard",
+          "Lizard Legionnaire",
+          "Lizard Magistratus",
+          "Lizard Noble",
+          "Lizard Zaogun",
+          "Mutated Rat",
+          "Terramite",
+          "Undead Dragon",
+          "Wailing Widow"
+        ]
+      },
+      {
+        "name": "Spirittrails",
+        "creatures": [
+          "Death Blob",
+          "Insect Swarm",
+          "Killer Caiman",
+          "Lizard Dragon Priest",
+          "Lizard High Guard",
+          "Lizard Legionnaire",
+          "Mutated Bat",
+          "Mutated Rat",
+          "Mutated Tiger",
+          "Souleater",
+          "Toad"
+        ]
+      },
+      {
+        "name": "Vengoth",
+        "creatures": [
+          "Banshee",
+          "Bat",
+          "Bog Raider",
+          "Bonebeast",
+          "Bonelord",
+          "Dark Torturer",
+          "Demon Skeleton",
+          "Earth Elemental",
+          "Elder Bonelord",
+          "Energy Elemental",
+          "Fury",
+          "Gargoyle",
+          "Giant Spider",
+          "Haunted Treeling",
+          "Hellspawn",
+          "Mutated Bat",
+          "Mutated Rat",
+          "Nightmare",
+          "Nightmare Scion",
+          "Nightstalker",
+          "Poison Spider",
+          "Priestess",
+          "Rat",
+          "Scorpion",
+          "Skeleton",
+          "Slime",
+          "Spectre",
+          "Spider",
+          "Tarantula",
+          "Vampire",
+          "Vampire Bride",
+          "War Wolf",
+          "Werewolf",
+          "Zombie"
+        ]
+      },
+      {
+        "name": "Vengoth Mountain Caves",
+        "creatures": [
+          "Bat",
+          "Ghoul",
+          "Skeleton"
+        ]
+      },
+      {
+        "name": "Zao Orc Fortress",
+        "creatures": [
+          "Cave Rat",
+          "Dragon Lord",
+          "Lizard High Guard",
+          "Lizard Legionnaire",
+          "Lizard Zaogun",
+          "Minotaur",
+          "Orc",
+          "Orc Berserker",
+          "Orc Leader",
+          "Orc Shaman",
+          "Orc Spearman",
+          "Orc Warlord",
+          "Orc Warrior",
+          "Slime"
+        ]
+      },
+      {
+        "name": "Zao Steppe",
+        "creatures": [
+          "Death Blob",
+          "Gnarlhound",
+          "Hyaena",
+          "Insect Swarm",
+          "Killer Caiman",
+          "Lancer Beetle",
+          "Orc",
+          "Orc Berserker",
+          "Orc Marauder",
+          "Orc Spearman",
+          "Orc Warrior",
+          "Sandcrawler",
+          "Terramite",
+          "Terror Bird",
+          "Wailing Widow",
+          "War Wolf"
+        ]
+      },
+      {
+        "name": "Zao Underground",
+        "creatures": [
+          "Stampor"
+        ]
+      },
+      {
+        "name": "Zzaion",
+        "creatures": [
+          "Draken Spellweaver",
+          "Draken Warmaster",
+          "Lizard Dragon Priest",
+          "Lizard High Guard",
+          "Lizard Legionnaire",
+          "Lizard Sentinel",
+          "Lizard Snakecharmer",
+          "Lizard Templar",
+          "Lizard Zaogun"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Unassigned",
+    "subareas": [
+      {
+        "name": "Hive Outpost",
+        "creatures": [
+          "Insectoid Worker",
+          "Spitter",
+          "Swarmer",
+          "Waspoid"
+        ]
+      },
+      {
+        "name": "Radiant Ascendancy",
+        "creatures": [
+          "Radiant Inquisitor",
+          "Radiant Templar",
+          "Radiant Zealot",
+          "Devoted Radiant Inquisitor",
+          "Devoted Radiant Templar",
+          "Devoted Radiant Zealot"
+        ]
+      },
+      {
+        "name": "Radiant Skyhold",
+        "creatures": [
+          "Radiant Acolyte",
+          "Radiant Paragon",
+          "Radiant Warden",
+		  "Devoted Radiant Acolyte",
+		  "Devoted Radiant Paragon",
+		  "Devoted Radiant Warden"
+        ]
+      }
+    ]
+  }
 ]
