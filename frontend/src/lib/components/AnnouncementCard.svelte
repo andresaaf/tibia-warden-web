@@ -92,6 +92,7 @@
 				class="creature-img"
 				src={a.creatureImageUrl}
 				alt=""
+				referrerpolicy="no-referrer"
 				onerror={(e) => ((e.currentTarget as HTMLImageElement).style.visibility = 'hidden')}
 			/>
 		{/if}
