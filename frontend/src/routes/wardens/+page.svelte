@@ -44,6 +44,10 @@
 	let areaOpenOverride = $state<Map<number, boolean>>(new Map());
 	let subareaOpenOverride = $state<Map<number, boolean>>(new Map());
 	let areaSearch = $state('');
+	/** Area/Subarea views: hide already-killed creatures (and fully-complete
+	 * areas/subareas), leaving only what's left to hunt. Session-only, like the
+	 * flat list's status filter. */
+	let remainingOnly = $state(false);
 
 	const AREA_OPEN_KEY = 'wardens:areaOpen';
 	const SUBAREA_OPEN_KEY = 'wardens:subareaOpen';
@@ -219,6 +223,28 @@
 		saveOpenOverride(AREA_OPEN_KEY, next);
 	}
 
+	/** Collapse/expand every loaded area at once. Expand also opens all subareas so
+	 * the Subareas view truly shows everything. Choices persist like manual ones. */
+	function collapseAll() {
+		const next = new Map(areaOpenOverride);
+		for (const a of areas) next.set(a.id, false);
+		areaOpenOverride = next;
+		saveOpenOverride(AREA_OPEN_KEY, next);
+	}
+
+	function expandAll() {
+		const nextAreas = new Map(areaOpenOverride);
+		for (const a of areas) nextAreas.set(a.id, true);
+		areaOpenOverride = nextAreas;
+		saveOpenOverride(AREA_OPEN_KEY, nextAreas);
+		if (viewMode === 'subarea') {
+			const nextSubs = new Map(subareaOpenOverride);
+			for (const a of areas) for (const s of a.subareas) nextSubs.set(s.id, true);
+			subareaOpenOverride = nextSubs;
+			saveOpenOverride(SUBAREA_OPEN_KEY, nextSubs);
+		}
+	}
+
 	let searching = $derived(areaSearch.trim() !== '');
 
 	// Search matches area names first, then creatures within areas. A name match
@@ -232,14 +258,12 @@
 			const nameMatch = term !== '' && area.name.toLowerCase().includes(term);
 			const matches =
 				term === '' ? area.creatures : area.creatures.filter((c) => c.name.toLowerCase().includes(term));
-			return {
-				area,
-				shown: nameMatch ? area.creatures : matches,
-				nameMatch,
-				creatureMatch: matches.length > 0
-			};
+			let shown = nameMatch ? area.creatures : matches;
+			if (remainingOnly) shown = shown.filter((c) => !killedIds.has(c.id));
+			return { area, shown, nameMatch, creatureMatch: matches.length > 0 };
 		});
-		const visible = term === '' ? withMeta : withMeta.filter((m) => m.nameMatch || m.creatureMatch);
+		let visible = term === '' ? withMeta : withMeta.filter((m) => m.nameMatch || m.creatureMatch);
+		if (remainingOnly) visible = visible.filter((m) => m.shown.length > 0);
 		return visible.sort((a, b) => {
 			if (term !== '' && a.nameMatch !== b.nameMatch) return a.nameMatch ? -1 : 1;
 			return Number(areaComplete(a.area)) - Number(areaComplete(b.area));
@@ -281,17 +305,22 @@
 			const shownSubareas = area.subareas
 				.map((subarea) => {
 					const subMatch = term !== '' && subarea.name.toLowerCase().includes(term);
-					const shown =
+					const searchShown =
 						term === '' || nameMatch || subMatch
 							? subarea.creatures
 							: subarea.creatures.filter((c) => c.name.toLowerCase().includes(term));
-					return { subarea, shown, subMatch };
+					const searchOk = term === '' || nameMatch || subMatch || searchShown.length > 0;
+					const shown = remainingOnly
+						? searchShown.filter((c) => !killedIds.has(c.id))
+						: searchShown;
+					return { subarea, shown, subMatch, searchOk };
 				})
-				.filter((s) => term === '' || nameMatch || s.subMatch || s.shown.length > 0);
+				.filter((s) => s.searchOk && (!remainingOnly || s.shown.length > 0));
 			return { area, nameMatch, shownSubareas };
 		});
-		const visible =
+		let visible =
 			term === '' ? withMeta : withMeta.filter((m) => m.nameMatch || m.shownSubareas.length > 0);
+		if (remainingOnly) visible = visible.filter((m) => m.shownSubareas.length > 0);
 		return visible.sort((a, b) => {
 			if (term !== '' && a.nameMatch !== b.nameMatch) return a.nameMatch ? -1 : 1;
 			return Number(areaComplete(a.area)) - Number(areaComplete(b.area));
@@ -461,9 +490,26 @@
 				: 'Search areas or creatures…'}
 			bind:value={areaSearch}
 		/>
+		<div class="area-controls">
+			<button
+				class="chip"
+				class:active={remainingOnly}
+				aria-pressed={remainingOnly}
+				onclick={() => (remainingOnly = !remainingOnly)}
+			>
+				Remaining only
+			</button>
+			<span class="grow"></span>
+			<button class="btn btn-sm" onclick={collapseAll}>Collapse all</button>
+			<button class="btn btn-sm" onclick={expandAll}>Expand all</button>
+		</div>
 		{#if viewMode === 'area'}
 			{#if filteredAreas.length === 0}
-				<p class="muted">No areas or creatures match your search.</p>
+				<p class="muted">
+					{remainingOnly && !searching
+						? 'Nothing left — every shown area is complete.'
+						: 'No areas or creatures match your search.'}
+				</p>
 			{:else}
 				<div class="areas">
 					{#each filteredAreas as { area, shown } (area.id)}
@@ -494,7 +540,11 @@
 			{/if}
 		{:else}
 			{#if filteredSubareaAreas.length === 0}
-				<p class="muted">No areas, subareas, or creatures match your search.</p>
+				<p class="muted">
+						{remainingOnly && !searching
+							? 'Nothing left — every shown area is complete.'
+							: 'No areas, subareas, or creatures match your search.'}
+					</p>
 			{:else}
 				<div class="areas">
 					{#each filteredSubareaAreas as { area, shownSubareas } (area.id)}
@@ -573,6 +623,15 @@
 	}
 	.area-search {
 		width: 100%;
+	}
+	.area-controls {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.5rem;
+	}
+	.area-controls .grow {
+		flex: 1;
 	}
 	.filters {
 		display: flex;
