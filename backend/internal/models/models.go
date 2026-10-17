@@ -97,6 +97,24 @@ type Area struct {
 	Subareas  []Subarea  `json:"subareas"`
 }
 
+// SubareaCheck is one user's latest visit to a subarea in the respawn checker.
+// Name/Avatar describe the checker (character name, falling back to Discord
+// username) so the client can show who is covering the spot.
+type SubareaCheck struct {
+	SubareaID int64     `json:"subareaId"`
+	UserID    int64     `json:"userId"`
+	Name      string    `json:"name"`
+	Avatar    string    `json:"avatar"`
+	CheckedAt time.Time `json:"checkedAt"`
+}
+
+// CheckerShare is the user's per-group "share my checks" setting.
+type CheckerShare struct {
+	GroupID int64  `json:"groupId"`
+	Name    string `json:"name"`
+	Share   bool   `json:"share"`
+}
+
 // HighscoreEntry is one row of the statistics leaderboard: a user's total
 // killed Wardens, the Charm Points those kills are worth, and the Charm Points
 // they've "given away" as an announcer (deduped per broadcast).

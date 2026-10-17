@@ -11,6 +11,7 @@ type Stores struct {
 	Areas         *AreaStore
 	Groups        *GroupStore
 	Announcements *AnnouncementStore
+	Checker       *CheckerStore
 }
 
 // New constructs the repository set bound to the given pool.
@@ -23,5 +24,6 @@ func New(pool *pgxpool.Pool) *Stores {
 		Areas:         &AreaStore{pool: pool},
 		Groups:        &GroupStore{pool: pool},
 		Announcements: &AnnouncementStore{pool: pool},
+		Checker:       &CheckerStore{pool: pool},
 	}
 }

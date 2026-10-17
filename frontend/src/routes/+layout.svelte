@@ -23,6 +23,7 @@
 		{ href: '/', label: 'Home', short: 'Home' },
 		{ href: '/groups', label: 'Groups', short: 'Groups' },
 		{ href: '/wardens', label: 'Warden List', short: 'Wardens' },
+		{ href: '/checker', label: 'Checker', short: 'Checker' },
 		{ href: '/statistics', label: 'Statistics', short: 'Stats' }
 	];
 

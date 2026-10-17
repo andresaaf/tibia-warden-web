@@ -2,8 +2,10 @@ import type {
 	AccessMode,
 	Announcement,
 	Area,
+	CheckerState,
 	Creature,
 	CreatureSighting,
+	SubareaCheck,
 	DiscordRole,
 	Group,
 	GroupMember,
@@ -96,6 +98,19 @@ export const api = {
 		return request<WardenImportResult>('POST', `/api/wardens/import?${params}`, file);
 	},
 	areas: () => request<Area[]>('GET', '/api/areas'),
+
+	// Respawn checker
+	checker: () => request<CheckerState>('GET', '/api/checker'),
+	checkSubarea: (subareaId: number) =>
+		request<{ check: SubareaCheck }>('POST', `/api/checker/checks/${subareaId}`),
+	undoCheck: (subareaId: number) =>
+		request<{ check: SubareaCheck | null }>('DELETE', `/api/checker/checks/${subareaId}`),
+	addCheckerFavorite: (subareaId: number) =>
+		request<void>('PUT', `/api/checker/favorites/${subareaId}`),
+	removeCheckerFavorite: (subareaId: number) =>
+		request<void>('DELETE', `/api/checker/favorites/${subareaId}`),
+	setCheckerShare: (groupId: number, share: boolean) =>
+		request<void>('PUT', `/api/groups/${groupId}/checker-share`, { share }),
 
 	// Statistics
 	highscores: () => request<HighscoreEntry[]>('GET', '/api/highscores'),

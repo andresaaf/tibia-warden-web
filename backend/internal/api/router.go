@@ -76,6 +76,14 @@ func NewRouter(cfg *config.Config, stores *store.Stores, oauth *auth.DiscordProv
 			r.Delete("/wardens/{creatureID}", s.handleUnmarkKilled)
 			r.Get("/areas", s.handleListAreas)
 
+			// Respawn checker (subarea cooldowns, shared with the user's groups).
+			r.Get("/checker", s.handleGetChecker)
+			r.Post("/checker/checks/{subareaID}", s.handleCheckSubarea)
+			r.Delete("/checker/checks/{subareaID}", s.handleUndoCheck)
+			r.Put("/checker/favorites/{subareaID}", s.handleAddCheckerFavorite)
+			r.Delete("/checker/favorites/{subareaID}", s.handleRemoveCheckerFavorite)
+			r.Put("/groups/{groupID}/checker-share", s.handleSetCheckerShare)
+
 			// Statistics leaderboard (global across all users).
 			r.Get("/highscores", s.handleListHighscores)
 			r.Get("/creatures/stats", s.handleListCreatureStats)

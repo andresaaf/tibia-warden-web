@@ -78,11 +78,34 @@ func (s *AreaStore) List(ctx context.Context, userID int64) ([]models.Area, erro
 	return out, rows.Err()
 }
 
-// ClearAreas removes all areas (cascading to subareas and their creature
-// memberships). Area data is seed-derived, so the seeder rebuilds it wholesale.
-func (s *AreaStore) ClearAreas(ctx context.Context) error {
-	_, err := s.pool.Exec(ctx, `DELETE FROM areas`)
-	return err
+// PruneAreas deletes every area and subarea not in the kept id sets (cascading
+// to their creature memberships, checks and favorites). The seeder upserts in
+// place and prunes afterwards, so surviving subareas keep their ids — the
+// respawn checker's checks and favorites reference them.
+func (s *AreaStore) PruneAreas(ctx context.Context, keptAreaIDs, keptSubareaIDs []int64) error {
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
+	if _, err := tx.Exec(ctx,
+		`DELETE FROM subareas WHERE NOT (id = ANY($1))`, keptSubareaIDs); err != nil {
+		return err
+	}
+	if _, err := tx.Exec(ctx,
+		`DELETE FROM areas WHERE NOT (id = ANY($1))`, keptAreaIDs); err != nil {
+		return err
+	}
+	return tx.Commit(ctx)
+}
+
+// SubareaExists reports whether a subarea with the given id exists.
+func (s *AreaStore) SubareaExists(ctx context.Context, subareaID int64) (bool, error) {
+	var exists bool
+	err := s.pool.QueryRow(ctx,
+		`SELECT EXISTS (SELECT 1 FROM subareas WHERE id = $1)`, subareaID).Scan(&exists)
+	return exists, err
 }
 
 // UpsertArea inserts or updates an area by name and returns its id. Used by the

@@ -102,6 +102,7 @@
 	}
 
 	function handleEvent(event: RoomEvent) {
+		if (event.type !== 'announcement.created' && event.type !== 'announcement.updated') return;
 		const a = enrich(event.payload);
 		const idx = feed.findIndex((x) => x.id === a.id);
 		if (idx >= 0) {

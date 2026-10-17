@@ -1,8 +1,15 @@
-import type { Announcement } from './types';
+import type { Announcement, SubareaCheck } from './types';
 
 export type RoomEvent =
 	| { type: 'announcement.created'; payload: Announcement }
-	| { type: 'announcement.updated'; payload: Announcement };
+	| { type: 'announcement.updated'; payload: Announcement }
+	// Respawn checker: one user's check changed (check null = undone away), or a
+	// member toggled sharing and the visible set of checks should be refetched.
+	| {
+			type: 'checker.updated';
+			payload: { subareaId: number; userId: number; check: SubareaCheck | null };
+	  }
+	| { type: 'checker.resync'; payload: Record<string, never> };
 
 /**
  * LiveRoom maintains a resilient WebSocket connection to a live announcement

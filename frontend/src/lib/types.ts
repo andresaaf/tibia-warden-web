@@ -87,6 +87,32 @@ export interface Area {
 	subareas: Subarea[];
 }
 
+/** One user's latest visit to a subarea in the respawn checker. */
+export interface SubareaCheck {
+	subareaId: number;
+	userId: number;
+	/** Character name, falling back to the Discord username. */
+	name: string;
+	/** Discord avatar URL, or '' when the user has none. */
+	avatar: string;
+	checkedAt: string;
+}
+
+/** The user's per-group "share my checks" setting. */
+export interface CheckerShare {
+	groupId: number;
+	name: string;
+	share: boolean;
+}
+
+export interface CheckerState {
+	/** Server clock, used to correct client clock skew for countdowns. */
+	now: string;
+	favorites: number[];
+	checks: SubareaCheck[];
+	sharing: CheckerShare[];
+}
+
 export type Visibility = 'public' | 'private';
 export type Role = 'owner' | 'admin' | 'member';
 export type RosterPeriod = 'lifetime' | 'current_month' | 'previous_month';

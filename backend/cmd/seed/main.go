@@ -146,16 +146,15 @@ func main() {
 	}
 }
 
-// seedAreas rebuilds the area/subarea tree from the file: it clears existing
-// areas, then upserts each area and its subareas, replacing each subarea's
-// creature membership. Creatures attach to subareas; an area given only a
+// seedAreas syncs the area/subarea tree to the file: it upserts each area and
+// its subareas in place (so ids stay stable for the respawn checker's checks
+// and favorites), replaces each subarea's creature membership, then prunes
+// areas/subareas no longer in the file. Creatures attach to subareas; an area given only a
 // top-level "creatures" list becomes a single implicit subarea named after it.
 // Unknown creature names are logged and skipped.
 func seedAreas(ctx context.Context, stores *store.Stores, areas []areaRecord) {
-	if err := stores.Areas.ClearAreas(ctx); err != nil {
-		log.Fatalf("failed to clear areas: %v", err)
-	}
-
+	keptAreas := []int64{}
+	keptSubareas := []int64{}
 	var areaCount, subareaCount int
 	for ai, area := range areas {
 		name := strings.TrimSpace(area.Name)
@@ -180,6 +179,7 @@ func seedAreas(ctx context.Context, stores *store.Stores, areas []areaRecord) {
 			log.Fatalf("failed to upsert area %q: %v", name, err)
 		}
 		areaCount++
+		keptAreas = append(keptAreas, areaID)
 
 		for si, sub := range subareas {
 			subName := strings.TrimSpace(sub.Name)
@@ -213,7 +213,11 @@ func seedAreas(ctx context.Context, stores *store.Stores, areas []areaRecord) {
 				log.Fatalf("failed to set creatures for subarea %q in area %q: %v", subName, name, err)
 			}
 			subareaCount++
+			keptSubareas = append(keptSubareas, subareaID)
 		}
+	}
+	if err := stores.Areas.PruneAreas(ctx, keptAreas, keptSubareas); err != nil {
+		log.Fatalf("failed to prune removed areas: %v", err)
 	}
 	fmt.Printf("imported/updated %d areas, %d subareas\n", areaCount, subareaCount)
 }
